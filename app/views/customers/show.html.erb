@@ -1,0 +1,21 @@
+<h1>Customer</h1>
+
+<p>
+  <strong>Code:</strong>
+  <%= @customer.code %>
+</p>
+
+<p>
+  <strong>Name:</strong>
+  <%= @customer.name %>
+</p>
+
+<p>
+  <strong>Default Customer Fee %:</strong>
+  <%= @customer.default_customer_fee_pct %>
+</p>
+
+<div class="button-group">
+  <%= link_to "Edit", edit_customer_path(@customer), class: "button" %>
+  <%= link_to "Back", customers_path, class: "button button-ghost" %>
+</div>

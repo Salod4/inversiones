@@ -1,0 +1,31 @@
+<%= form_with(model: supplier) do |form| %>
+  <% if supplier.errors.any? %>
+    <div class="errors">
+      <h2><%= pluralize(supplier.errors.count, "error") %> prevented this supplier from being saved:</h2>
+      <ul>
+        <% supplier.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :code %>
+    <%= form.text_field :code %>
+  </div>
+
+  <div>
+    <%= form.label :name %>
+    <%= form.text_field :name %>
+  </div>
+
+  <div>
+    <%= form.label :default_analysis_pct %>
+    <%= form.number_field :default_analysis_pct, step: 0.01 %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>

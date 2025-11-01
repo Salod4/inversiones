@@ -23,7 +23,20 @@
   </head>
 
   <body>
-    <main class="container mx-auto mt-28 px-5 flex">
+    <header class="site-header">
+      <div class="site-header__inner">
+        <%= link_to "Jack V2", root_path, class: "site-brand" %>
+        <nav class="site-nav">
+          <%= link_to "Sales", sales_path, class: "button button-nav" %>
+          <%= link_to "Suppliers", suppliers_path, class: "button button-nav" %>
+          <%= link_to "Customers", customers_path, class: "button button-nav" %>
+          <%= link_to "Closings", closings_path, class: "button button-nav" %>
+          <%= link_to "Transfers", transfers_path, class: "button button-nav" %>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container mx-auto px-5 flex">
       <%= yield %>
     </main>
   </body>

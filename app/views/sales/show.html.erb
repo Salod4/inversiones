@@ -1,0 +1,95 @@
+<h1>Sale <%= @sale.code %></h1>
+
+<p><strong>Date:</strong> <%= @sale.date %></p>
+<p><strong>Customer:</strong> <%= @sale.customer&.name %></p>
+<p><strong>Supplier:</strong> <%= @sale.supplier&.name %></p>
+<p><strong>Closing:</strong> <%= @sale.closing&.business_date %></p>
+<p><strong>Gross Deposit:</strong> <%= @sale.gross_deposit %></p>
+<p><strong>Net Base:</strong> <%= @sale.net_base %></p>
+<p><strong>Provider %:</strong> <%= @sale.provider_pct %></p>
+<p><strong>Customer Fee %:</strong> <%= @sale.customer_fee_pct %></p>
+<p><strong>Provider Commission:</strong> <%= @sale.provider_commission %></p>
+<p><strong>Customer Fee:</strong> <%= @sale.customer_fee %></p>
+<p><strong>Total Transfer Applied:</strong> <%= @sale.total_transfer_applied %></p>
+<p><strong>Working Capital:</strong> <%= @sale.working_capital %></p>
+<p><strong>Customer Balance:</strong> <%= @sale.customer_balance %></p>
+<p><strong>Status:</strong> <%= @sale.status %></p>
+
+<p><strong>Total Seller Commission:</strong> <%= @sale.total_seller_commission %></p>
+<p><strong>Net After Provider and Sellers:</strong> <%= @sale.net_after_provider_and_sellers %></p>
+<p><strong>Balance After Transfers:</strong> <%= @sale.balance_after_transfers %></p>
+
+<section>
+  <h2>Sales Users</h2>
+  <div class="button-group">
+    <%= link_to "Add Seller", new_sale_sales_user_path(@sale), class: "button" %>
+  </div>
+  <% if @sales_users.any? %>
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Commission %</th>
+          <th>Commission Amount</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @sales_users.each do |sales_user| %>
+          <tr>
+            <td><%= sales_user.user&.email %></td>
+            <td><%= sales_user.commission_pct %></td>
+            <td><%= sales_user.commission_amount %></td>
+            <td>
+              <%= link_to "Remove",
+                          sale_sales_user_path(@sale, sales_user),
+                          class: "button button-danger",
+                          data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No sellers linked to this sale yet.</p>
+  <% end %>
+</section>
+
+<section>
+  <h2>Transfers</h2>
+  <div class="button-group">
+    <%= link_to "New Transfer", new_sale_transfer_path(@sale), class: "button" %>
+    <%= link_to "View All Transfers", sale_transfers_path(@sale), class: "button button-secondary" %>
+  </div>
+  <% if @transfers.any? %>
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Occurred At</th>
+          <th>Supplier</th>
+          <th>Amount</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @transfers.each do |transfer| %>
+          <tr>
+            <td><%= transfer.code %></td>
+            <td><%= transfer.occurred_at %></td>
+            <td><%= transfer.supplier&.name %></td>
+            <td><%= transfer.amount %></td>
+            <td><%= link_to "Show", transfer_path(transfer), class: "button button-secondary" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No transfers recorded for this sale yet.</p>
+  <% end %>
+</section>
+
+<div class="button-group">
+  <%= link_to "Edit", edit_sale_path(@sale), class: "button" %>
+  <%= link_to "Back", sales_path, class: "button button-ghost" %>
+</div>

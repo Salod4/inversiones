@@ -1,0 +1,12 @@
+<h1>Customer Closing</h1>
+
+<p><strong>Closing:</strong> <%= link_to @closing.business_date, closing_path(@closing), class: "button button-ghost" %></p>
+<p><strong>Customer:</strong> <%= @customer_closing.customer&.name %></p>
+<p><strong>Customer Balance:</strong> <%= @customer_closing.customer_balance %></p>
+<p><strong>Receivables:</strong> <%= @customer_closing.receivables %></p>
+
+<div class="button-group">
+  <%= link_to "Edit", edit_closing_customer_closing_path(@closing, @customer_closing), class: "button" %>
+  <%= link_to "Delete", closing_customer_closing_path(@closing, @customer_closing), class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
+  <%= link_to "Back", closing_customer_closings_path(@closing), class: "button button-ghost" %>
+</div>

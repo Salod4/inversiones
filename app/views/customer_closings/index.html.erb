@@ -1,0 +1,29 @@
+<h1>Customer Closings for <%= @closing.business_date %></h1>
+
+<div class="button-group">
+  <%= link_to "New Customer Closing", new_closing_customer_closing_path(@closing), class: "button" %>
+  <%= link_to "Back to Closing", closing_path(@closing), class: "button button-ghost" %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Customer</th>
+      <th>Customer Balance</th>
+      <th>Receivables</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @customer_closings.each do |customer_closing| %>
+      <tr>
+        <td><%= customer_closing.customer&.name %></td>
+        <td><%= customer_closing.customer_balance %></td>
+        <td><%= customer_closing.receivables %></td>
+        <td>
+          <%= link_to "Show", closing_customer_closing_path(@closing, customer_closing), class: "button button-secondary" %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

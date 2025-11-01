@@ -1,0 +1,29 @@
+<h1>Supplier Closings for <%= @closing.business_date %></h1>
+
+<div class="button-group">
+  <%= link_to "New Supplier Closing", new_closing_supplier_closing_path(@closing), class: "button" %>
+  <%= link_to "Back to Closing", closing_path(@closing), class: "button button-ghost" %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Supplier</th>
+      <th>Supplier Credit</th>
+      <th>Amount Owed To Supplier</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @supplier_closings.each do |supplier_closing| %>
+      <tr>
+        <td><%= supplier_closing.supplier&.name %></td>
+        <td><%= supplier_closing.supplier_credit %></td>
+        <td><%= supplier_closing.amount_owed_to_supplier %></td>
+        <td>
+          <%= link_to "Show", closing_supplier_closing_path(@closing, supplier_closing), class: "button button-secondary" %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

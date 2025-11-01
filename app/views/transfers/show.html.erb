@@ -1,0 +1,13 @@
+<h1>Transfer <%= @transfer.code %></h1>
+
+<p><strong>Sale:</strong> <%= link_to @sale.code, sale_path(@sale), class: "button button-ghost" %></p>
+<p><strong>Occurred At:</strong> <%= @transfer.occurred_at %></p>
+<p><strong>Supplier:</strong> <%= @transfer.supplier&.name %></p>
+<p><strong>Amount:</strong> <%= @transfer.amount %></p>
+<p><strong>Note:</strong> <%= @transfer.note %></p>
+
+<div class="button-group">
+  <%= link_to "Edit", edit_transfer_path(@transfer), class: "button" %>
+  <%= link_to "Delete", transfer_path(@transfer), class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
+  <%= link_to "Back to Sale Transfers", sale_transfers_path(@sale), class: "button button-ghost" %>
+</div>

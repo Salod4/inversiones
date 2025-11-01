@@ -1,0 +1,31 @@
+<h1>Transfers for Sale <%= @sale.code %></h1>
+
+<div class="button-group">
+  <%= link_to "New Transfer", new_sale_transfer_path(@sale), class: "button" %>
+  <%= link_to "Back to Sale", sale_path(@sale), class: "button button-ghost" %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Code</th>
+      <th>Occurred At</th>
+      <th>Supplier</th>
+      <th>Amount</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @transfers.each do |transfer| %>
+      <tr>
+        <td><%= transfer.code %></td>
+        <td><%= transfer.occurred_at %></td>
+        <td><%= transfer.supplier&.name %></td>
+        <td><%= transfer.amount %></td>
+        <td>
+          <%= link_to "Show", transfer_path(transfer), class: "button button-secondary" %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

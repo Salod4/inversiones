@@ -1,0 +1,46 @@
+<%= form_with(model: closing) do |form| %>
+  <% if closing.errors.any? %>
+    <div class="errors">
+      <h2><%= pluralize(closing.errors.count, "error") %> prevented this closing from being saved:</h2>
+      <ul>
+        <% closing.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :business_date %>
+    <%= form.date_field :business_date %>
+  </div>
+
+  <div>
+    <%= form.label :closed_at %>
+    <%= form.datetime_field :closed_at %>
+  </div>
+
+  <div>
+    <%= form.label :status %>
+    <%= form.select :status, options_for_select([["Open", "open"], ["Closed", "closed"]], closing.status) %>
+  </div>
+
+  <div>
+    <%= form.label :total_customers %>
+    <%= form.number_field :total_customers, step: 1 %>
+  </div>
+
+  <div>
+    <%= form.label :total_suppliers %>
+    <%= form.number_field :total_suppliers, step: 1 %>
+  </div>
+
+  <div>
+    <%= form.label :difference %>
+    <%= form.number_field :difference, step: 0.01 %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>

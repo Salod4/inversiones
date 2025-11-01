@@ -1,0 +1,30 @@
+<h1>Customers</h1>
+
+<p><%= link_to "New Customer", new_customer_path, class: "button" %></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Code</th>
+      <th>Name</th>
+      <th>Default Customer Fee %</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @customers.each do |customer| %>
+      <tr>
+        <td><%= customer.code %></td>
+        <td><%= customer.name %></td>
+        <td><%= customer.default_customer_fee_pct %></td>
+        <td>
+          <div class="button-group">
+            <%= link_to "Show", customer, class: "button button-secondary" %>
+            <%= link_to "Edit", edit_customer_path(customer), class: "button button-secondary" %>
+            <%= link_to "Destroy", customer, class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
+          </div>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

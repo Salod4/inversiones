@@ -1,0 +1,91 @@
+<%= form_with(model: sale) do |form| %>
+  <% if sale.errors.any? %>
+    <div class="errors">
+      <h2><%= pluralize(sale.errors.count, "error") %> prevented this sale from being saved:</h2>
+      <ul>
+        <% sale.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :code %>
+    <%= form.text_field :code %>
+  </div>
+
+  <div>
+    <%= form.label :date %>
+    <%= form.date_field :date %>
+  </div>
+
+  <div>
+    <%= form.label :customer_id, "Customer" %>
+    <%= form.collection_select :customer_id, @customers, :id, :name %>
+  </div>
+
+  <div>
+    <%= form.label :supplier_id, "Supplier" %>
+    <%= form.collection_select :supplier_id, @suppliers, :id, :name %>
+  </div>
+
+  <div>
+    <%= form.label :closing_id, "Closing" %>
+    <%= form.collection_select :closing_id, @closings, :id, :business_date, include_blank: true %>
+  </div>
+
+  <div>
+    <%= form.label :gross_deposit %>
+    <%= form.number_field :gross_deposit, step: 0.01 %>
+  </div>
+
+  <div>
+    <%= form.label :net_base %>
+    <%= form.number_field :net_base, step: 0.01 %>
+  </div>
+
+  <div>
+    <%= form.label :provider_pct %>
+    <%= form.number_field :provider_pct, step: 0.01 %>
+  </div>
+
+  <div>
+    <%= form.label :customer_fee_pct %>
+    <%= form.number_field :customer_fee_pct, step: 0.01 %>
+  </div>
+
+  <div>
+    <%= form.label :provider_commission %>
+    <%= form.number_field :provider_commission, step: 0.01 %>
+  </div>
+
+  <div>
+    <%= form.label :customer_fee %>
+    <%= form.number_field :customer_fee, step: 0.01 %>
+  </div>
+
+  <div>
+    <%= form.label :total_transfer_applied %>
+    <%= form.number_field :total_transfer_applied, step: 0.01 %>
+  </div>
+
+  <div>
+    <%= form.label :working_capital %>
+    <%= form.number_field :working_capital, step: 0.01 %>
+  </div>
+
+  <div>
+    <%= form.label :customer_balance %>
+    <%= form.number_field :customer_balance, step: 0.01 %>
+  </div>
+
+  <div>
+    <%= form.label :status %>
+    <%= form.select :status, options_for_select([["Open", "open"], ["Closed", "closed"], ["Canceled", "canceled"]], sale.status), include_blank: true %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>
