@@ -1,4 +1,10 @@
-<%= form_with(model: sale ? [sale, transfer] : transfer) do |form| %>
+<% form_url = if transfer.persisted?
+                transfer_path(transfer)
+              else
+                sale_transfers_path(sale)
+              end %>
+
+<%= form_with(model: transfer, url: form_url) do |form| %>
   <% if transfer.errors.any? %>
     <div class="errors">
       <h2><%= pluralize(transfer.errors.count, "error") %> prevented this transfer from being saved:</h2>
