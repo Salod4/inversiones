@@ -1,0 +1,44 @@
+<h1>Sales</h1>
+
+<p><%= link_to "New Sale", new_sale_path, class: "button" %></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Code</th>
+      <th>Date</th>
+      <th>Customer</th>
+      <th>Supplier</th>
+      <th>Gross Deposit</th>
+      <th>Provider Commission</th>
+      <th>Total Transfer Applied</th>
+      <th>Working Capital</th>
+      <th>Customer Balance</th>
+      <th>Status</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @sales.each do |sale| %>
+      <tr>
+        <td><%= sale.code %></td>
+        <td><%= sale.date %></td>
+        <td><%= sale.customer&.name %></td>
+        <td><%= sale.supplier&.name %></td>
+        <td><%= sale.gross_deposit %></td>
+        <td><%= sale.provider_commission %></td>
+        <td><%= sale.total_transfer_applied %></td>
+        <td><%= sale.working_capital %></td>
+        <td><%= sale.customer_balance %></td>
+        <td><%= sale.status %></td>
+        <td>
+          <div class="button-group">
+            <%= link_to "Show", sale, class: "button button-secondary" %>
+            <%= link_to "Edit", edit_sale_path(sale), class: "button button-secondary" %>
+            <%= link_to "Destroy", sale, class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
+          </div>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

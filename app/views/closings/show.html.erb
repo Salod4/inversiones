@@ -1,0 +1,78 @@
+<h1>Closing for <%= @closing.business_date %></h1>
+
+<p><strong>Status:</strong> <%= @closing.status %></p>
+<p><strong>Closed At:</strong> <%= @closing.closed_at %></p>
+<p><strong>Total Customers:</strong> <%= @closing.total_customers %></p>
+<p><strong>Total Suppliers:</strong> <%= @closing.total_suppliers %></p>
+<p><strong>Difference:</strong> <%= @closing.difference %></p>
+
+<section>
+  <h2>Customer Closings</h2>
+  <div class="button-group">
+    <%= link_to "New Customer Closing", new_closing_customer_closing_path(@closing), class: "button" %>
+  </div>
+  <% if @customer_closings.any? %>
+    <table>
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Customer Balance</th>
+          <th>Receivables</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @customer_closings.each do |customer_closing| %>
+          <tr>
+            <td><%= customer_closing.customer&.name %></td>
+            <td><%= customer_closing.customer_balance %></td>
+            <td><%= customer_closing.receivables %></td>
+            <td>
+              <%= link_to "Show", closing_customer_closing_path(@closing, customer_closing), class: "button button-secondary" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No customer closings recorded.</p>
+  <% end %>
+</section>
+
+<section>
+  <h2>Supplier Closings</h2>
+  <div class="button-group">
+    <%= link_to "New Supplier Closing", new_closing_supplier_closing_path(@closing), class: "button" %>
+  </div>
+  <% if @supplier_closings.any? %>
+    <table>
+      <thead>
+        <tr>
+          <th>Supplier</th>
+          <th>Supplier Credit</th>
+          <th>Amount Owed To Supplier</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @supplier_closings.each do |supplier_closing| %>
+          <tr>
+            <td><%= supplier_closing.supplier&.name %></td>
+            <td><%= supplier_closing.supplier_credit %></td>
+            <td><%= supplier_closing.amount_owed_to_supplier %></td>
+            <td>
+              <%= link_to "Show", closing_supplier_closing_path(@closing, supplier_closing), class: "button button-secondary" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No supplier closings recorded.</p>
+  <% end %>
+</section>
+
+<div class="button-group">
+  <%= link_to "Edit", edit_closing_path(@closing), class: "button" %>
+  <%= link_to "Back", closings_path, class: "button button-ghost" %>
+</div>

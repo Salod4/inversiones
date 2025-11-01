@@ -1,0 +1,21 @@
+<h1>Supplier</h1>
+
+<p>
+  <strong>Code:</strong>
+  <%= @supplier.code %>
+</p>
+
+<p>
+  <strong>Name:</strong>
+  <%= @supplier.name %>
+</p>
+
+<p>
+  <strong>Default Analysis %:</strong>
+  <%= @supplier.default_analysis_pct %>
+</p>
+
+<div class="button-group">
+  <%= link_to "Edit", edit_supplier_path(@supplier), class: "button" %>
+  <%= link_to "Back", suppliers_path, class: "button button-ghost" %>
+</div>

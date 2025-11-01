@@ -1,0 +1,31 @@
+<%= form_with(model: [@sale, @sales_user]) do |form| %>
+  <% if @sales_user.errors.any? %>
+    <div class="errors">
+      <h2><%= pluralize(@sales_user.errors.count, "error") %> prevented this sales user from being saved:</h2>
+      <ul>
+        <% @sales_user.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :user_id, "User" %>
+    <%= form.collection_select :user_id, @users, :id, :email %>
+  </div>
+
+  <div>
+    <%= form.label :commission_pct %>
+    <%= form.number_field :commission_pct, step: 0.01 %>
+  </div>
+
+  <div>
+    <%= form.label :commission_amount %>
+    <%= form.number_field :commission_amount, step: 0.01 %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>

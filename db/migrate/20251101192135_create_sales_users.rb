@@ -1,6 +1,5 @@
 class CreateSalesUsers < ActiveRecord::Migration[8.0]
   def change
-
 create_table :sales_users, if_not_exists: true do |t|
   t.references :sale, null: false, foreign_key: true
   t.references :user, null: false, foreign_key: true

@@ -9,6 +9,5 @@ create_table :supplier_closings, if_not_exists: true do |t|
 end
 add_index :supplier_closings, :closing_id  unless index_exists?(:supplier_closings, :closing_id)
 add_index :supplier_closings, :supplier_id unless index_exists?(:supplier_closings, :supplier_id)
-
   end
 end

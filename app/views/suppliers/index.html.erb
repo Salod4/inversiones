@@ -1,0 +1,30 @@
+<h1>Suppliers</h1>
+
+<p><%= link_to "New Supplier", new_supplier_path, class: "button" %></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Code</th>
+      <th>Name</th>
+      <th>Default Analysis %</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @suppliers.each do |supplier| %>
+      <tr>
+        <td><%= supplier.code %></td>
+        <td><%= supplier.name %></td>
+        <td><%= supplier.default_analysis_pct %></td>
+        <td>
+          <div class="button-group">
+            <%= link_to "Show", supplier, class: "button button-secondary" %>
+            <%= link_to "Edit", edit_supplier_path(supplier), class: "button button-secondary" %>
+            <%= link_to "Destroy", supplier, class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
+          </div>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

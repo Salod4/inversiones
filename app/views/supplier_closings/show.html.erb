@@ -1,0 +1,12 @@
+<h1>Supplier Closing</h1>
+
+<p><strong>Closing:</strong> <%= link_to @closing.business_date, closing_path(@closing), class: "button button-ghost" %></p>
+<p><strong>Supplier:</strong> <%= @supplier_closing.supplier&.name %></p>
+<p><strong>Supplier Credit:</strong> <%= @supplier_closing.supplier_credit %></p>
+<p><strong>Amount Owed To Supplier:</strong> <%= @supplier_closing.amount_owed_to_supplier %></p>
+
+<div class="button-group">
+  <%= link_to "Edit", edit_closing_supplier_closing_path(@closing, @supplier_closing), class: "button" %>
+  <%= link_to "Delete", closing_supplier_closing_path(@closing, @supplier_closing), class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
+  <%= link_to "Back", closing_supplier_closings_path(@closing), class: "button button-ghost" %>
+</div>

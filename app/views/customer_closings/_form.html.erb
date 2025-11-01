@@ -1,0 +1,31 @@
+<%= form_with(model: [@closing, @customer_closing]) do |form| %>
+  <% if @customer_closing.errors.any? %>
+    <div class="errors">
+      <h2><%= pluralize(@customer_closing.errors.count, "error") %> prevented this customer closing from being saved:</h2>
+      <ul>
+        <% @customer_closing.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :customer_id, "Customer" %>
+    <%= form.collection_select :customer_id, @customers, :id, :name %>
+  </div>
+
+  <div>
+    <%= form.label :customer_balance %>
+    <%= form.number_field :customer_balance, step: 0.01 %>
+  </div>
+
+  <div>
+    <%= form.label :receivables %>
+    <%= form.number_field :receivables, step: 0.01 %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>
