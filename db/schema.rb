@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_01_192245) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_03_051319) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -35,6 +35,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_01_192245) do
     t.datetime "updated_at", null: false
     t.index ["closing_id"], name: "index_customer_closings_on_closing_id"
     t.index ["customer_id"], name: "index_customer_closings_on_customer_id"
+  end
+
+  create_table "customer_suppliers", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id", "supplier_id"], name: "index_customer_suppliers_on_customer_id_and_supplier_id", unique: true
+    t.index ["customer_id"], name: "index_customer_suppliers_on_customer_id"
+    t.index ["supplier_id"], name: "index_customer_suppliers_on_supplier_id"
   end
 
   create_table "customers", force: :cascade do |t|
@@ -129,6 +139,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_01_192245) do
 
   add_foreign_key "customer_closings", "closings"
   add_foreign_key "customer_closings", "customers"
+  add_foreign_key "customer_suppliers", "customers"
+  add_foreign_key "customer_suppliers", "suppliers"
   add_foreign_key "sales", "closings"
   add_foreign_key "sales", "customers"
   add_foreign_key "sales", "suppliers"
