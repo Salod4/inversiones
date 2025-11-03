@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_03_051319) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_03_052237) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -42,6 +42,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_03_051319) do
     t.bigint "supplier_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["customer_id", "supplier_id"], name: "index_customer_suppliers_on_customer_and_supplier", unique: true
     t.index ["customer_id", "supplier_id"], name: "index_customer_suppliers_on_customer_id_and_supplier_id", unique: true
     t.index ["customer_id"], name: "index_customer_suppliers_on_customer_id"
     t.index ["supplier_id"], name: "index_customer_suppliers_on_supplier_id"
