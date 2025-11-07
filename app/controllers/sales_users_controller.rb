@@ -39,6 +39,11 @@ class SalesUsersController < ApplicationController
   end
 
   def sales_user_params
-    params.require(:sales_user).permit(:user_id, :commission_pct, :commission_amount)
+    params.require(:sales_user).permit(
+      :user_id,
+      :commission_pct,
+      :commission_pct_override,
+      :commission_amount
+    )
   end
 end

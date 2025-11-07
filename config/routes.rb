@@ -7,6 +7,7 @@ Rails.application.routes.draw do
   resources :customers
 
   resources :sales do
+    get :prefill, on: :collection
     resources :sales_users, only: [ :new, :create, :destroy ]
     resources :transfers,   only: [ :new, :create, :index ]
   end

@@ -4,6 +4,7 @@ class Supplier < ApplicationRecord
   has_many :transfers, dependent: :restrict_with_error
   has_many :customer_suppliers, dependent: :destroy
   has_many :customers, through: :customer_suppliers
+  has_many :commission_defaults, dependent: :destroy
 
 
 
