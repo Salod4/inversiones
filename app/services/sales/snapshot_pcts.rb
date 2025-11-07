@@ -14,6 +14,7 @@ module Sales
       snapshot_provider_pct!
       snapshot_customer_fee_pct!
       snapshot_sales_users_splits!
+      compute_net_base!
       compute_amounts!
       sale
     end
@@ -47,6 +48,10 @@ module Sales
 
     def find_or_build_sales_user(user_id)
       sale.sales_users.detect { |su| su.user_id.to_i == user_id.to_i } || sale.sales_users.build(user_id: user_id)
+    end
+
+    def compute_net_base!
+      sale.net_base = (sale.gross_deposit.to_f * 0.84).round(2)
     end
 
     def compute_amounts!

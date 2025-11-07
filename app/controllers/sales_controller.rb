@@ -7,7 +7,6 @@ class SalesController < ApplicationController
   end
 
   def show
-    hydrate_sale_totals(@sale)
     @sales_users = @sale.sales_users.includes(:user)
     @transfers = @sale.transfers.order(occurred_at: :desc)
   end
@@ -46,16 +45,8 @@ class SalesController < ApplicationController
 
     if @sale.save
       redirect_to @sale, notice: "Venta creada."
-    @sale.net_base = @sale.gross_deposit * 0.84
-    @sale.provider_commission = @sale.gross_deposit * @sale.provider_pct / 100.0
-    @sale.customer_fee = @sale.gross_deposit * @sale.customer_fee_pct / 100
     else
-      if @sale.customer_id.present? && @sale.supplier_id.present?
-        Sales::Prefill.call(@sale)
-            @sale.net_base = @sale.gross_deposit * 0.84
-    @sale.provider_commission = @sale.gross_deposit * @sale.provider_pct / 100.0
-    @sale.customer_fee = @sale.gross_deposit * @sale.customer_fee_pct / 100
-      end
+      Sales::Prefill.call(@sale) if @sale.customer_id.present? && @sale.supplier_id.present?
       render :new, status: :unprocessable_entity
     end
   end
@@ -86,13 +77,6 @@ class SalesController < ApplicationController
     @customers = Customer.order(:name)
     @suppliers = Supplier.order(:name)
     @closings = Closing.order(business_date: :desc)
-  end
-
-  def hydrate_sale_totals(sale)
-    deposit = sale.gross_deposit.to_f
-    sale.net_base = (deposit * 0.84).round(2)
-    sale.provider_commission = (deposit * sale.provider_pct.to_f / 100.0).round(2)
-    sale.customer_fee = (deposit * sale.customer_fee_pct.to_f / 100.0).round(2)
   end
 
   def sale_params

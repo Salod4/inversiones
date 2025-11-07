@@ -37,7 +37,7 @@
       <tbody>
         <% @sales_users.each do |sales_user| %>
           <tr>
-            <td><%= sales_user.user&.email %></td>
+            <td><%= sales_user.user&.name || sales_user.user&.email %></td>
             <td><%= sales_user.commission_pct %></td>
             <td><%= sales_user.commission_amount %></td>
             <td>
