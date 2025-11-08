@@ -28,14 +28,15 @@ class SalesController < ApplicationController
   def prefill
     sale = Sale.new(customer_id: params[:customer_id], supplier_id: params[:supplier_id])
     Sales::Prefill.call(sale)
+    supplier_code = lookup_supplier_code(sale)
+    customer_name = lookup_customer_name(sale)
     render json: {
       provider_pct: sale.provider_pct,
       customer_fee_pct: sale.customer_fee_pct,
       sales_users: sale.sales_users.map do |su|
-        user = su.user || User.find_by(id: su.user_id)
         {
           user_id: su.user_id,
-          user_name: user&.name || user&.email || "Vendedor",
+          user_name: prefill_user_name(su, supplier_code, customer_name),
           commission_pct: su.commission_pct
         }
       end
@@ -103,5 +104,23 @@ class SalesController < ApplicationController
         :_destroy
       ]
     )
+  end
+
+  def lookup_supplier_code(sale)
+    sale.supplier&.code || Supplier.where(id: sale.supplier_id).pick(:code)
+  end
+
+  def lookup_customer_name(sale)
+    sale.customer&.name || Customer.where(id: sale.customer_id).pick(:name)
+  end
+
+  def prefill_user_name(sales_user, supplier_code, customer_name)
+    if sales_user.user&.code == "SUBAG"
+      Sales::Subagents.display_name_for(supplier_code, customer_name, sales_user.commission_pct) ||
+        sales_user.user&.name ||
+        "Subagente"
+    else
+      sales_user.user&.name || sales_user.user&.email || "Vendedor"
+    end
   end
 end

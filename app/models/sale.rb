@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Sale < ApplicationRecord
-  MAX_SELLERS = 3
+  MAX_SELLERS = 4
 
   before_validation :assign_defaults, on: :create
 
@@ -39,6 +39,10 @@ class Sale < ApplicationRecord
 
   def total_seller_commission
     (sales_users.sum(:commission_amount) || 0)
+  end
+
+  def total_transfer_applied
+    transfers.sum(:amount)
   end
 
   def net_after_provider_and_sellers
