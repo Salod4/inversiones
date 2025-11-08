@@ -5,7 +5,8 @@ require "securerandom"
 USERS = [
   { key: :jack,  email: "jack@example.com",  name: "Jack",  code: "JACK" },
   { key: :sam,   email: "sam@example.com",   name: "Sam",   code: "SAM" },
-  { key: :fondo, email: "fondo@example.com", name: "Fondo", code: "FONDO" }
+  { key: :fondo, email: "fondo@example.com", name: "Fondo", code: "FONDO" },
+  { key: :subagent, email: "subagent@example.com", name: "Subagente", code: "SUBAG" }
 ].freeze
 
 SUPPLIERS = [
@@ -2940,6 +2941,21 @@ ActiveRecord::Base.transaction do
           supplier: supplier,
           customer: customer,
           user: user,
+          pct: pct
+        )
+        counters["commission_defaults_#{cd_status}".to_sym] += 1
+      end
+
+      Sales::Subagents.entries_for(supplier_code, customer_name).each do |subagent|
+        pct = subagent[:pct]
+        unless pct && pct >= 0 && pct < 1
+          raise ArgumentError, "Pct inválido para subagente #{supplier_code} / #{customer_name}"
+        end
+
+        _, cd_status = upsert_commission_default!(
+          supplier: supplier,
+          customer: customer,
+          user: user_records.fetch(:subagent),
           pct: pct
         )
         counters["commission_defaults_#{cd_status}".to_sym] += 1

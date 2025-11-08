@@ -54,8 +54,7 @@
 
   <div id="preview_sales_users">
     <% sale.sales_users.each do |su| %>
-      <% user = su.user || User.find_by(id: su.user_id) %>
-      <% display_name = user&.name || user&.email || "Vendedor" %>
+      <% display_name = sales_user_display_name(sale, su) %>
       <div data-user-id="<%= su.user_id %>">
         <label><%= display_name %> (<%= su.commission_pct %>)</label>
         <input
