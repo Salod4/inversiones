@@ -10,60 +10,42 @@
     </div>
   <% end %>
 
-  <div>
-    <%= f.label :code %>
-    <%= f.text_field :code %>
-  </div>
 
   <div>
     <%= f.label :date %>
-    <%= f.date_field :date %>
+    <%= f.date_field :date, value: (sale.date || Date.current) %>
   </div>
 
+
   <div>
-    <%= f.label :customer_id, "Customer" %>
+    <%= f.label :supplier_id, "Proveedor" %>
+    <%= f.collection_select :supplier_id, @suppliers || Supplier.order(:name), :id, :name, {}, { id: "sale_supplier_id" } %>
+  </div>
+  
+  <div>
+    <%= f.label :customer_id, "Cliente" %>
     <%= f.collection_select :customer_id, @customers || Customer.order(:name), :id, :name, {}, { id: "sale_customer_id" } %>
   </div>
 
+
+
   <div>
-    <%= f.label :supplier_id, "Supplier" %>
-    <%= f.collection_select :supplier_id, @suppliers || Supplier.order(:name), :id, :name, {}, { id: "sale_supplier_id" } %>
+    <%= f.label :gross_deposit, "Deposito del cliente" %>
+    <%= f.number_field :gross_deposit, step: 1 %>
+  </div>
+
+
+
+  <div>
+    <%= f.label :provider_pct_override, "% Que nos cobra el proveedor" %>
+    <%= f.number_field :provider_pct_override, step: 0.0001, id: "sale_provider_pct_override" %>
   </div>
 
   <div>
-    <%= f.label :closing_id, "Closing" %>
-    <%= f.collection_select :closing_id, @closings || Closing.order(business_date: :desc), :id, :business_date, { include_blank: true }, { id: "sale_closing_id" } %>
+    <%= f.label :customer_fee_pct_override, "% Al que le vendemos al cliente" %>
+    <%= f.number_field :customer_fee_pct_override, step: 0.0001, id: "sale_customer_fee_pct_override" %>
   </div>
 
-  <div>
-    <label>Proveedor % (preview)</label>
-    <input type="number" step="0.0001" id="preview_provider_pct" value="<%= sale.provider_pct %>" readonly>
-  </div>
-
-  <div>
-    <label>Cliente % (preview)</label>
-    <input type="number" step="0.0001" id="preview_customer_fee_pct" value="<%= sale.customer_fee_pct %>" readonly>
-  </div>
-
-  <div>
-    <%= f.label :provider_pct_override, "Provider % override" %>
-    <%= f.number_field :provider_pct_override, step: 0.0001 %>
-  </div>
-
-  <div>
-    <%= f.label :customer_fee_pct_override, "Customer fee % override" %>
-    <%= f.number_field :customer_fee_pct_override, step: 0.0001 %>
-  </div>
-
-  <div>
-    <%= f.label :gross_deposit %>
-    <%= f.number_field :gross_deposit, step: 0.01 %>
-  </div>
-
-  <div>
-    <%= f.label :net_base %>
-    <%= f.number_field :net_base, step: 0.01 %>
-  </div>
 
   <div>
     <%= f.label :status %>
@@ -72,11 +54,18 @@
 
   <div id="preview_sales_users">
     <% sale.sales_users.each do |su| %>
+      <% user = su.user || User.find_by(id: su.user_id) %>
+      <% display_name = user&.name || user&.email || "Vendedor" %>
       <div data-user-id="<%= su.user_id %>">
-        <span>Vendedor #<%= su.user_id %></span>
-        <input type="number" step="0.0001" name="sale[sales_users_attributes][][commission_pct_override]" placeholder="override opcional">
+        <label><%= display_name %> (<%= su.commission_pct %>)</label>
+        <input
+          type="number"
+          step="0.0001"
+          name="sale[sales_users_attributes][][commission_pct_override]"
+          value="<%= su.commission_pct_override %>"
+          placeholder="<%= su.commission_pct %>"
+        >
         <input type="hidden" name="sale[sales_users_attributes][][user_id]" value="<%= su.user_id %>">
-        <small>default: <%= su.commission_pct %></small>
       </div>
     <% end %>
   </div>

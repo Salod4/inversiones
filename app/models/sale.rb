@@ -3,6 +3,8 @@
 class Sale < ApplicationRecord
   MAX_SELLERS = 3
 
+  before_validation :assign_defaults, on: :create
+
   belongs_to :customer
   belongs_to :supplier
   belongs_to :closing, optional: true
@@ -53,5 +55,22 @@ class Sale < ApplicationRecord
 
   def resolved_customer_fee_pct
     customer_fee_pct_override.presence || customer_fee_pct.to_f
+  end
+
+  private
+
+  def assign_defaults
+    self.date ||= Date.current
+    assign_code if code.blank?
+  end
+
+  def assign_code
+    return if supplier.blank?
+
+    next_seq = Sale.where(supplier_id: supplier_id).count + 1
+    date_stamp = (date || Date.current).strftime("%-d%b").upcase
+    supplier_code = supplier.code.presence || "SUP"
+
+    self.code = "MOV-#{supplier_code}-##{next_seq}-#{date_stamp}"
   end
 end
