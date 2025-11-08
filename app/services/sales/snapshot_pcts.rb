@@ -59,6 +59,7 @@ module Sales
       sale.provider_commission = (nb * sale.provider_pct.to_f).round(2)
       sale.customer_fee        = (nb * sale.customer_fee_pct.to_f).round(2)
       sale.working_capital     = (nb - sale.provider_commission.to_f - sale.customer_fee.to_f).round(2)
+      sale.customer_balance    = (sale.working_capital.to_f - sale.total_transfer_applied.to_f).round(2)
 
       sale.sales_users.each do |su|
         pct = su.commission_pct_override.presence || su.commission_pct.to_f
