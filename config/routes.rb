@@ -10,6 +10,9 @@ Rails.application.routes.draw do
     get :prefill, on: :collection
     resources :sales_users, only: [ :new, :create, :destroy ]
     resources :transfers,   only: [ :new, :create, :index ]
+     collection do
+      post :close_today # /sales/close_today
+    end
   end
 
   resources :transfers, only: [ :show, :edit, :update, :destroy, :index ]

@@ -4,6 +4,7 @@ class SalesController < ApplicationController
 
   def index
     @sales = Sale.includes(:customer, :supplier).order(date: :desc)
+    @closing_today_exists = Closing.closed_for?(Date.current)
   end
 
   def show
@@ -71,6 +72,12 @@ class SalesController < ApplicationController
     else
       redirect_to sales_url, alert: @sale.errors.full_messages.to_sentence
     end
+  end
+   def close_today
+    Closings::CloseDay.new(business_date: Date.current).call
+    redirect_to sales_path, notice: "Cierre de hoy realizado correctamente."
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to sales_path, alert: "No se pudo cerrar: #{e.message}"
   end
 
   private

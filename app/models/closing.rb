@@ -5,4 +5,12 @@ class Closing < ApplicationRecord
 
   validates :business_date, presence: true
   validates :status, inclusion: { in: %w[open closed] }
+   scope :for_date, ->(date) { where(business_date: date) }
+
+  def self.closed_for?(date)
+    for_date(date).exists?
+  end
+  def self.open_business_date(today = Date.current)
+    closed_for?(today) ? today + 1.day : today
+  end
 end
