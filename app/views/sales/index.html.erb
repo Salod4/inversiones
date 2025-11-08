@@ -1,6 +1,17 @@
 <h1>Sales</h1>
 
 <p><%= link_to "New Sale", new_sale_path, class: "button" %></p>
+ <% if @closing_today_exists %>
+    <span class="px-3 py-1 rounded bg-green-100 text-green-700 text-sm">
+      Cierre de hoy ya realizado
+    </span>
+  <% else %>
+    <%= button_to "Cerrar ventas de hoy",
+                  close_today_sales_path,
+                  method: :post,
+                  data: { turbo: false, confirm: "¿Seguro que deseas cerrar las ventas de HOY?" },
+                  class: "px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700" %>
+  <% end %>
 
 <table>
   <thead>

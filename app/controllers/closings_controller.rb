@@ -5,9 +5,27 @@ class ClosingsController < ApplicationController
     @closings = Closing.order(business_date: :desc)
   end
 
-  def show
-    @customer_closings = @closing.customer_closings.includes(:customer)
-    @supplier_closings = @closing.supplier_closings.includes(:supplier)
+ def show
+    @closing = Closing.find(params[:id])
+
+    @sales = @closing
+      .sales
+      .includes(:customer, :supplier)
+      .order(:code)
+
+    @customer_closings = CustomerClosing.where(closing_id: @closing.id).includes(:customer).order("customers.name")
+    @supplier_closings = SupplierClosing.where(closing_id: @closing.id).includes(:supplier).order("suppliers.name")
+
+    # Totales rápidos para el footer de la tabla de ventas
+    @sales_totals = {
+      gross_deposit: @sales.sum(:gross_deposit),
+      net_base: @sales.sum(:net_base),
+      provider_commission: @sales.sum(:provider_commission),
+      customer_fee: @sales.sum(:customer_fee),
+      total_transfer_applied: @sales.sum(:total_transfer_applied),
+      working_capital: @sales.sum(:working_capital),
+      customer_balance: @sales.sum(:customer_balance)
+    }
   end
 
   def new

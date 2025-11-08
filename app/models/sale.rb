@@ -14,7 +14,7 @@ class Sale < ApplicationRecord
   has_many :transfers, dependent: :restrict_with_error
 
   accepts_nested_attributes_for :sales_users, allow_destroy: true
-
+  before_validation :assign_business_date
   validates :status, inclusion: { in: %w[open closed canceled] }, allow_nil: true
   validates :gross_deposit, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :provider_pct, numericality: { greater_than_or_equal_to: 0, less_than: 1 }, allow_nil: true
@@ -73,4 +73,8 @@ class Sale < ApplicationRecord
 
     self.code = "MOV-#{supplier_code}-##{next_seq}-#{date_stamp}"
   end
+    def assign_business_date
+      target = Closing.open_business_date(Date.current)
+      self.date = target if date.blank? || date == Date.current
+    end
 end
