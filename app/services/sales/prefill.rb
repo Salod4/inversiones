@@ -40,7 +40,7 @@ module Sales
       sale.sales_users.target.clear
       commission_defaults.find_each do |cd|
         pct = cd.commission_pct.to_f
-        sale.sales_users.build(user_id: cd.user_id, commission_pct: pct)
+        sale.sales_users.build(user: cd.user, user_id: cd.user_id, commission_pct: pct)
       end
     end
 

@@ -32,7 +32,12 @@ class SalesController < ApplicationController
       provider_pct: sale.provider_pct,
       customer_fee_pct: sale.customer_fee_pct,
       sales_users: sale.sales_users.map do |su|
-        { user_id: su.user_id, commission_pct: su.commission_pct }
+        user = su.user || User.find_by(id: su.user_id)
+        {
+          user_id: su.user_id,
+          user_name: user&.name || user&.email || "Vendedor",
+          commission_pct: su.commission_pct
+        }
       end
     }
   end

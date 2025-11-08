@@ -9,11 +9,11 @@ USERS = [
 ].freeze
 
 SUPPLIERS = [
-  { code: "KJS",    name: "Klemba / Kling",       default_analysis_pct: 0.0100 },
-  { code: "KLING",  name: "Kling",                default_analysis_pct: 0.0100 },
-  { code: "BONANZA", name: "Bonanza",             default_analysis_pct: 0.0120 },
-  { code: "JJS",    name: "LC",                    default_analysis_pct: 0.0135 },
-  { code: "JJS175", name: "LC (1.75%)",           default_analysis_pct: 0.0175 }
+  { code: "KJS",     name: "Klemba / Kling", default_analysis_pct: 0.0100 },
+  { code: "KLING",   name: "Kling",          default_analysis_pct: 0.0100 },
+  { code: "BONANZA", name: "Bonanza",        default_analysis_pct: 0.0120 },
+  { code: "JJS135",  name: "LC 1.35%",       default_analysis_pct: 0.0135 },
+  { code: "JJS175",  name: "LC 1.75%",       default_analysis_pct: 0.0175 }
 ].freeze
 
 CUSTOMERS_BY_SUPPLIER = {
