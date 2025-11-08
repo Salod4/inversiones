@@ -37,15 +37,9 @@
       <tbody>
         <% @sales_users.each do |sales_user| %>
           <tr>
-            <td><%= sales_user.user&.name || sales_user.user&.email %></td>
+            <td><%= sales_user_display_name(@sale, sales_user) %></td>
             <td><%= sales_user.commission_pct %></td>
             <td><%= sales_user.commission_amount %></td>
-            <td>
-              <%= link_to "Remove",
-                          sale_sales_user_path(@sale, sales_user),
-                          class: "button button-danger",
-                          data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
-            </td>
           </tr>
         <% end %>
       </tbody>
