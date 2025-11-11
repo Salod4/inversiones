@@ -1,21 +1,54 @@
-<h1>Customer</h1>
+vista show 
+<h1><%= @customer.name %></h1>
+<p>Código: <strong><%= @customer.code %></strong></p>
 
-<p>
-  <strong>Code:</strong>
-  <%= @customer.code %>
-</p>
+<section class="card">
+  <h2>Proveedores</h2>
+  <% if @suppliers.any? %>
+    <ul class="list">
+      <% @suppliers.each do |s| %>
+        <li><%= link_to s.name, s %> (<%= s.code %>)</li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p>Sin proveedores vinculados.</p>
+  <% end %>
+</section>
 
-<p>
-  <strong>Name:</strong>
-  <%= @customer.name %>
-</p>
-
-<p>
-  <strong>Default Customer Fee %:</strong>
-  <%= @customer.default_customer_fee_pct %>
-</p>
-
-<div class="button-group">
-  <%= link_to "Edit", edit_customer_path(@customer), class: "button" %>
-  <%= link_to "Back", customers_path, class: "button button-ghost" %>
-</div>
+<section class="card">
+  <h2>Ventas recientes</h2>
+  <% if @sales.any? %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Código venta</th>
+          <th>Proveedor</th>
+          <th>Bruto (gross_deposit)</th>
+          <th>Comisión prov.</th>
+          <th>Fee cliente</th>
+          <th>Saldo cliente</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @sales.each do |s| %>
+          <tr id="<%= dom_id(s) %>">
+            <td><%= l(s.date) %></td>
+            <td><%= s.code %></td>
+            <td><%= s.supplier&.name %></td>
+            <td><%= number_to_currency(s.gross_deposit || 0, unit: "$") %></td>
+            <td><%= number_to_currency(s.provider_commission || 0, unit: "$") %></td>
+            <td><%= number_to_currency(s.customer_fee || 0, unit: "$") %></td>
+            <td><%= number_to_currency(s.customer_balance || 0, unit: "$") %></td>
+            <td><%= s.status %></td>
+            <td><%= link_to "Ver venta", s %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No hay ventas recientes.</p>
+  <% end %>
+</section>

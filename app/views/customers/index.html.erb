@@ -1,29 +1,72 @@
-<h1>Customers</h1>
 
-<p><%= link_to "New Customer", new_customer_path, class: "button" %></p>
+<h1>Clientes</h1>
 
-<table>
+<div class="filters">
+  <%= search_form_for @q, url: customers_path, method: :get do |f| %>
+    <div class="filter-row">
+      <div>
+        <%= f.label :name_cont, "Nombre contiene" %>
+        <%= f.search_field :name_cont, placeholder: "Ej. Acme" %>
+      </div>
+
+      <div>
+        <%= f.label :code_eq, "Código exacto" %>
+        <%= f.search_field :code_eq, placeholder: "Ej. C001" %>
+      </div>
+
+      <div>
+        <%= f.label :suppliers_id_eq, "Proveedor" %>
+        <%= f.select :suppliers_id_eq, options_for_select(@suppliers, params.dig(:q, :suppliers_id_eq)),
+                     include_blank: "Todos" %>
+      </div>
+
+      <div>
+        <%= f.label :s, "Ordenar por" %>
+        <%= f.select :s,
+              options_for_select([
+                ["Cliente (A–Z)", "name asc"],
+                ["Cliente (Z–A)", "name desc"],
+                ["Proveedor (A–Z)", "suppliers_name asc"],
+                ["Proveedor (Z–A)", "suppliers_name desc"],
+                ["Creado reciente", "created_at desc"],
+                ["Creado antiguo", "created_at asc"]
+              ], params.dig(:q, :s)),
+              include_blank: "— Selecciona —" %>
+      </div>
+
+      <div style="align-self:end">
+        <%= f.submit "Filtrar", class: "button" %>
+        <%= link_to "Limpiar", customers_path, class: "button button--secondary" %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<table class="table">
   <thead>
     <tr>
-      <th>Code</th>
-      <th>Name</th>
-      <th>Default Customer Fee %</th>
+      <th><%= sort_link @q, :name, "Cliente" %></th>
+      <th>Código</th>
+      <th><%= sort_link @q, :suppliers_name, "Proveedor (alguno)" %></th>
+      <th>Creado</th>
       <th></th>
     </tr>
   </thead>
   <tbody>
-    <% @customers.each do |customer| %>
-      <tr>
-        <td><%= customer.code %></td>
-        <td><%= customer.name %></td>
-        <td><%= customer.default_customer_fee_pct %></td>
+    <% @customers.each do |c| %>
+      <tr id="<%= dom_id(c) %>">
+        <td><%= link_to c.name, c %></td>
+        <td><%= c.code %></td>
         <td>
-          <div class="button-group">
-            <%= link_to "Show", customer, class: "button button-secondary" %>
-            <%= link_to "Edit", edit_customer_path(customer), class: "button button-secondary" %>
-            <%= link_to "Destroy", customer, class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
-          </div>
+          <% if c.suppliers.loaded? || c.association(:suppliers).loaded? %>
+            <%= c.suppliers.map(&:name).sort.join(", ") %>
+          <% else %>
+            <%= c.suppliers.order(:name).limit(3).pluck(:name).join(", ") %>
+            <%# muestra hasta 3 para no alargar %>
+          <% end %>
         </td>
+        <td><%= l(c.created_at, format: :short) %></td>
+        <td><%= link_to "Ver", c, class: "button" %></td>
       </tr>
     <% end %>
   </tbody>

@@ -9,4 +9,12 @@ class Customer < ApplicationRecord
   validates :default_customer_fee_pct,
             numericality: { greater_than_or_equal_to: 0, less_than: 1 },
             allow_nil: true
+
+  def self.ransackable_attributes(_auth = nil)
+    %w[id code name created_at updated_at]
+  end
+
+  def self.ransackable_associations(_auth = nil)
+    %w[suppliers customer_suppliers sales]
+  end
 end
