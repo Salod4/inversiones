@@ -4,7 +4,7 @@ class SupplierClosingsController < ApplicationController
   before_action :set_suppliers, only: [ :new, :create, :edit, :update ]
 
   def index
-    @supplier_closings = @closing.supplier_closings.includes(:supplier)
+    @pagy, @supplier_closings = pagy(@closing.supplier_closings.includes(:supplier))
   end
 
   def show; end

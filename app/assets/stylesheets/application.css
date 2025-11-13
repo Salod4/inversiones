@@ -9,6 +9,10 @@
  * Consider organizing styles into separate files for maintainability.
  */
 
+@import "customers.css";
+@import "suppliers.css";
+@import "transfers.css";
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -271,4 +275,75 @@ p {
 
 section {
   margin-bottom: 2rem;
+}
+
+.hint {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-top: 0.4rem;
+}
+
+.pagination-nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.pagination-nav--info-only {
+  justify-content: flex-end;
+}
+
+.pagination-nav__links {
+  flex: 1 1 auto;
+}
+
+.pagination-nav__info {
+  margin-left: auto;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.pagy-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.pagy-nav .page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.95rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.pagy-nav .page a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.pagy-nav .page:hover {
+  background-color: #e0edff;
+  border-color: #93c5fd;
+}
+
+.pagy-nav .page.active {
+  background-color: #1d4ed8;
+  color: #ffffff;
+  border-color: #1d4ed8;
+}
+
+.pagy-nav .page.disabled {
+  color: #94a3b8;
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
 }

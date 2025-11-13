@@ -1,0 +1,36 @@
+<h1>Nuevo transfer para <%= @customer.name %></h1>
+
+<section class="card">
+  <h2>Selecciona la venta destino</h2>
+  <%= form_with url: new_customer_transfer_path(@customer), method: :get, local: true, class: "form-inline" do |form| %>
+    <div class="form-inline__field">
+      <%= form.label :sale_id, "Venta" %>
+      <%= form.collection_select :sale_id,
+                                 @sales,
+                                 :id,
+                                 ->(sale) { "#{sale.code} · #{l(sale.date)} · #{sale.supplier&.name}" },
+                                 { selected: @sale&.id },
+                                 { class: "sale-picker" } %>
+    </div>
+    <div>
+      <%= form.submit "Cambiar venta", class: "button button-secondary" %>
+    </div>
+  <% end %>
+</section>
+
+<section class="card">
+  <h2>Registrar transfer</h2>
+  <% if @sale %>
+    <p class="hint">
+      Saldo disponible en <strong><%= @sale.code %></strong>:
+      <%= number_to_currency(@sale.available_transfer_amount, unit: "$") %>
+    </p>
+  <% end %>
+  <%= render "transfers/form",
+             transfer: @transfer,
+             sale: @sale,
+             form_url: customer_transfers_path(@customer),
+             include_sale_field: true %>
+</section>
+
+<p><%= link_to "Volver al cliente", customer_path(@customer), class: "button button-ghost" %></p>

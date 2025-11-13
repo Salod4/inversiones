@@ -12,7 +12,11 @@ class TransferTest < ActiveSupport::TestCase
       provider_pct: 0.2,
       customer_fee_pct: 0.1,
       gross_deposit: 1_000,
+      net_base: 900,
       provider_commission: 100,
+      customer_fee: 50,
+      working_capital: 850,
+      customer_balance: 850,
       total_transfer_applied: 0,
       status: "open"
     )
@@ -42,5 +46,72 @@ class TransferTest < ActiveSupport::TestCase
     transfer = Transfer.new
     assert_respond_to transfer, :sale
     assert_respond_to transfer, :supplier
+  end
+
+  test "cannot exceed sale available balance" do
+    Transfer.create!(
+      sale: @sale,
+      supplier: @supplier,
+      amount: 900,
+      code: "TRX-CAP",
+      occurred_at: Time.current
+    )
+
+    transfer = Transfer.new(
+      sale: @sale,
+      supplier: @supplier,
+      amount: 200
+    )
+
+    assert_not transfer.valid?
+    assert transfer.errors[:amount].any?
+  end
+
+  test "updates sale totals after saving" do
+    transfer = Transfer.create!(
+      sale: @sale,
+      supplier: @supplier,
+      amount: 250,
+      code: "TRX-UPDATE",
+      occurred_at: Time.current
+    )
+
+    @sale.reload
+    assert_equal 250, @sale.total_transfer_applied
+    assert_equal(600, @sale.customer_balance.to_f)
+
+    transfer.update!(amount: 300)
+    @sale.reload
+    assert_equal 300, @sale.total_transfer_applied
+  end
+
+  test "supplier must match sale" do
+    other_supplier = Supplier.create!(code: "SUPZ", name: "Supplier Z")
+    transfer = Transfer.new(
+      sale: @sale,
+      supplier: other_supplier,
+      amount: 50
+    )
+
+    assert_not transfer.valid?
+    assert transfer.errors[:supplier_id].any?
+  end
+
+  test "generates unique code when base repeats" do
+    Time.stub :current, Time.current do
+      first = Transfer.create!(
+        sale: @sale,
+        supplier: @supplier,
+        amount: 50
+      )
+
+      second = Transfer.create!(
+        sale: @sale,
+        supplier: @supplier,
+        amount: 60
+      )
+
+      refute_equal first.code, second.code
+    end
   end
 end

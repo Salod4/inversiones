@@ -4,7 +4,7 @@ class TransfersController < ApplicationController
   before_action :set_suppliers, only: [ :new, :create, :edit, :update ]
 
   def index
-    @transfers = @sale.transfers.order(occurred_at: :desc)
+    @pagy, @transfers = pagy(@sale.transfers.order(occurred_at: :desc))
   end
 
   def show
@@ -57,7 +57,9 @@ class TransfersController < ApplicationController
   end
 
   def set_suppliers
-    @suppliers = Supplier.order(:name)
+    current_sale = @sale || @transfer&.sale
+    supplier = current_sale&.supplier
+    @suppliers = supplier ? [ supplier ] : Supplier.order(:name)
   end
 
   def transfer_params

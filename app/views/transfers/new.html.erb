@@ -1,5 +1,12 @@
 <h1>New Transfer for Sale <%= @sale.code %></h1>
 
+<% if @sale %>
+  <p class="hint">
+    Saldo disponible en <strong><%= @sale.code %></strong>:
+    <%= number_to_currency(@sale.available_transfer_amount, unit: "$") %>
+  </p>
+<% end %>
+
 <%= render "form", transfer: @transfer, sale: @sale %>
 
 <p><%= link_to "Back", sale_transfers_path(@sale), class: "button button-ghost" %></p>

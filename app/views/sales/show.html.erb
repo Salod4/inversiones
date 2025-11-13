@@ -1,36 +1,36 @@
 <h1>Sale <%= @sale.code %></h1>
 
-<p><strong>Date:</strong> <%= @sale.date %></p>
-<p><strong>Customer:</strong> <%= @sale.customer&.name %></p>
-<p><strong>Supplier:</strong> <%= @sale.supplier&.name %></p>
-<p><strong>Closing:</strong> <%= @sale.closing&.business_date %></p>
-<p><strong>Gross Deposit:</strong> <%= @sale.gross_deposit %></p>
-<p><strong>Net Base:</strong> <%= @sale.net_base %></p>
-<p><strong>Provider %:</strong> <%= @sale.provider_pct %></p>
-<p><strong>Customer Fee %:</strong> <%= @sale.customer_fee_pct %></p>
-<p><strong>Provider Commission:</strong> <%= @sale.provider_commission %></p>
-<p><strong>Customer Fee:</strong> <%= @sale.customer_fee %></p>
-<p><strong>Total Transfer Applied:</strong> <%= @sale.total_transfer_applied %></p>
-<p><strong>Working Capital:</strong> <%= @sale.working_capital %></p>
-<p><strong>Customer Balance:</strong> <%= @sale.customer_balance %></p>
+<p><strong>Fecha de la venta:</strong> <%= @sale.date %></p>
+<p><strong>Cliente:</strong> <%= @sale.customer&.name %></p>
+<p><strong>Proveedor:</strong> <%= @sale.supplier&.name %></p>
+<p><strong>Cierre:</strong> <%= @sale.closing&.business_date %></p>
+<p><strong>Deposito bruto:</strong> <%= @sale.gross_deposit %></p>
+<p><strong>Deposito - IVA:</strong> <%= @sale.net_base %></p>
+<p><strong>% Proveedor:</strong> <%= @sale.provider_pct %></p>
+<p><strong>% Cliente:</strong> <%= @sale.customer_fee_pct %></p>
+<p><strong>Comision de proveedor:</strong> <%= @sale.provider_commission %></p>
+<p><strong>Comision de cliente:</strong> <%= @sale.customer_fee %></p>
+<p><strong>Total de SPEI en venta:</strong> <%= @sale.total_transfer_applied %></p>
+<p><strong>Capital de trabajo:</strong> <%= @sale.working_capital %></p>
+<p><strong>Balance de cliente:</strong> <%= @sale.customer_balance %></p>
 <p><strong>Status:</strong> <%= @sale.status %></p>
 
-<p><strong>Total Seller Commission:</strong> <%= @sale.total_seller_commission %></p>
-<p><strong>Net After Provider and Sellers:</strong> <%= @sale.net_after_provider_and_sellers %></p>
-<p><strong>Balance After Transfers:</strong> <%= @sale.balance_after_transfers %></p>
+<p><strong>Total comision del vendedor:</strong> <%= @sale.total_seller_commission %></p>
+<p><strong>Total despues de %'s: </strong> <%= @sale.net_after_provider_and_sellers %></p>
+<p><strong>Balance despues de SPEI:</strong> <%= @sale.balance_after_transfers %></p>
 
 <section>
-  <h2>Sales Users</h2>
+  <h2>Vendedores</h2>
   <div class="button-group">
-    <%= link_to "Add Seller", new_sale_sales_user_path(@sale), class: "button" %>
+    <%= link_to "Agregar vendedor", new_sale_sales_user_path(@sale), class: "button" %>
   </div>
   <% if @sales_users.any? %>
     <table>
       <thead>
         <tr>
-          <th>User</th>
-          <th>Commission %</th>
-          <th>Commission Amount</th>
+          <th>Vendedor</th>
+          <th>Comision %</th>
+          <th>Total de comision</th>
           <th></th>
         </tr>
       </thead>
@@ -52,8 +52,8 @@
 <section>
   <h2>Transfers</h2>
   <div class="button-group">
-    <%= link_to "New Transfer", new_sale_transfer_path(@sale), class: "button" %>
-    <%= link_to "View All Transfers", sale_transfers_path(@sale), class: "button button-secondary" %>
+    <%= link_to "SPEI", new_sale_transfer_path(@sale), class: "button" %>
+    <%= link_to "Ver todos los SPEI", sale_transfers_path(@sale), class: "button button-secondary" %>
   </div>
   <% if @transfers.any? %>
     <table>
@@ -73,17 +73,17 @@
             <td><%= transfer.occurred_at %></td>
             <td><%= transfer.supplier&.name %></td>
             <td><%= transfer.amount %></td>
-            <td><%= link_to "Show", transfer_path(transfer), class: "button button-secondary" %></td>
+            <td><%= link_to "Ver", transfer_path(transfer), class: "button button-secondary" %></td>
           </tr>
         <% end %>
       </tbody>
     </table>
   <% else %>
-    <p>No transfers recorded for this sale yet.</p>
+    <p>No tiene ningun SPEI registrado.</p>
   <% end %>
 </section>
 
 <div class="button-group">
   <%= link_to "Edit", edit_sale_path(@sale), class: "button" %>
-  <%= link_to "Back", sales_path, class: "button button-ghost" %>
+  <%= link_to "Regresar", sales_path, class: "button button-ghost" %>
 </div>

@@ -3,14 +3,18 @@ Rails.application.routes.draw do
 
   get "up" => "rails/health#show", as: :rails_health_check
 
-  resources :suppliers
-  resources :customers
+  resources :suppliers do
+    resources :transfers, only: [ :new, :create ], module: :suppliers
+  end
+  resources :customers do
+    resources :transfers, only: [ :new, :create ], module: :customers
+  end
 
   resources :sales do
     get :prefill, on: :collection
     resources :sales_users, only: [ :new, :create, :destroy ]
     resources :transfers,   only: [ :new, :create, :index ]
-     collection do
+    collection do
       post :close_today # /sales/close_today
     end
   end

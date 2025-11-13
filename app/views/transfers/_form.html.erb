@@ -1,4 +1,5 @@
-<% form_url = if transfer.persisted?
+<% form_url = local_assigns[:form_url] ||
+              if transfer.persisted?
                 transfer_path(transfer)
               else
                 sale_transfers_path(sale)
@@ -30,6 +31,10 @@
     <p class="hint">El código SPEI y la fecha se generarán automáticamente al guardar.</p>
   <% end %>
 
+  <% if local_assigns[:include_sale_field] %>
+    <%= form.hidden_field :sale_id, value: sale&.id %>
+  <% end %>
+
   <div>
     <%= form.label :supplier_id, "Supplier" %>
     <%= form.collection_select :supplier_id, @suppliers, :id, :name %>
@@ -39,6 +44,12 @@
     <%= form.label :amount %>
     <%= form.number_field :amount, step: 0.01 %>
   </div>
+  <% if sale.present? %>
+    <p class="hint">
+      Saldo disponible en esta venta:
+      <strong><%= number_to_currency(sale.available_transfer_amount(excluding: transfer), unit: "$") %></strong>
+    </p>
+  <% end %>
 
   <div>
     <%= form.label :note %>

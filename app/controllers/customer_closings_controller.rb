@@ -4,7 +4,7 @@ class CustomerClosingsController < ApplicationController
   before_action :set_customers, only: [ :new, :create, :edit, :update ]
 
   def index
-    @customer_closings = @closing.customer_closings.includes(:customer)
+    @pagy, @customer_closings = pagy(@closing.customer_closings.includes(:customer))
   end
 
   def show; end

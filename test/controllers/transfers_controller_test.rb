@@ -12,7 +12,11 @@ class TransfersControllerTest < ActionDispatch::IntegrationTest
       provider_pct: 0.2,
       customer_fee_pct: 0.1,
       gross_deposit: 1_000,
+      net_base: 900,
       provider_commission: 100,
+      customer_fee: 50,
+      working_capital: 850,
+      customer_balance: 850,
       total_transfer_applied: 0,
       status: "open"
     )

@@ -174,32 +174,25 @@ GEM
       net-protocol
     net-ssh (7.3.0)
     nio4r (2.7.5)
-    nokogiri (1.18.10-aarch64-linux-gnu)
+    nokogiri (1.18.10-aarch64-linux)
       racc (~> 1.4)
-    nokogiri (1.18.10-aarch64-linux-musl)
-      racc (~> 1.4)
-    nokogiri (1.18.10-arm-linux-gnu)
-      racc (~> 1.4)
-    nokogiri (1.18.10-arm-linux-musl)
+    nokogiri (1.18.10-arm-linux)
       racc (~> 1.4)
     nokogiri (1.18.10-x86_64-darwin)
       racc (~> 1.4)
-    nokogiri (1.18.10-x86_64-linux-gnu)
-      racc (~> 1.4)
-    nokogiri (1.18.10-x86_64-linux-musl)
+    nokogiri (1.18.10-x86_64-linux)
       racc (~> 1.4)
     orm_adapter (0.5.0)
     ostruct (0.6.3)
+    pagy (6.5.0)
     parallel (1.27.0)
     parser (3.3.10.0)
       ast (~> 2.4.1)
       racc
     pg (1.6.2)
     pg (1.6.2-aarch64-linux)
-    pg (1.6.2-aarch64-linux-musl)
     pg (1.6.2-x86_64-darwin)
     pg (1.6.2-x86_64-linux)
-    pg (1.6.2-x86_64-linux-musl)
     pp (0.6.3)
       prettyprint
     prettyprint (0.2.0)
@@ -329,11 +322,9 @@ GEM
       railties (>= 7.0.0)
       tailwindcss-ruby (~> 4.0)
     tailwindcss-ruby (4.1.16)
-    tailwindcss-ruby (4.1.16-aarch64-linux-gnu)
-    tailwindcss-ruby (4.1.16-aarch64-linux-musl)
+    tailwindcss-ruby (4.1.16-aarch64-linux)
     tailwindcss-ruby (4.1.16-x86_64-darwin)
-    tailwindcss-ruby (4.1.16-x86_64-linux-gnu)
-    tailwindcss-ruby (4.1.16-x86_64-linux-musl)
+    tailwindcss-ruby (4.1.16-x86_64-linux)
     thor (1.4.0)
     thruster (0.1.16)
     thruster (0.1.16-aarch64-linux)
@@ -366,15 +357,11 @@ GEM
 
 PLATFORMS
   aarch64-linux
-  aarch64-linux-gnu
-  aarch64-linux-musl
-  arm-linux-gnu
-  arm-linux-musl
+  arm-linux
+  arm64-darwin-25
   x86_64-darwin-21
   x86_64-darwin-23
   x86_64-linux
-  x86_64-linux-gnu
-  x86_64-linux-musl
 
 DEPENDENCIES
   bootsnap
@@ -385,6 +372,7 @@ DEPENDENCIES
   importmap-rails
   kamal
   minitest-reporters
+  pagy (~> 6.4)
   pg (~> 1.1)
   propshaft
   puma (>= 5.0)

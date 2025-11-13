@@ -1,0 +1,14 @@
+.form-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.form-inline__field {
+  flex: 1 1 260px;
+}
+
+.sale-picker {
+  width: 100%;
+}

@@ -1,6 +1,34 @@
-vista show 
 <h1><%= @customer.name %></h1>
 <p>Código: <strong><%= @customer.code %></strong></p>
+
+<section class="card customer-summary">
+  <div class="customer-summary__stat">
+    <p class="label">Total depositado</p>
+    <p class="stat"><%= number_to_currency(@customer_total_deposit || 0, unit: "$") %></p>
+    <p class="hint">Suma de los depósitos registrados en sus ventas.</p>
+  </div>
+
+  <div class="customer-summary__stat">
+    <p class="label">Transferido a proveedores</p>
+    <p class="stat"><%= number_to_currency(@customer_total_transferred || 0, unit: "$") %></p>
+    <p class="hint">Total retirado mediante transfers.</p>
+  </div>
+
+  <div class="customer-summary__stat">
+    <p class="label">Saldo disponible</p>
+    <p class="stat"><%= number_to_currency(@customer_available_balance || 0, unit: "$") %></p>
+    <p class="hint">Lo que aún pertenece al cliente después de transfers.</p>
+  </div>
+
+  <div class="customer-summary__actions">
+    <% if @sales.any? %>
+      <%= link_to "Agregar transfer", new_customer_transfer_path(@customer), class: "button" %>
+      <p class="hint">Selecciona la venta destino en el siguiente paso.</p>
+    <% else %>
+      <p class="hint">Aún no hay ventas para registrar transfers.</p>
+    <% end %>
+  </div>
+</section>
 
 <section class="card">
   <h2>Proveedores</h2>
@@ -50,5 +78,39 @@ vista show
     </table>
   <% else %>
     <p>No hay ventas recientes.</p>
+  <% end %>
+</section>
+
+<section class="card" id="customer-transfers">
+  <h2>Transfers del cliente</h2>
+  <% if @customer_transfers.any? %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Código</th>
+          <th>Venta</th>
+          <th>Proveedor</th>
+          <th>Monto</th>
+          <th>Nota</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @customer_transfers.each do |transfer| %>
+          <tr id="<%= dom_id(transfer) %>">
+            <td><%= l(transfer.occurred_at, format: :short) %></td>
+            <td><%= transfer.code %></td>
+            <td><%= link_to transfer.sale&.code, transfer.sale if transfer.sale.present? %></td>
+            <td><%= transfer.supplier&.name %></td>
+            <td><%= number_to_currency(transfer.amount, unit: "$") %></td>
+            <td><%= transfer.note.presence || "—" %></td>
+            <td><%= link_to "Ver", transfer_path(transfer), class: "button button-secondary" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>Este cliente aún no tiene transfers registrados.</p>
   <% end %>
 </section>

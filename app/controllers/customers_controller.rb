@@ -1,21 +1,20 @@
 class CustomersController < ApplicationController
   before_action :set_customer, only: [ :show, :edit, :update, :destroy ]
 
- def index
+  def index
     @q = Customer
           .left_joins(:suppliers)         # permite filtrar/ordenar por proveedor
           .distinct
           .ransack(params[:q])
 
-    # Orden por defecto: nombre del cliente asc
-    @customers = @q.result.includes(:suppliers).order("customers.name ASC")
+    customers_scope = @q.result.includes(:suppliers).order("customers.name ASC")
+    @pagy, @customers = pagy(customers_scope)
 
     # Para el <select> de filtros
     @suppliers = Supplier.order(:name).pluck(:name, :id)
   end
 
   def show
-    @customer  = Customer.find(params[:id])
     @suppliers = @customer.suppliers.order(:name)
 
     # Ventas recientes del cliente (ligero y sin cálculos de negocio)
@@ -23,6 +22,19 @@ class CustomersController < ApplicationController
                       .includes(:supplier)
                       .order(date: :desc)
                       .limit(25)
+
+    @customer_total_deposit = @customer.sales.sum(:gross_deposit) || 0
+    @customer_total_transferred = Transfer
+                                    .joins(:sale)
+                                    .where(sales: { customer_id: @customer.id })
+                                    .sum(:amount) || 0
+    @customer_available_balance = @customer_total_deposit - @customer_total_transferred
+
+    @customer_transfers = Transfer
+                            .joins(:sale)
+                            .includes(:supplier, :sale)
+                            .where(sales: { customer_id: @customer.id })
+                            .order(occurred_at: :desc)
   end
 
   def new

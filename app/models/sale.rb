@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "bigdecimal"
+
 class Sale < ApplicationRecord
   MAX_SELLERS = 4
 
@@ -61,7 +63,29 @@ class Sale < ApplicationRecord
     customer_fee_pct_override.presence || customer_fee_pct.to_f
   end
 
+  def available_transfer_amount(excluding: nil)
+    scope = transfers
+    scope = scope.where.not(id: excluding.id) if excluding&.persisted?
+    used = scope.sum(:amount) || 0
+    remaining = decimal(gross_deposit) - used
+    remaining.positive? ? remaining : BigDecimal("0")
+  end
+
+  def refresh_transfer_totals!
+    transfer_sum = transfers.sum(:amount) || 0
+    new_customer_balance = (decimal(working_capital) - transfer_sum).round(2)
+    update_columns(
+      total_transfer_applied: transfer_sum,
+      customer_balance: new_customer_balance,
+      updated_at: Time.current
+    )
+  end
+
   private
+
+  def decimal(value)
+    BigDecimal(value.presence || 0)
+  end
 
   def assign_defaults
     self.date ||= Date.current
@@ -77,8 +101,9 @@ class Sale < ApplicationRecord
 
     self.code = "MOV-#{supplier_code}-##{next_seq}-#{date_stamp}"
   end
-    def assign_business_date
-      target = Closing.open_business_date(Date.current)
-      self.date = target if date.blank? || date == Date.current
-    end
+
+  def assign_business_date
+    target = Closing.open_business_date(Date.current)
+    self.date = target if date.blank? || date == Date.current
+  end
 end

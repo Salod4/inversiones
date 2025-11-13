@@ -2,10 +2,24 @@ class SuppliersController < ApplicationController
   before_action :set_supplier, only: [ :show, :edit, :update, :destroy ]
 
   def index
-    @suppliers = Supplier.order(:name)
+    @pagy, @suppliers = pagy(Supplier.order(:name))
   end
 
-  def show; end
+  def show
+    @supplier_total_deposit = @supplier.sales.sum(:gross_deposit) || 0
+    @supplier_total_transferred = @supplier.transfers.sum(:amount) || 0
+    @supplier_available_balance = @supplier_total_deposit - @supplier_total_transferred
+
+
+    @sales = @supplier.sales
+                      .includes(:customer)
+                      .order(date: :desc)
+                      .limit(25)
+
+    @supplier_transfers = @supplier.transfers
+                                  .includes(:sale)
+                                  .order(occurred_at: :desc)
+  end
 
   def new
     @supplier = Supplier.new

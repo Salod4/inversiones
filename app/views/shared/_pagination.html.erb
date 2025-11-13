@@ -1,0 +1,42 @@
+<% return if pagy.nil? %>
+<% item_label = local_assigns[:item_name].presence || "registros" %>
+
+<div class="pagination-nav <%= "pagination-nav--info-only" if pagy.pages <= 1 %>">
+  <% if pagy.pages > 1 %>
+    <nav class="pagy-nav pagination" aria-label="Paginación">
+      <% if pagy.prev %>
+        <%= link_to "&lsaquo;&nbsp;Anterior".html_safe,
+                    pagy_url_for(pagy, pagy.prev),
+                    class: "page prev",
+                    aria: { label: "Anterior" } %>
+      <% else %>
+        <span class="page prev disabled">&lsaquo;&nbsp;Anterior</span>
+      <% end %>
+
+      <% pagy.series.each do |item| %>
+        <% if item.is_a?(Integer) %>
+          <% if item == pagy.page %>
+            <span class="page active"><%= item %></span>
+          <% else %>
+            <%= link_to item, pagy_url_for(pagy, item), class: "page" %>
+          <% end %>
+        <% elsif item == :gap %>
+          <span class="page gap">&hellip;</span>
+        <% end %>
+      <% end %>
+
+      <% if pagy.next %>
+        <%= link_to "Siguiente&nbsp;&rsaquo;".html_safe,
+                    pagy_url_for(pagy, pagy.next),
+                    class: "page next",
+                    aria: { label: "Siguiente" } %>
+      <% else %>
+        <span class="page next disabled">Siguiente&nbsp;&rsaquo;</span>
+      <% end %>
+    </nav>
+  <% end %>
+
+  <div class="pagination-nav__info">
+    Mostrando <%= item_label %> <b><%= pagy.from %>-<%= pagy.to %></b> de <b><%= pagy.count %></b> en total
+  </div>
+</div>

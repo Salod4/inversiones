@@ -1,19 +1,107 @@
-<h1>Supplier</h1>
+<h1><%= @supplier.name %></h1>
+<p>Código: <strong><%= @supplier.code %></strong></p>
+<p>Análisis base: <strong><%= number_to_percentage(@supplier.default_analysis_pct.to_f * 100, precision: 2) %></strong></p>
 
-<p>
-  <strong>Code:</strong>
-  <%= @supplier.code %>
-</p>
+<section class="card supplier-summary">
+  <div class="supplier-summary__stat">
+    <p class="label">Total asignado</p>
+    <p class="stat"><%= number_to_currency(@supplier_total_deposit || 0, unit: "$") %></p>
+    <p class="hint">Depósitos de clientes relacionados a este proveedor.</p>
+  </div>
 
-<p>
-  <strong>Name:</strong>
-  <%= @supplier.name %>
-</p>
+  <div class="supplier-summary__stat">
+    <p class="label">Transferido</p>
+    <p class="stat"><%= number_to_currency(@supplier_total_transferred || 0, unit: "$") %></p>
+    <p class="hint">Monto ya enviado mediante transfers.</p>
+  </div>
 
-<p>
-  <strong>Default Analysis %:</strong>
-  <%= @supplier.default_analysis_pct %>
-</p>
+  <div class="supplier-summary__stat">
+    <p class="label">Saldo pendiente</p>
+    <p class="stat"><%= number_to_currency(@supplier_available_balance || 0, unit: "$") %></p>
+    <p class="hint">Lo que aún se debe entregar a este proveedor.</p>
+  </div>
+
+  <div class="supplier-summary__actions">
+    <% if @sales.any? %>
+      <%= link_to "Agregar transfer", new_supplier_transfer_path(@supplier), class: "button" %>
+      <p class="hint">Selecciona la venta destino en el siguiente paso.</p>
+    <% else %>
+      <p class="hint">Aún no hay ventas para registrar transfers.</p>
+    <% end %>
+  </div>
+</section>
+
+
+
+<section class="card">
+  <h2>Ventas recientes</h2>
+  <% if @sales.any? %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Código</th>
+          <th>Cliente</th>
+          <th>Bruto</th>
+          <th>Comisión prov.</th>
+          <th>Fee cliente</th>
+          <th>Saldo cliente</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @sales.each do |sale| %>
+          <tr id="<%= dom_id(sale) %>">
+            <td><%= l(sale.date) %></td>
+            <td><%= sale.code %></td>
+            <td><%= sale.customer&.name %></td>
+            <td><%= number_to_currency(sale.gross_deposit || 0, unit: "$") %></td>
+            <td><%= number_to_currency(sale.provider_commission || 0, unit: "$") %></td>
+            <td><%= number_to_currency(sale.customer_fee || 0, unit: "$") %></td>
+            <td><%= number_to_currency(sale.customer_balance || 0, unit: "$") %></td>
+            <td><%= sale.status %></td>
+            <td><%= link_to "Ver venta", sale %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No hay ventas registradas.</p>
+  <% end %>
+</section>
+
+<section class="card" id="supplier-transfers">
+  <h2>Transfers del proveedor</h2>
+  <% if @supplier_transfers.any? %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Código</th>
+          <th>Venta</th>
+          <th>Monto</th>
+          <th>Nota</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @supplier_transfers.each do |transfer| %>
+          <tr id="<%= dom_id(transfer) %>">
+            <td><%= l(transfer.occurred_at, format: :short) %></td>
+            <td><%= transfer.code %></td>
+            <td><%= link_to transfer.sale&.code, transfer.sale if transfer.sale.present? %></td>
+            <td><%= number_to_currency(transfer.amount, unit: "$") %></td>
+            <td><%= transfer.note.presence || "—" %></td>
+            <td><%= link_to "Ver", transfer_path(transfer), class: "button button-secondary" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>Este proveedor aún no tiene transfers registrados.</p>
+  <% end %>
+</section>
 
 <div class="button-group">
   <%= link_to "Edit", edit_supplier_path(@supplier), class: "button" %>

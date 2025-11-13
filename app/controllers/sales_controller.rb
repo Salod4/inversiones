@@ -3,7 +3,7 @@ class SalesController < ApplicationController
   before_action :set_collections, only: [ :new, :create, :edit, :update ]
 
   def index
-    @sales = Sale.includes(:customer, :supplier).order(date: :desc)
+    @pagy, @sales = pagy(Sale.includes(:customer, :supplier).order(date: :desc))
     @closing_today_exists = Closing.closed_for?(Date.current)
   end
 

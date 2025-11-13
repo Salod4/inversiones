@@ -2,7 +2,7 @@ class ClosingsController < ApplicationController
   before_action :set_closing, only: [ :show, :edit, :update, :destroy ]
 
   def index
-    @closings = Closing.order(business_date: :desc)
+    @pagy, @closings = pagy(Closing.order(business_date: :desc))
   end
 
  def show
