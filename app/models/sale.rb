@@ -67,7 +67,7 @@ class Sale < ApplicationRecord
     scope = transfers
     scope = scope.where.not(id: excluding.id) if excluding&.persisted?
     used = scope.sum(:amount) || 0
-    remaining = decimal(gross_deposit) - used
+    remaining = decimal(working_capital) - used
     remaining.positive? ? remaining : BigDecimal("0")
   end
 

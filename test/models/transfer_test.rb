@@ -1,6 +1,7 @@
 require "test_helper"
 
 class TransferTest < ActiveSupport::TestCase
+  include ActiveSupport::Testing::TimeHelpers
   setup do
     customer = Customer.create!(code: "CUSTY", name: "Customer Y")
     @supplier = Supplier.create!(code: "SUPY", name: "Supplier Y")
@@ -52,7 +53,7 @@ class TransferTest < ActiveSupport::TestCase
     Transfer.create!(
       sale: @sale,
       supplier: @supplier,
-      amount: 900,
+      amount: 800,
       code: "TRX-CAP",
       occurred_at: Time.current
     )
@@ -98,7 +99,7 @@ class TransferTest < ActiveSupport::TestCase
   end
 
   test "generates unique code when base repeats" do
-    Time.stub :current, Time.current do
+    freeze_time do
       first = Transfer.create!(
         sale: @sale,
         supplier: @supplier,
