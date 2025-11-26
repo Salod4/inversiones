@@ -71,6 +71,10 @@ class Sale < ApplicationRecord
     remaining.positive? ? remaining : BigDecimal("0")
   end
 
+  def ret_comp
+    (gross_deposit - provider_commission).round(2)
+  end
+
   def refresh_transfer_totals!
     transfer_sum = transfers.sum(:amount) || 0
     new_customer_balance = (decimal(working_capital) - transfer_sum).round(2)

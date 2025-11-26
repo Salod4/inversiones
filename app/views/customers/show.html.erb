@@ -5,19 +5,25 @@
   <div class="customer-summary__stat">
     <p class="label">Total depositado</p>
     <p class="stat"><%= number_to_currency(@customer_total_deposit || 0, unit: "$") %></p>
-    <p class="hint">Suma de los depósitos registrados en sus ventas.</p>
+    <p class="hint">Suma de los depósitos brutos.</p>
   </div>
 
   <div class="customer-summary__stat">
-    <p class="label">Transferido a proveedores</p>
+    <p class="label">Total después de %s</p>
+    <p class="stat"><%= number_to_currency(@customer_total_after_pcts || 0, unit: "$") %></p>
+    <p class="hint">Depósito menos comisión de proveedor y vendedores.</p>
+  </div>
+
+  <div class="customer-summary__stat">
+    <p class="label">Transferencias</p>
     <p class="stat"><%= number_to_currency(@customer_total_transferred || 0, unit: "$") %></p>
-    <p class="hint">Total retirado mediante transfers.</p>
+    <p class="hint">Total enviado mediante SPEI.</p>
   </div>
 
   <div class="customer-summary__stat">
-    <p class="label">Saldo disponible</p>
+    <p class="label">Total cliente</p>
     <p class="stat"><%= number_to_currency(@customer_available_balance || 0, unit: "$") %></p>
-    <p class="hint">Lo que aún pertenece al cliente después de transfers.</p>
+    <p class="hint">Total después de %s menos las transferencias.</p>
   </div>
 
   <div class="customer-summary__actions">

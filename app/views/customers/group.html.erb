@@ -1,0 +1,107 @@
+<h1>Grupo <%= @group[:name] %></h1>
+<p><%= pluralize(@display_customers.size, "cliente") %> incluidos<% if @group_search_query.present? %> (filtro: "<%= @group_search_query %>")<% end %>:</p>
+
+<div class="filters">
+  <%= form_with url: group_customers_path(name: @group[:name]), method: :get, local: true do %>
+    <div class="filter-row">
+      <div>
+        <label for="q">Buscar cliente</label>
+        <input type="text" name="q" id="q" value="<%= @group_search_query %>" placeholder="Nombre contiene" />
+      </div>
+      <div style="align-self:end">
+        <button type="submit" class="button">Filtrar</button>
+        <%= link_to "Limpiar", group_customers_path(name: @group[:name]), class: "button button--secondary" %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<section class="card customer-summary">
+  <div class="customer-summary__stat">
+    <p class="label">Total depositado</p>
+    <p class="stat"><%= number_to_currency(@group_total_deposit || 0, unit: "$") %></p>
+  </div>
+
+  <div class="customer-summary__stat">
+    <p class="label">Total después de %s</p>
+    <p class="stat"><%= number_to_currency(@group_total_after_pcts || 0, unit: "$") %></p>
+  </div>
+
+  <div class="customer-summary__stat">
+    <p class="label">Transferido a proveedores</p>
+    <p class="stat"><%= number_to_currency(@group_total_transferred || 0, unit: "$") %></p>
+  </div>
+
+  <div class="customer-summary__stat">
+    <p class="label">Total cliente</p>
+    <p class="stat"><%= number_to_currency(@group_available_balance || 0, unit: "$") %></p>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Clientes del grupo</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Cliente</th>
+        <th>Código</th>
+        <th>Total depositado</th>
+        <th>Total después de %s</th>
+        <th>Transferido</th>
+        <th>Saldo disponible</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @display_customers.each do |c| %>
+        <tr id="<%= dom_id(c) %>">
+          <td><%= c.name %></td>
+          <td><%= c.code %></td>
+          <td><%= number_to_currency(@per_customer_deposit[c.id].to_f, unit: "$") %></td>
+          <td><%= number_to_currency(@per_customer_after_pcts[c.id].to_f, unit: "$") %></td>
+          <td><%= number_to_currency(@per_customer_transfers[c.id].to_f, unit: "$") %></td>
+          <td><%= number_to_currency(@per_customer_balances[c.id].to_f, unit: "$") %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Ventas recientes del grupo</h2>
+  <% if @sales.any? %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Cliente</th>
+          <th>Proveedor</th>
+          <th>Bruto (gross_deposit)</th>
+          <th>Comisión prov.</th>
+          <th>Fee cliente</th>
+          <th>Saldo cliente</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @sales.each do |s| %>
+          <tr id="<%= dom_id(s) %>">
+            <td><%= l(s.date) %></td>
+            <td><%= s.customer&.name %></td>
+            <td><%= s.supplier&.name %></td>
+            <td><%= number_to_currency(s.gross_deposit || 0, unit: "$") %></td>
+            <td><%= number_to_currency(s.provider_commission || 0, unit: "$") %></td>
+            <td><%= number_to_currency(s.customer_fee || 0, unit: "$") %></td>
+            <td><%= number_to_currency(s.customer_balance || 0, unit: "$") %></td>
+            <td><%= s.status %></td>
+            <td><%= link_to "Ver venta", s %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No hay ventas recientes para este grupo.</p>
+  <% end %>
+</section>
+
+<p><%= link_to "Volver a clientes", customers_path %></p>

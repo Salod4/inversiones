@@ -51,7 +51,7 @@ module Sales
     end
 
     def compute_net_base!
-      sale.net_base = (sale.gross_deposit.to_f * 0.84).round(2)
+      sale.net_base = (sale.gross_deposit.to_f / 1.16).round(2)
     end
 
     def compute_amounts!

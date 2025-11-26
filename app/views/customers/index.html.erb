@@ -42,6 +42,22 @@
   <% end %>
 </div>
 
+<% if @grouped_customers.any? %>
+  <section class="card">
+    <h2>Grupos</h2>
+    <ul class="list">
+      <% @grouped_customers.each do |group| %>
+        <li>
+          <strong><%= group[:name] %></strong>
+          (<%= pluralize(group[:count], "cliente") %>)
+          <%= link_to "Ver grupo", group_customers_path(name: group[:name]), class: "button button--small" %>
+        </li>
+      <% end %>
+    </ul>
+    <p class="hint">Los grupos se ocultan de la tabla inferior para no duplicar clientes.</p>
+  </section>
+<% end %>
+
 <table class="table">
   <thead>
     <tr>

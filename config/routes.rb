@@ -7,6 +7,7 @@ Rails.application.routes.draw do
     resources :transfers, only: [ :new, :create ], module: :suppliers
   end
   resources :customers do
+    get "groups/:name", on: :collection, action: :group, as: :group
     resources :transfers, only: [ :new, :create ], module: :customers
   end
 

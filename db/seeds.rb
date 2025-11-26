@@ -10,12 +10,48 @@ USERS = [
 ].freeze
 
 SUPPLIERS = [
-  { code: "KJS",     name: "Klemba / Kling", default_analysis_pct: 0.0100 },
+  { code: "KJS",     name: "Klemba", default_analysis_pct: 0.0100 },
   { code: "KLING",   name: "Kling",          default_analysis_pct: 0.0100 },
   { code: "BONANZA", name: "Bonanza",        default_analysis_pct: 0.0120 },
   { code: "JJS135",  name: "LC 1.35%",       default_analysis_pct: 0.0135 },
   { code: "JJS175",  name: "LC 1.75%",       default_analysis_pct: 0.0175 }
 ].freeze
+
+DUMA_SUBCUSTOMERS = [
+  "DUMA/BOOPSY",
+  "DUMA/HONG",
+  "DUMA/MOBILI",
+  "DUMA/TRES PUNTOS",
+  "DUMA/HEG",
+  "DUMA/LOSI",
+  "DUMA/REFRICARE",
+  "DUMA/FACIL",
+  "DUMA/MARVIC",
+  "DUMA/PROMOCELA",
+  "DUMA/SINERGIA",
+  "DUMA/LEAV",
+  "DUMA/GAMBOA",
+  "DUMA/ARANA",
+  "DUMA/SQ",
+  "DUMA/JOLER",
+  "DUMA/BALVINA",
+  "DUMA/PATIÑO",
+  "DUMA/PIGMENTOS",
+  "DUMA/COTEMAR",
+  "DUMA/CRISTEL",
+  "DUMA/FABULA",
+  "DUMA/VIDEOMAPPING",
+  "DUMA/NORA"
+].freeze
+
+DUMA_GROUP_CUSTOMERS = ([ "DUMA" ] + DUMA_SUBCUSTOMERS).freeze
+DUMA_FEE_DEFAULT = 0.015
+DUMA_GROUP_FEES = DUMA_GROUP_CUSTOMERS.to_h { |name| [ name, DUMA_FEE_DEFAULT ] }.freeze
+
+DUMA_SPLITS_BY_SUPPLIER = {
+  "KJS" => DUMA_GROUP_CUSTOMERS.to_h { |name| [ name, { fondo: 0.001, jack: 0.002, sam: 0.002 } ] },
+  "BONANZA" => DUMA_GROUP_CUSTOMERS.to_h { |name| [ name, { fondo: 0.001, jack: 0.001, sam: 0.001 } ] }
+}.freeze
 
 CUSTOMERS_BY_SUPPLIER = {
   "KJS" =>   [
@@ -203,7 +239,7 @@ CUSTOMERS_BY_SUPPLIER = {
     "KIKE",
     "DUMA",
     "MACA"
-  ],
+  ] + DUMA_SUBCUSTOMERS,
   "BONANZA" =>   [
     "ARQUI",
     "ARQUI CECY",
@@ -391,9 +427,23 @@ CUSTOMERS_BY_SUPPLIER = {
     "KIKE",
     "DUMA",
     "MACA"
-  ]
+  ] + DUMA_SUBCUSTOMERS
   # TODO: agrega más proveedores aquí
 }.freeze
+
+CUSTOMER_SUMMARY_GROUPS = {
+  "ARQUI" => { match: ->(name) { name.start_with?("ARQUI") }, except: [ "ARQUI KAR" ] },
+  "NADJAR" => { match: ->(name) { name.start_with?("NADJAR") } },
+  "BEHAR" => { match: ->(name) { name.start_with?("BEHAR") } },
+  "DUMA" => { match: ->(name) { name.start_with?("DUMA") } }
+}.freeze
+
+ALL_CUSTOMER_NAMES = CUSTOMERS_BY_SUPPLIER.values.flatten.uniq.freeze
+CUSTOMER_SUMMARIES = CUSTOMER_SUMMARY_GROUPS.transform_values do |cfg|
+  names = ALL_CUSTOMER_NAMES.select { |name| cfg[:match].call(name) }
+  names -= Array(cfg[:except])
+  names.sort
+end.freeze
 
 DEFAULT_CUSTOMER_FEE_PCT_BY_CUSTOMER = {
   "ADMAS" => 0.025,
@@ -523,7 +573,7 @@ DEFAULT_CUSTOMER_FEE_PCT_BY_CUSTOMER = {
   "COSMOS SPEIS" => 0.015,
   "DAN/CARLOS SANDOVAL" => 0.03,
   "DAR" => 0.03,
-  "DUMA" => 0.015,
+  **DUMA_GROUP_FEES,
   "FELIPE (SMART)" => 0.01625,
   "FF/INSCOM" => 0.02,
   "FF/LA NET" => 0.02,
@@ -711,7 +761,7 @@ CUSTOMER_FEE_OVERRIDES = {
     "COSMOS SPEIS" => 0.015,
     "DAN/CARLOS SANDOVAL" => 0.03,
     "DAR" => 0.03,
-    "DUMA" => 0.015,
+    **DUMA_GROUP_FEES,
     "FELIPE (SMART)" => 0.01625,
     "FF/INSCOM" => 0.02,
     "FF/LA NET" => 0.02,
@@ -899,7 +949,7 @@ CUSTOMER_FEE_OVERRIDES = {
     "COSMOS SPEIS" => 0.015,
     "DAN/CARLOS SANDOVAL" => 0.03,
     "DAR" => 0.03,
-    "DUMA" => 0.015,
+    **DUMA_GROUP_FEES,
     "FELIPE (SMART)" => 0.01625,
     "FF/INSCOM" => 0.02,
     "FF/LA NET" => 0.02,
@@ -1597,11 +1647,7 @@ COMMISSION_SPLITS = {
       jack: 0.0137,
       sam: 0.0003
     },
-    "DUMA" => {
-      fondo: 0.001,
-      jack: 0.002,
-      sam: 0.002
-    },
+    **DUMA_SPLITS_BY_SUPPLIER["KJS"],
     "FELIPE (SMART)" => {
       fondo: 0.001,
       jack: 0.00495,
@@ -2534,11 +2580,7 @@ COMMISSION_SPLITS = {
       jack: 0.0117,
       sam: 0.0003
     },
-    "DUMA" => {
-      fondo: 0.001,
-      jack: 0.001,
-      sam: 0.001
-    },
+    **DUMA_SPLITS_BY_SUPPLIER["BONANZA"],
     "FELIPE (SMART)" => {
       fondo: 0.001,
       jack: 0.00295,
@@ -2891,6 +2933,11 @@ end
 
 ActiveRecord::Base.transaction do
   counters = Hash.new(0)
+
+  puts "== Resumen de clientes agrupados =="
+  CUSTOMER_SUMMARIES.each do |summary_name, members|
+    puts "#{summary_name}: #{members.join(', ')}"
+  end
 
   puts "== Usuarios base =="
   user_records = {}
