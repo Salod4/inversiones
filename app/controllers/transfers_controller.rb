@@ -1,10 +1,15 @@
 class TransfersController < ApplicationController
-  before_action :set_sale, only: [ :index, :new, :create ]
   before_action :set_transfer, only: [ :show, :edit, :update, :destroy ]
+  before_action :set_sale, only: [ :index, :new, :create ]
   before_action :set_suppliers, only: [ :new, :create, :edit, :update ]
 
   def index
-    @pagy, @transfers = pagy(@sale.transfers.order(occurred_at: :desc))
+    scope = if @sale
+      @sale.transfers
+    else
+      Transfer.includes(:sale, :customer, :supplier)
+    end
+    @pagy, @transfers = pagy(scope.order(occurred_at: :desc))
   end
 
   def show
@@ -12,7 +17,9 @@ class TransfersController < ApplicationController
   end
 
   def new
-    @transfer = @sale.transfers.build(supplier: @sale.supplier)
+    return redirect_to(transfers_path, alert: "Selecciona una venta para crear un transfer.") unless @sale
+
+    @transfer = @sale.transfers.build(customer: @sale.customer, supplier: @sale.supplier)
   end
 
   def edit
@@ -20,7 +27,10 @@ class TransfersController < ApplicationController
   end
 
   def create
+    return redirect_to(transfers_path, alert: "Selecciona una venta para crear un transfer.") unless @sale
+
     @transfer = @sale.transfers.build(transfer_params)
+    @transfer.customer = @sale.customer
     if @transfer.save
       redirect_to sale_transfers_path(@sale), notice: "Transfer was successfully created."
     else
@@ -40,16 +50,16 @@ class TransfersController < ApplicationController
   def destroy
     sale = @transfer.sale
     if @transfer.destroy
-      redirect_to sale_transfers_path(sale), notice: "Transfer was successfully destroyed."
+      redirect_to(sale ? sale_transfers_path(sale) : transfers_path, notice: "Transfer was successfully destroyed.")
     else
-      redirect_to sale_transfers_path(sale), alert: @transfer.errors.full_messages.to_sentence
+      redirect_to(sale ? sale_transfers_path(sale) : transfers_path, alert: @transfer.errors.full_messages.to_sentence)
     end
   end
 
   private
 
   def set_sale
-    @sale = Sale.find(params[:sale_id])
+    @sale = Sale.find_by(id: params[:sale_id])
   end
 
   def set_transfer
@@ -58,7 +68,7 @@ class TransfersController < ApplicationController
 
   def set_suppliers
     current_sale = @sale || @transfer&.sale
-    supplier = current_sale&.supplier
+    supplier = current_sale&.supplier || @transfer&.supplier
     @suppliers = supplier ? [ supplier ] : Supplier.order(:name)
   end
 

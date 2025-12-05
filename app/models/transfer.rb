@@ -1,9 +1,11 @@
 class Transfer < ApplicationRecord
-  belongs_to :sale
+  belongs_to :customer
+  belongs_to :sale, optional: true
   belongs_to :supplier
 
   validates :amount, numericality: { greater_than: 0 }
   validate :amount_does_not_exceed_sale_balance
+  validate :customer_matches_sale
   validate :supplier_matches_sale
 
   before_validation :assign_defaults, on: :create
@@ -20,6 +22,13 @@ class Transfer < ApplicationRecord
     errors.add(:amount, "supera el saldo disponible de #{available.to_s("F")}")
   end
 
+  def customer_matches_sale
+    return if sale.blank? || customer_id.blank?
+    return if sale.customer_id == customer_id
+
+    errors.add(:customer_id, "debe coincidir con el cliente de la venta")
+  end
+
   def supplier_matches_sale
     return if sale.blank? || supplier.blank?
     return if sale.supplier_id == supplier_id
@@ -34,6 +43,8 @@ class Transfer < ApplicationRecord
   end
 
   def assign_defaults
+    self.customer ||= sale&.customer
+    self.supplier ||= sale&.supplier
     self.occurred_at ||= Time.current
     assign_code if code.blank?
   end

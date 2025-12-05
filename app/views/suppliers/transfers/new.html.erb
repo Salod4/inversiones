@@ -22,8 +22,8 @@
   <h2>Registrar transfer</h2>
   <% if @sale %>
     <p class="hint">
-      Saldo disponible en <strong><%= @sale.code %></strong>:
-      <%= number_to_currency(@sale.available_transfer_amount, unit: "$") %>
+      Saldo de cliente en <strong><%= @sale.code %></strong>:
+      <%= number_to_currency(@sale.customer_balance.to_f, unit: "$") %>
     </p>
   <% end %>
   <%= render "transfers/form",

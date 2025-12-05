@@ -49,6 +49,7 @@
         <th>Total después de %s</th>
         <th>Transferido</th>
         <th>Saldo disponible</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
@@ -60,6 +61,7 @@
           <td><%= number_to_currency(@per_customer_after_pcts[c.id].to_f, unit: "$") %></td>
           <td><%= number_to_currency(@per_customer_transfers[c.id].to_f, unit: "$") %></td>
           <td><%= number_to_currency(@per_customer_balances[c.id].to_f, unit: "$") %></td>
+          <td><%= link_to "Agregar transfer", new_customer_transfer_path(c), class: "button button--small" %></td>
         </tr>
       <% end %>
     </tbody>

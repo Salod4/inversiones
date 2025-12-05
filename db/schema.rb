@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_07_000003) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_08_000004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -147,7 +147,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_07_000003) do
     t.text "note"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "customer_id", null: false
     t.index ["code"], name: "index_transfers_on_code", unique: true
+    t.index ["customer_id"], name: "index_transfers_on_customer_id"
     t.index ["sale_id"], name: "index_transfers_on_sale_id"
     t.index ["supplier_id"], name: "index_transfers_on_supplier_id"
     t.check_constraint "amount >= 0::numeric", name: "transfers_amount_nonnegative"
@@ -182,6 +184,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_07_000003) do
   add_foreign_key "sales_users", "users"
   add_foreign_key "supplier_closings", "closings"
   add_foreign_key "supplier_closings", "suppliers"
+  add_foreign_key "transfers", "customers"
   add_foreign_key "transfers", "sales"
   add_foreign_key "transfers", "suppliers"
 end

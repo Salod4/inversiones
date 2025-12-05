@@ -53,6 +53,11 @@ DUMA_SPLITS_BY_SUPPLIER = {
   "BONANZA" => DUMA_GROUP_CUSTOMERS.to_h { |name| [ name, { fondo: 0.001, jack: 0.001, sam: 0.001 } ] }
 }.freeze
 
+SUPPLIER_ALIASES = {
+  "JJS135" => "KJS",
+  "JJS175" => "KJS"
+}.freeze
+
 CUSTOMERS_BY_SUPPLIER = {
   "KJS" =>   [
     "ARQUI",
@@ -431,6 +436,10 @@ CUSTOMERS_BY_SUPPLIER = {
   # TODO: agrega más proveedores aquí
 }.freeze
 
+CUSTOMERS_BY_SUPPLIER_EXPANDED = CUSTOMERS_BY_SUPPLIER.merge(
+  SUPPLIER_ALIASES.transform_values { |source| CUSTOMERS_BY_SUPPLIER.fetch(source) }
+).freeze
+
 CUSTOMER_SUMMARY_GROUPS = {
   "ARQUI" => { match: ->(name) { name.start_with?("ARQUI") }, except: [ "ARQUI KAR" ] },
   "NADJAR" => { match: ->(name) { name.start_with?("NADJAR") } },
@@ -438,7 +447,7 @@ CUSTOMER_SUMMARY_GROUPS = {
   "DUMA" => { match: ->(name) { name.start_with?("DUMA") } }
 }.freeze
 
-ALL_CUSTOMER_NAMES = CUSTOMERS_BY_SUPPLIER.values.flatten.uniq.freeze
+ALL_CUSTOMER_NAMES = CUSTOMERS_BY_SUPPLIER_EXPANDED.values.flatten.uniq.freeze
 CUSTOMER_SUMMARIES = CUSTOMER_SUMMARY_GROUPS.transform_values do |cfg|
   names = ALL_CUSTOMER_NAMES.select { |name| cfg[:match].call(name) }
   names -= Array(cfg[:except])
@@ -2870,6 +2879,10 @@ COMMISSION_SPLITS = {
   # TODO: agrega splits para más proveedores
 }.freeze
 
+COMMISSION_SPLITS_EXPANDED = COMMISSION_SPLITS.merge(
+  SUPPLIER_ALIASES.transform_values { |source| COMMISSION_SPLITS.fetch(source) }
+).freeze
+
 def slug_code(str)
   str.to_s.parameterize(separator: "_").upcase
 end
@@ -2958,7 +2971,7 @@ ActiveRecord::Base.transaction do
   end
 
   puts "== Clientes, duplas y splits =="
-  CUSTOMERS_BY_SUPPLIER.each do |supplier_code, customer_names|
+  CUSTOMERS_BY_SUPPLIER_EXPANDED.each do |supplier_code, customer_names|
     supplier = supplier_records[supplier_code] || Supplier.find_by!(code: supplier_code)
     customer_names.each do |customer_name|
       default_fee = DEFAULT_CUSTOMER_FEE_PCT_BY_CUSTOMER[customer_name]
@@ -2969,7 +2982,7 @@ ActiveRecord::Base.transaction do
       link, link_status = link_customer_supplier!(customer, supplier, fee_pct: fee_override)
       counters["customer_suppliers_#{link_status}".to_sym] += 1
 
-      split_catalog = COMMISSION_SPLITS.fetch(supplier_code) { {} }
+      split_catalog = COMMISSION_SPLITS_EXPANDED.fetch(supplier_code) { {} }
       default_split = split_catalog["__default__"] || {}
       custom_split = split_catalog[customer_name] || {}
       split = {

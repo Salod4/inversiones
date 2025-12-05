@@ -16,15 +16,16 @@
 <table>
   <thead>
     <tr>
-      <th>Code</th>
-      <th>Date</th>
-      <th>Customer</th>
-      <th>Supplier</th>
-      <th>Gross Deposit</th>
-      <th>Provider Commission</th>
-      <th>Total Transfer Applied</th>
-      <th>Working Capital</th>
-      <th>Customer Balance</th>
+      <th>Codigo</th>
+      <th>Fecha</th>
+      <th>Cliente</th>
+      <th>Proveedor</th>
+      <th>Deposito bruto</th>
+      <th>Commision proveedor</th>
+      <th>SPEIS aplicados</th>
+      <th>Ret. Cliente</th>
+      <th>Balance de Cliente</th>
+      <th>Ret. Comp</th>
       <th>Status</th>
       <th></th>
     </tr>
@@ -41,7 +42,9 @@
         <td><%= sale.total_transfer_applied %></td>
         <td><%= sale.working_capital %></td>
         <td><%= sale.customer_balance %></td>
+        <td><%= sale.ret_comp %></td>
         <td><%= sale.status %></td>
+        
         <td>
           <div class="button-group">
             <%= link_to "Show", sale, class: "button button-secondary" %>

@@ -9,7 +9,7 @@
                                  @sales,
                                  :id,
                                  ->(sale) { "#{sale.code} · #{l(sale.date)} · #{sale.supplier&.name}" },
-                                 { selected: @sale&.id },
+                                 { selected: @sale&.id, include_blank: "Sin venta" },
                                  { class: "sale-picker" } %>
     </div>
     <div>
@@ -22,15 +22,22 @@
   <h2>Registrar transfer</h2>
   <% if @sale %>
     <p class="hint">
-      Saldo disponible en <strong><%= @sale.code %></strong>:
-      <%= number_to_currency(@sale.available_transfer_amount, unit: "$") %>
+      Balance del cliente en <strong><%= @sale.code %></strong>:
+      <%= number_to_currency(@sale.customer_balance.to_f, unit: "$") %>
     </p>
+  <% else %>
+    <p class="hint">Este transfer no se ligará a una venta específica.</p>
   <% end %>
+  <p class="hint">
+    Total de cliente:
+    <strong><%= number_to_currency(@customer_available_balance, unit: "$") %></strong>
+  </p>
   <%= render "transfers/form",
              transfer: @transfer,
              sale: @sale,
              form_url: customer_transfers_path(@customer),
-             include_sale_field: true %>
+             include_sale_field: true,
+             customer_balance: @customer_available_balance %>
 </section>
 
 <p><%= link_to "Volver al cliente", customer_path(@customer), class: "button button-ghost" %></p>

@@ -52,6 +52,7 @@ module Suppliers
 
     def build_transfer_for_sale(attributes = {})
       transfer = @sale.transfers.build(attributes)
+      transfer.customer = @sale.customer
       transfer.supplier ||= @supplier
       transfer
     end

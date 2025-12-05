@@ -58,14 +58,15 @@ module Sales
       nb = sale.net_base.to_f
       sale.provider_commission = (nb * sale.provider_pct.to_f).round(2)
       sale.customer_fee        = (nb * sale.customer_fee_pct.to_f).round(2)
-      sale.working_capital     = (nb - sale.provider_commission.to_f - sale.customer_fee.to_f).round(2)
-      transfer_total           = sale.transfers.sum(:amount)
-      sale.customer_balance    = (sale.working_capital.to_f - transfer_total).round(2)
-
       sale.sales_users.each do |su|
         pct = su.commission_pct_override.presence || su.commission_pct.to_f
         su.commission_amount = (nb * pct.to_f).round(2)
       end
+
+      sale.working_capital = (sale.gross_deposit.to_f - sale.customer_fee.to_f).round(2)
+
+      transfer_total        = sale.transfers.sum(:amount)
+      sale.customer_balance = (sale.working_capital.to_f - transfer_total).round(2)
     end
 
     def supplier

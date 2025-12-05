@@ -2,7 +2,7 @@
               if transfer.persisted?
                 transfer_path(transfer)
               else
-                sale_transfers_path(sale)
+                sale ? sale_transfers_path(sale) : transfers_path
               end %>
 
 <%= form_with(model: transfer, url: form_url) do |form| %>
@@ -31,7 +31,11 @@
     <p class="hint">El código SPEI y la fecha se generarán automáticamente al guardar.</p>
   <% end %>
 
-  <% if local_assigns[:include_sale_field] %>
+  <% if transfer.customer_id.present? || sale&.customer_id.present? %>
+    <%= form.hidden_field :customer_id, value: transfer.customer_id || sale&.customer_id %>
+  <% end %>
+
+  <% if local_assigns[:include_sale_field] && sale.present? %>
     <%= form.hidden_field :sale_id, value: sale&.id %>
   <% end %>
 
@@ -46,8 +50,13 @@
   </div>
   <% if sale.present? %>
     <p class="hint">
-      Saldo disponible en esta venta:
-      <strong><%= number_to_currency(sale.available_transfer_amount(excluding: transfer), unit: "$") %></strong>
+      Balance del cliente en esta venta: <strong><%= number_to_currency(sale.customer_balance.to_f, unit: "$") %></strong><br>
+      Disponible para SPEI en esta venta: <strong><%= number_to_currency(sale.available_transfer_amount(excluding: transfer), unit: "$") %></strong>
+    </p>
+  <% elsif transfer.customer.present? %>
+    <% available_total = local_assigns[:customer_balance] || transfer.customer.total_customer_balance %>
+    <p class="hint">
+      Total de cliente: <strong><%= number_to_currency(available_total, unit: "$") %></strong>
     </p>
   <% end %>
 

@@ -3,12 +3,12 @@ require "test_helper"
 class TransferTest < ActiveSupport::TestCase
   include ActiveSupport::Testing::TimeHelpers
   setup do
-    customer = Customer.create!(code: "CUSTY", name: "Customer Y")
+    @customer = Customer.create!(code: "CUSTY", name: "Customer Y")
     @supplier = Supplier.create!(code: "SUPY", name: "Supplier Y")
     @sale = Sale.create!(
       code: "SALEY",
       date: Date.current,
-      customer: customer,
+      customer: @customer,
       supplier: @supplier,
       provider_pct: 0.2,
       customer_fee_pct: 0.1,
@@ -26,6 +26,7 @@ class TransferTest < ActiveSupport::TestCase
   test "valid transfer" do
     transfer = Transfer.new(
       sale: @sale,
+      customer: @customer,
       supplier: @supplier,
       amount: 500
     )
@@ -35,6 +36,7 @@ class TransferTest < ActiveSupport::TestCase
   test "requires positive amount" do
     transfer = Transfer.new(
       sale: @sale,
+      customer: @customer,
       supplier: @supplier,
       amount: 0
     )
@@ -46,12 +48,14 @@ class TransferTest < ActiveSupport::TestCase
   test "has associations" do
     transfer = Transfer.new
     assert_respond_to transfer, :sale
+    assert_respond_to transfer, :customer
     assert_respond_to transfer, :supplier
   end
 
   test "cannot exceed sale available balance" do
     Transfer.create!(
       sale: @sale,
+      customer: @customer,
       supplier: @supplier,
       amount: 800,
       code: "TRX-CAP",
@@ -60,6 +64,7 @@ class TransferTest < ActiveSupport::TestCase
 
     transfer = Transfer.new(
       sale: @sale,
+      customer: @customer,
       supplier: @supplier,
       amount: 200
     )
@@ -71,6 +76,7 @@ class TransferTest < ActiveSupport::TestCase
   test "updates sale totals after saving" do
     transfer = Transfer.create!(
       sale: @sale,
+      customer: @customer,
       supplier: @supplier,
       amount: 250,
       code: "TRX-UPDATE",
@@ -90,6 +96,7 @@ class TransferTest < ActiveSupport::TestCase
     other_supplier = Supplier.create!(code: "SUPZ", name: "Supplier Z")
     transfer = Transfer.new(
       sale: @sale,
+      customer: @customer,
       supplier: other_supplier,
       amount: 50
     )
@@ -102,17 +109,29 @@ class TransferTest < ActiveSupport::TestCase
     freeze_time do
       first = Transfer.create!(
         sale: @sale,
+        customer: @customer,
         supplier: @supplier,
         amount: 50
       )
 
       second = Transfer.create!(
         sale: @sale,
+        customer: @customer,
         supplier: @supplier,
         amount: 60
       )
 
       refute_equal first.code, second.code
     end
+  end
+
+  test "can exist without sale" do
+    transfer = Transfer.new(
+      customer: @customer,
+      supplier: @supplier,
+      amount: 75
+    )
+
+    assert transfer.valid?
   end
 end
