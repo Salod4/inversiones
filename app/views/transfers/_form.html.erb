@@ -31,17 +31,64 @@
     <p class="hint">El código SPEI y la fecha se generarán automáticamente al guardar.</p>
   <% end %>
 
-  <% if transfer.customer_id.present? || sale&.customer_id.present? %>
-    <%= form.hidden_field :customer_id, value: transfer.customer_id || sale&.customer_id %>
-  <% end %>
-
   <% if local_assigns[:include_sale_field] && sale.present? %>
     <%= form.hidden_field :sale_id, value: sale&.id %>
   <% end %>
 
-  <div>
-    <%= form.label :supplier_id, "Supplier" %>
-    <%= form.collection_select :supplier_id, @suppliers, :id, :name %>
+<% options_collection = [] %>
+<% if defined?(@customers)
+     @customers.each do |c|
+       options_collection << [c.name, "Customer:#{c.id}", { "data-entity-type": "Customer", "data-balance": c.available_transfer_total(excluding: transfer).to_f }]
+     end
+   end %>
+<% if defined?(@suppliers)
+     @suppliers.each do |s|
+       options_collection << [s.name, "Supplier:#{s.id}", { "data-entity-type": "Supplier", "data-balance": "" }]
+     end
+   end %>
+<% if defined?(@users)
+     @users.each do |u|
+       options_collection << [u.name || u.email, "User:#{u.id}", { "data-entity-type": "User", "data-balance": "" }]
+     end
+   end %>
+
+<% from_selected = "#{transfer.from_entity_type}:#{transfer.from_entity_id}" if transfer.from_entity_type && transfer.from_entity_id %>
+<% to_selected = "#{transfer.to_entity_type}:#{transfer.to_entity_id}" if transfer.to_entity_type && transfer.to_entity_id %>
+
+  <div class="entity-picker">
+    <label>Origen</label>
+    <div class="entity-picker__row">
+      <select id="from_type" class="select">
+        <option value="">Selecciona tipo</option>
+        <option value="Customer">Cliente</option>
+        <option value="Supplier">Proveedor</option>
+        <option value="User">Vendedor</option>
+      </select>
+      <%= select_tag "transfer[from_entity_ref]",
+                    options_for_select(options_collection, from_selected),
+                    include_blank: "Selecciona origen",
+                    id: "from_entity_ref",
+                    class: "select entity-options" %>
+    </div>
+    <p class="hint" id="from_balance_hint"></p>
+  </div>
+
+  <div class="entity-picker">
+    <label>Destino</label>
+    <div class="entity-picker__row">
+      <select id="to_type" class="select">
+        <option value="">Selecciona tipo</option>
+        <option value="Customer">Cliente</option>
+        <option value="Supplier">Proveedor</option>
+        <option value="User">Vendedor</option>
+      </select>
+      <%= select_tag "transfer[to_entity_ref]",
+                    options_for_select(options_collection, to_selected),
+                    include_blank: "Selecciona destino",
+                    id: "to_entity_ref",
+                    class: "select entity-options" %>
+    </div>
+    <p class="hint" id="to_balance_hint"></p>
   </div>
 
   <div>
@@ -69,3 +116,61 @@
     <%= form.submit %>
   </div>
 <% end %>
+
+<script>
+  (() => {
+    function setupEntitySelector(typeSelectId, entitySelectId, balanceHintId) {
+      const typeSelect = document.getElementById(typeSelectId);
+      const entitySelect = document.getElementById(entitySelectId);
+      const hint = document.getElementById(balanceHintId);
+      if (!typeSelect || !entitySelect) return;
+
+      const options = Array.from(entitySelect.options);
+
+      function filterOptions() {
+        const type = typeSelect.value;
+        entitySelect.innerHTML = "";
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "Selecciona";
+        entitySelect.appendChild(placeholder);
+
+        options.forEach((opt) => {
+          const optType = opt.dataset.entityType;
+          if (!type || optType === type) {
+            entitySelect.appendChild(opt.cloneNode(true));
+          }
+        });
+        updateHint();
+      }
+
+      function updateHint() {
+        const selected = entitySelect.selectedOptions[0];
+        if (!selected || !selected.dataset) {
+          if (hint) hint.textContent = "";
+          return;
+        }
+        const balance = selected.dataset.balance;
+        if (hint && balance && balance.length > 0) {
+          hint.textContent = `Saldo disponible: ${new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(balance))}`;
+        } else if (hint) {
+          hint.textContent = "";
+        }
+      }
+
+      typeSelect.addEventListener("change", filterOptions);
+      entitySelect.addEventListener("change", updateHint);
+
+      filterOptions();
+    }
+
+    document.addEventListener("turbo:load", () => {
+      setupEntitySelector("from_type", "from_entity_ref", "from_balance_hint");
+      setupEntitySelector("to_type", "to_entity_ref", "to_balance_hint");
+    });
+    document.addEventListener("DOMContentLoaded", () => {
+      setupEntitySelector("from_type", "from_entity_ref", "from_balance_hint");
+      setupEntitySelector("to_type", "to_entity_ref", "to_balance_hint");
+    });
+  })();
+</script>

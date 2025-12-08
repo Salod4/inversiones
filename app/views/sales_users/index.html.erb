@@ -1,0 +1,52 @@
+<h1>Ganancias de vendedores</h1>
+
+<section class="card">
+  <h2>Totales por vendedor</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Vendedor</th>
+        <th>Total de comisión</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @totals_by_user.each do |user_id, total| %>
+        <% user = @users[user_id] %>
+        <tr>
+          <td><%= user&.name || user&.email || "Vendedor ##{user_id}" %></td>
+          <td><%= number_to_currency(total.to_f, unit: "$") %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Detalle de comisiones por venta</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Vendedor</th>
+        <th>Venta</th>
+        <th>Proveedor</th>
+        <th>Fecha</th>
+        <th>Comisión %</th>
+        <th>Comisión $</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @sales_users.each do |su| %>
+        <tr>
+          <td><%= su.user&.name || su.user&.email || "Vendedor" %></td>
+          <td><%= su.sale&.code %></td>
+          <td><%= su.sale&.supplier&.name %></td>
+          <td><%= su.sale&.date %></td>
+          <td><%= number_to_percentage(su.effective_commission_pct.to_f * 100, precision: 2) %></td>
+          <td><%= number_to_currency(su.commission_amount.to_f, unit: "$") %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <%= pagination_nav(@pagy) %>
+</section>

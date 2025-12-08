@@ -1,7 +1,13 @@
 class SalesUsersController < ApplicationController
-  before_action :set_sale
+  before_action :set_sale, except: [ :index ]
   before_action :set_sales_user, only: [ :destroy ]
   before_action :set_users, only: [ :new, :create ]
+
+  def index
+    @pagy, @sales_users = pagy(SalesUser.includes(:user, sale: :supplier).order(created_at: :desc))
+    @totals_by_user = SalesUser.group(:user_id).sum(:commission_amount)
+    @users = User.where(id: @totals_by_user.keys + @sales_users.map(&:user_id)).index_by(&:id)
+  end
 
   def new
     @sales_user = @sale.sales_users.build

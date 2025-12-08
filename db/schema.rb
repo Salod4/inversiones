@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_08_000004) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_08_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -142,16 +142,22 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_08_000004) do
     t.string "code", null: false
     t.datetime "occurred_at", null: false
     t.bigint "sale_id", null: false
-    t.bigint "supplier_id", null: false
+    t.bigint "supplier_id"
     t.decimal "amount", precision: 15, scale: 2, null: false
     t.text "note"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "customer_id", null: false
+    t.bigint "customer_id"
+    t.string "from_entity_type", null: false
+    t.bigint "from_entity_id", null: false
+    t.string "to_entity_type", null: false
+    t.bigint "to_entity_id", null: false
     t.index ["code"], name: "index_transfers_on_code", unique: true
     t.index ["customer_id"], name: "index_transfers_on_customer_id"
+    t.index ["from_entity_type", "from_entity_id"], name: "index_transfers_on_from_entity"
     t.index ["sale_id"], name: "index_transfers_on_sale_id"
     t.index ["supplier_id"], name: "index_transfers_on_supplier_id"
+    t.index ["to_entity_type", "to_entity_id"], name: "index_transfers_on_to_entity"
     t.check_constraint "amount >= 0::numeric", name: "transfers_amount_nonnegative"
   end
 

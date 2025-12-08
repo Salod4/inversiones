@@ -20,7 +20,8 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :transfers, only: [ :show, :edit, :update, :destroy, :index ]
+  resources :sales_users, only: [ :index ]
+  resources :transfers, only: [ :new, :create, :show, :edit, :update, :destroy, :index ]
 
   resources :closings do
     resources :customer_closings

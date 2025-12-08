@@ -3,7 +3,7 @@ module Customers
     before_action :set_customer
     before_action :set_sales
     before_action :set_sale
-    before_action :set_suppliers
+    before_action :set_entities
     before_action :set_available_balances
 
     def new
@@ -35,12 +35,14 @@ module Customers
       @sale = @sales.find_by(id: sale_id)
     end
 
-    def set_suppliers
+    def set_entities
       @suppliers = if @sale
         [ @sale.supplier ].compact
       else
         Supplier.order(:name)
       end
+      @customers = Customer.order(:name)
+      @users = User.order(:name)
     end
 
     def set_available_balances
@@ -59,10 +61,11 @@ module Customers
     end
 
     def build_transfer_for_customer(attributes = {})
-      Transfer.new(attributes).tap do |transfer|
+      Transfer.new(attributes.merge(from_entity: @customer)).tap do |transfer|
         transfer.customer = @customer
         transfer.sale = @sale if @sale
         transfer.supplier ||= @sale&.supplier
+        transfer.to_entity ||= @sale&.supplier
       end
     end
   end

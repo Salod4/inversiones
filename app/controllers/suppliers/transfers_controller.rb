@@ -4,7 +4,7 @@ module Suppliers
     before_action :set_sales
     before_action :ensure_sales_present
     before_action :set_sale
-    before_action :set_suppliers
+    before_action :set_entities
 
     def new
       @transfer = build_transfer_for_sale
@@ -42,8 +42,10 @@ module Suppliers
       @sale = @sales.find_by(id: sale_id) || @sales.first
     end
 
-    def set_suppliers
+    def set_entities
       @suppliers = [ @supplier ]
+      @customers = Customer.order(:name)
+      @users = User.order(:name)
     end
 
     def transfer_params
@@ -51,7 +53,7 @@ module Suppliers
     end
 
     def build_transfer_for_sale(attributes = {})
-      transfer = @sale.transfers.build(attributes)
+      transfer = @sale.transfers.build(attributes.merge(from_entity: @supplier, to_entity: @sale.customer))
       transfer.customer = @sale.customer
       transfer.supplier ||= @supplier
       transfer
