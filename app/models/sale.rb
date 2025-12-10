@@ -15,6 +15,20 @@ class Sale < ApplicationRecord
   has_many :users, through: :sales_users
   has_many :transfers, dependent: :restrict_with_error
 
+  scope :for_customer_closing, ->(customer_closing) {
+    where(
+      closing_id: customer_closing.closing_id,
+      customer_id: customer_closing.customer_id
+    )
+  }
+
+  scope :for_supplier_closing, ->(supplier_closing) {
+    where(
+      closing_id: supplier_closing.closing_id,
+      supplier_id: supplier_closing.supplier_id
+    )
+  }
+
   accepts_nested_attributes_for :sales_users, allow_destroy: true
   before_validation :assign_business_date
   validates :status, inclusion: { in: %w[open closed canceled] }, allow_nil: true

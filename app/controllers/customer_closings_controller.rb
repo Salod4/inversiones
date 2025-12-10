@@ -1,13 +1,20 @@
 class CustomerClosingsController < ApplicationController
-  before_action :set_closing
-  before_action :set_customer_closing, only: [ :show, :edit, :update, :destroy ]
+  before_action :set_closing, except: :show
+  before_action :set_customer_closing, only: [ :edit, :update, :destroy ]
   before_action :set_customers, only: [ :new, :create, :edit, :update ]
 
   def index
     @pagy, @customer_closings = pagy(@closing.customer_closings.includes(:customer))
   end
 
-  def show; end
+  def show
+    @customer_closing = CustomerClosing
+      .includes(:closing, :customer)
+      .find(params[:id])
+
+    @sales  = @customer_closing.sales_for_closing
+    @totals = @customer_closing.totals
+  end
 
   def new
     @customer_closing = @closing.customer_closings.build
