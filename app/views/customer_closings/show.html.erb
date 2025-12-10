@@ -1,48 +1,69 @@
-<h1>Resumen del cliente</h1>
+<style>
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .summary-card {
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .summary-card h3 {
+    margin: 0 0 4px;
+    font-size: 0.95rem;
+    color: #334155;
+  }
+  .summary-card .value {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .summary-card p {
+    margin: 4px 0 0;
+    color: #475569;
+    font-size: 0.9rem;
+  }
+</style>
 
-<p><strong>Fecha del cierre:</strong> <%= @customer_closing.closing.business_date %></p>
-<p><strong>Cliente:</strong> <%= [@customer_closing.customer&.code, @customer_closing.customer&.name].compact.join(" - ") %></p>
+<div class="page-header">
+  <h1>Resumen del cliente</h1>
+  <p><strong>Fecha del cierre:</strong> <%= @customer_closing.closing.business_date %></p>
+  <p><strong>Cliente:</strong> <%= [@customer_closing.customer&.code, @customer_closing.customer&.name].compact.join(" - ") %></p>
+</div>
 
 <section>
   <h2>Totales del día</h2>
-  <dl class="summary-list">
-    <div>
-      <dt>Depósito bruto</dt>
-      <dd><%= number_to_currency(@totals[:gross_deposit]) %></dd>
+  <div class="summary-grid">
+    <div class="summary-card">
+      <h3>Total depositado</h3>
+      <p class="value"><%= number_to_currency(@totals[:total_depositado]) %></p>
+      <p>Suma de los depósitos brutos.</p>
     </div>
-    <div>
-      <dt>Base neta</dt>
-      <dd><%= number_to_currency(@totals[:net_base]) %></dd>
+    <div class="summary-card">
+      <h3>Total después de %s</h3>
+      <p class="value"><%= number_to_currency(@totals[:total_despues_pcts]) %></p>
+      <p>Depósito menos comisión de proveedor y vendedores.</p>
     </div>
-    <div>
-      <dt>Comisión proveedor</dt>
-      <dd><%= number_to_currency(@totals[:provider_commission]) %></dd>
+    <div class="summary-card">
+      <h3>Transferencias</h3>
+      <p class="value"><%= number_to_currency(@totals[:transferencias]) %></p>
+      <p>Total enviado mediante SPEI.</p>
     </div>
-    <div>
-      <dt>Comisión cliente</dt>
-      <dd><%= number_to_currency(@totals[:customer_fee]) %></dd>
+    <div class="summary-card">
+      <h3>Transfers recibidos (sin venta)</h3>
+      <p class="value"><%= number_to_currency(@totals[:transferencias_recibidas]) %></p>
+      <p>Pagos directos al cliente que reducen su saldo.</p>
     </div>
-    <div>
-      <dt>SPEI aplicados</dt>
-      <dd><%= number_to_currency(@totals[:total_transfer_applied]) %></dd>
+    <div class="summary-card">
+      <h3>Total cliente</h3>
+      <p class="value"><%= number_to_currency(@totals[:total_cliente]) %></p>
+      <p>Total después de %s menos las transferencias.</p>
     </div>
-    <div>
-      <dt>Capital de trabajo</dt>
-      <dd><%= number_to_currency(@totals[:working_capital]) %></dd>
-    </div>
-    <div>
-      <dt>Saldo de cliente (ventas)</dt>
-      <dd><%= number_to_currency(@totals[:customer_balance]) %></dd>
-    </div>
-    <div>
-      <dt>Saldo de cliente al cierre</dt>
-      <dd><%= number_to_currency(@totals[:customer_balance_at_closing]) %></dd>
-    </div>
-    <div>
-      <dt>Por cobrar al cierre</dt>
-      <dd><%= number_to_currency(@totals[:receivables_at_closing]) %></dd>
-    </div>
-  </dl>
+  </div>
 </section>
 
 <section>
