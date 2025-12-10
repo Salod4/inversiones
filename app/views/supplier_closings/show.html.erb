@@ -1,44 +1,69 @@
-<h1>Resumen del proveedor</h1>
+<style>
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .summary-card {
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .summary-card h3 {
+    margin: 0 0 4px;
+    font-size: 0.95rem;
+    color: #334155;
+  }
+  .summary-card .value {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .summary-card p {
+    margin: 4px 0 0;
+    color: #475569;
+    font-size: 0.9rem;
+  }
+</style>
 
-<p><strong>Fecha del cierre:</strong> <%= @supplier_closing.closing.business_date %></p>
-<p><strong>Proveedor:</strong> <%= [@supplier_closing.supplier&.code, @supplier_closing.supplier&.name].compact.join(" - ") %></p>
+<div class="page-header">
+  <h1>Resumen del proveedor</h1>
+  <p><strong>Fecha del cierre:</strong> <%= @supplier_closing.closing.business_date %></p>
+  <p><strong>Proveedor:</strong> <%= [@supplier_closing.supplier&.code, @supplier_closing.supplier&.name].compact.join(" - ") %></p>
+</div>
 
 <section>
   <h2>Totales del día</h2>
-  <dl class="summary-list">
-    <div>
-      <dt>Depósito bruto</dt>
-      <dd><%= number_to_currency(@totals[:gross_deposit]) %></dd>
+  <div class="summary-grid">
+    <div class="summary-card">
+      <h3>Análisis base</h3>
+      <p class="value"><%= number_to_percentage(@totals[:analisis_base_pct].to_f * 100, precision: 2) %></p>
+      <p>Porcentaje base configurado para este proveedor.</p>
     </div>
-    <div>
-      <dt>Base neta</dt>
-      <dd><%= number_to_currency(@totals[:net_base]) %></dd>
+    <div class="summary-card">
+      <h3>Total asignado</h3>
+      <p class="value"><%= number_to_currency(@totals[:total_asignado]) %></p>
+      <p>Depósitos de clientes relacionados a este proveedor.</p>
     </div>
-    <div>
-      <dt>Comisión proveedor</dt>
-      <dd><%= number_to_currency(@totals[:provider_commission]) %></dd>
+    <div class="summary-card">
+      <h3>RET.COMP total</h3>
+      <p class="value"><%= number_to_currency(@totals[:ret_comp_total]) %></p>
+      <p>Suma de (depósito bruto - comisión proveedor) en las ventas.</p>
     </div>
-    <div>
-      <dt>SPEI aplicados</dt>
-      <dd><%= number_to_currency(@totals[:total_transfer_applied]) %></dd>
+    <div class="summary-card">
+      <h3>Transferido</h3>
+      <p class="value"><%= number_to_currency(@totals[:transferido]) %></p>
+      <p>Monto ya enviado mediante transfers.</p>
     </div>
-    <div>
-      <dt>Cantidad de transferencias</dt>
-      <dd><%= @totals[:transfer_count] %></dd>
+    <div class="summary-card">
+      <h3>Saldo pendiente</h3>
+      <p class="value"><%= number_to_currency(@totals[:saldo_pendiente]) %></p>
+      <p>RET.COMP total menos transfers.</p>
     </div>
-    <div>
-      <dt>Monto transferido</dt>
-      <dd><%= number_to_currency(@totals[:transfer_amount]) %></dd>
-    </div>
-    <div>
-      <dt>Crédito proveedor al cierre</dt>
-      <dd><%= number_to_currency(@totals[:supplier_credit_at_closing]) %></dd>
-    </div>
-    <div>
-      <dt>Por pagar al proveedor al cierre</dt>
-      <dd><%= number_to_currency(@totals[:amount_owed_to_supplier_at_closing]) %></dd>
-    </div>
-  </dl>
+  </div>
 </section>
 
 <section>

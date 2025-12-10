@@ -22,16 +22,18 @@ class SupplierClosing < ApplicationRecord
   def totals
     s = sales_for_closing
     t = transfers_for_closing
+    gross_total = s.sum(:gross_deposit)
+    provider_commission_total = s.sum(:provider_commission)
+    ret_comp_total = gross_total - provider_commission_total
+    transfer_amount = t.sum(:amount)
+    saldo_pendiente = ret_comp_total - transfer_amount
 
     {
-      gross_deposit:          s.sum(:gross_deposit),
-      net_base:               s.sum(:net_base),
-      provider_commission:    s.sum(:provider_commission),
-      total_transfer_applied: s.sum(:total_transfer_applied),
-      transfer_count:         t.count,
-      transfer_amount:        t.sum(:amount),
-      supplier_credit_at_closing:            supplier_credit,
-      amount_owed_to_supplier_at_closing:    amount_owed_to_supplier
+      analisis_base_pct: supplier&.default_analysis_pct,
+      total_asignado: gross_total,
+      ret_comp_total: ret_comp_total,
+      transferido: transfer_amount,
+      saldo_pendiente: saldo_pendiente
     }
   end
 end

@@ -51,7 +51,7 @@ class CustomerClosingTest < ActiveSupport::TestCase
     assert_equal [ matching_sale ], @customer_closing.sales_for_closing
   end
 
-  test "totals aggregates sales and closing balances" do
+  test "totals aggregates sales, transfers, and balance" do
     create_sale(
       code: "SALE10",
       gross_deposit: 100,
@@ -73,18 +73,15 @@ class CustomerClosingTest < ActiveSupport::TestCase
       customer_balance: 120
     )
     create_sale(code: "IGNORED", customer: @other_customer, gross_deposit: 999)
+    create_direct_transfer(amount: 15)
 
     totals = @customer_closing.totals
 
-    assert_in_delta 300, totals[:gross_deposit].to_f
-    assert_in_delta 270, totals[:net_base].to_f
-    assert_in_delta 30, totals[:provider_commission].to_f
-    assert_in_delta 15, totals[:customer_fee].to_f
-    assert_in_delta 60, totals[:total_transfer_applied].to_f
-    assert_in_delta 210, totals[:working_capital].to_f
-    assert_in_delta 180, totals[:customer_balance].to_f
-    assert_equal @customer_closing.customer_balance, totals[:customer_balance_at_closing]
-    assert_equal @customer_closing.receivables, totals[:receivables_at_closing]
+    assert_in_delta 300, totals[:total_depositado].to_f
+    assert_in_delta 270, totals[:total_despues_pcts].to_f
+    assert_in_delta 60, totals[:transferencias].to_f
+    assert_in_delta 15, totals[:transferencias_recibidas].to_f
+    assert_in_delta 195, totals[:total_cliente].to_f
   end
 
   private
@@ -109,5 +106,20 @@ class CustomerClosingTest < ActiveSupport::TestCase
     }
 
     Sale.create!(defaults.merge(attrs))
+  end
+
+  def create_direct_transfer(attrs = {})
+    defaults = {
+      code: "TR-DIRECT",
+      amount: 10,
+      customer: @customer,
+      supplier: @supplier,
+      from_entity: @supplier,
+      to_entity: @customer,
+      payment_method: "deposito",
+      occurred_at: @closing.business_date.to_time.change(hour: 10)
+    }
+
+    Transfer.create!(defaults.merge(attrs))
   end
 end

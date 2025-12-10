@@ -79,14 +79,11 @@ class SupplierClosingTest < ActiveSupport::TestCase
 
     totals = @supplier_closing.totals
 
-    assert_in_delta 300, totals[:gross_deposit].to_f
-    assert_in_delta 270, totals[:net_base].to_f
-    assert_in_delta 30, totals[:provider_commission].to_f
-    assert_in_delta 75, totals[:total_transfer_applied].to_f
-    assert_equal 2, totals[:transfer_count]
-    assert_in_delta 75, totals[:transfer_amount].to_f
-    assert_equal @supplier_closing.supplier_credit, totals[:supplier_credit_at_closing]
-    assert_equal @supplier_closing.amount_owed_to_supplier, totals[:amount_owed_to_supplier_at_closing]
+    assert_in_delta @supplier.default_analysis_pct.to_f, totals[:analisis_base_pct].to_f
+    assert_in_delta 300, totals[:total_asignado].to_f
+    assert_in_delta 270, totals[:ret_comp_total].to_f
+    assert_in_delta 75, totals[:transferido].to_f
+    assert_in_delta 195, totals[:saldo_pendiente].to_f
   end
 
   private
