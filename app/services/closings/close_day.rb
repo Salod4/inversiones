@@ -86,6 +86,14 @@ module Closings
         cust[:receivables] += sale.customer_fee.to_d
       end
 
+      # Transfers sin venta: restan saldo al cliente receptor (pago de deuda)
+      extra_transfers = Transfer.where(sale_id: nil).where("occurred_at <= ?", business_date.end_of_day)
+      extra_transfers.find_each do |t|
+        if t.to_entity_type == "Customer" && t.customer_id.present?
+          customers[t.customer_id][:balance] -= t.amount.to_d
+        end
+      end
+
       # Proveedores: RET.COMP (gross - provider_commission) menos transfers hasta la fecha
       suppliers = Hash.new { |h, k| h[k] = { ret_comp: 0.to_d, transferred: 0.to_d } }
       sales_scope.find_each do |sale|

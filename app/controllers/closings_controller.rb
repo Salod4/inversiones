@@ -5,7 +5,7 @@ class ClosingsController < ApplicationController
     @pagy, @closings = pagy(Closing.order(business_date: :desc))
   end
 
- def show
+  def show
     @closing = Closing.find(params[:id])
 
     @sales = @closing
@@ -15,6 +15,23 @@ class ClosingsController < ApplicationController
 
     @customer_closings = CustomerClosing.where(closing_id: @closing.id).includes(:customer).order("customers.name")
     @supplier_closings = SupplierClosing.where(closing_id: @closing.id).includes(:supplier).order("suppliers.name")
+    @closing_transfers = Transfer.where(occurred_at: @closing.business_date.beginning_of_day..@closing.business_date.end_of_day).includes(:sale, :supplier, :customer)
+
+    balances_by_customer = @customer_closings.each_with_object(Hash.new(0.to_d)) do |cc, memo|
+      memo[cc.customer_id] += cc.customer_balance.to_d
+    end
+
+    group_defs = CustomerGroups.build(Customer.where(id: balances_by_customer.keys))
+    @customer_group_totals = group_defs.map do |g|
+      ids = g[:customers].map(&:id)
+      {
+        name: g[:name],
+        balance: ids.sum { |cid| balances_by_customer[cid] }
+      }
+    end
+
+    grouped_ids = group_defs.flat_map { |g| g[:customers].map(&:id) }
+    @customer_ungrouped = balances_by_customer.reject { |cid, _| grouped_ids.include?(cid) }
 
     # Totales rápidos tomando los agregados históricos
     @sales_totals = {

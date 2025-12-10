@@ -21,6 +21,12 @@
   </div>
 
   <div class="customer-summary__stat">
+    <p class="label">Transfers recibidos (sin venta)</p>
+    <p class="stat"><%= number_to_currency(@customer_direct_received || 0, unit: "$") %></p>
+    <p class="hint">Pagos directos al cliente que reducen su saldo.</p>
+  </div>
+
+  <div class="customer-summary__stat">
     <p class="label">Total cliente</p>
     <p class="stat"><%= number_to_currency(@customer_available_balance || 0, unit: "$") %></p>
     <p class="hint">Total después de %s menos las transferencias.</p>
@@ -97,6 +103,7 @@
           <th>Código</th>
           <th>Venta</th>
           <th>Proveedor</th>
+          <th>Tipo</th>
           <th>Monto</th>
           <th>Nota</th>
           <th></th>
@@ -109,6 +116,7 @@
             <td><%= transfer.code %></td>
             <td><%= link_to transfer.sale&.code, transfer.sale if transfer.sale.present? %></td>
             <td><%= transfer.supplier&.name %></td>
+            <td><%= [transfer.from_entity_type, "→", transfer.to_entity_type].compact.join(" ") %></td>
             <td><%= number_to_currency(transfer.amount, unit: "$") %></td>
             <td><%= transfer.note.presence || "—" %></td>
             <td><%= link_to "Ver", transfer_path(transfer), class: "button button-secondary" %></td>
