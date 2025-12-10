@@ -46,10 +46,12 @@ module Suppliers
       @suppliers = [ @supplier ]
       @customers = Customer.order(:name)
       @users = User.order(:name)
+      @supplier_balances = supplier_balances_for(@suppliers)
+      @user_balances = {}
     end
 
     def transfer_params
-      params.require(:transfer).permit(:sale_id, :supplier_id, :amount, :note)
+      params.require(:transfer).permit(:sale_id, :supplier_id, :amount, :note, :payment_method)
     end
 
     def build_transfer_for_sale(attributes = {})
@@ -57,6 +59,18 @@ module Suppliers
       transfer.customer = @sale.customer
       transfer.supplier ||= @supplier
       transfer
+    end
+
+    def supplier_balances_for(suppliers)
+      ids = suppliers.map(&:id)
+      return {} if ids.empty?
+      sales_sum = Sale.where(supplier_id: ids).group(:supplier_id).sum(Arel.sql("COALESCE(gross_deposit,0) - COALESCE(provider_commission,0)"))
+      transfer_sum = Transfer.where(supplier_id: ids).group(:supplier_id).sum(:amount)
+      ids.index_with do |sid|
+        gross = BigDecimal(sales_sum[sid] || 0)
+        transferred = BigDecimal(transfer_sum[sid] || 0)
+        gross - transferred
+      end
     end
   end
 end

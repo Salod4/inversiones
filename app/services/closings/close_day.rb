@@ -17,9 +17,11 @@ module Closings
         )
 
         attach_sales!(closing)
-        upsert_customer_aggregates!(closing)
-        upsert_supplier_aggregates!(closing)
-        update_totals!(closing)
+        snapshot = build_snapshot
+
+        upsert_customer_aggregates!(closing, snapshot[:customers])
+        upsert_supplier_aggregates!(closing, snapshot[:suppliers])
+        update_totals!(closing, snapshot)
 
         closing.update!(closed_at: Time.current)
         closing
@@ -36,65 +38,73 @@ module Closings
       day_sales.update_all(closing_id: closing.id)
     end
 
-    def upsert_customer_aggregates!(closing)
-      # Agrupa por cliente usando las ventas YA adjuntas al closing
-      per_customer = closing.sales.group(:customer_id).pluck(
-        :customer_id,
-        Arel.sql("COALESCE(SUM(customer_balance), 0)"),
-        Arel.sql("COALESCE(SUM(customer_fee), 0)")
-      )
-      per_customer.each do |customer_id, balance_sum, receivables_sum|
+    def upsert_customer_aggregates!(closing, customers_snapshot)
+      customers_snapshot.each do |customer_id, data|
         CustomerClosing
           .where(closing_id: closing.id, customer_id: customer_id)
           .first_or_initialize
           .update!(
-            customer_balance: balance_sum,
-            receivables: receivables_sum
+            customer_balance: data[:balance],
+            receivables: data[:receivables]
           )
       end
     end
 
-    def upsert_supplier_aggregates!(closing)
-      # Ventas por proveedor (ya adjuntas al closing)
-      per_supplier_sales = closing.sales.group(:supplier_id).pluck(
-        :supplier_id,
-        Arel.sql("COALESCE(SUM(provider_commission), 0)"),
-        Arel.sql("COALESCE(SUM(total_transfer_applied), 0)")
-      )
-
-      # También puedes sumar transferencias del mismo día (si las consideras)
-      per_supplier_transfers = Transfer.where(
-        supplier_id: per_supplier_sales.map(&:first),
-        occurred_at: business_date.beginning_of_day..business_date.end_of_day
-      ).group(:supplier_id).sum(:amount)
-
-      per_supplier_sales.each do |supplier_id, provider_commission_sum, total_transfer_applied_sum|
-        transfers_sum = per_supplier_transfers[supplier_id] || 0
-
+    def upsert_supplier_aggregates!(closing, suppliers_snapshot)
+      suppliers_snapshot.each do |supplier_id, data|
         SupplierClosing
           .where(closing_id: closing.id, supplier_id: supplier_id)
           .first_or_initialize
           .update!(
-            supplier_credit: provider_commission_sum,
-            amount_owed_to_supplier: transfers_sum # o total_transfer_applied_sum si lo prefieres
+            supplier_credit: data[:ret_comp],
+            amount_owed_to_supplier: data[:ret_comp] - data[:transferred]
           )
       end
     end
 
-    def update_totals!(closing)
-      totals = closing.sales.pluck(
-        Arel.sql("COALESCE(SUM(customer_balance), 0)"),
-        Arel.sql("COALESCE(SUM(provider_commission), 0)")
-      ).first
-
-      total_customers = totals[0] || 0
-      total_suppliers = totals[1] || 0
+    def update_totals!(closing, snapshot)
+      total_customers = snapshot[:customers].values.sum { |h| h[:balance].to_d }
+      total_suppliers = snapshot[:suppliers].values.sum { |h| (h[:ret_comp] - h[:transferred]).to_d }
 
       closing.update!(
         total_customers: total_customers,
         total_suppliers: total_suppliers,
         difference: (total_customers.to_d - total_suppliers.to_d)
       )
+    end
+
+    def build_snapshot
+      sales_scope = Sale.where("date <= ?", business_date).includes(:transfers)
+
+      # Clientes: suma de working_capital menos transfers hasta la fecha
+      customers = Hash.new { |h, k| h[k] = { balance: 0.to_d, receivables: 0.to_d } }
+      sales_scope.find_each do |sale|
+        transfers_sum = sale.transfers.where("occurred_at <= ?", business_date.end_of_day).sum(:amount).to_d
+        balance = sale.working_capital.to_d - transfers_sum
+        cust = customers[sale.customer_id]
+        cust[:balance] += balance
+        cust[:receivables] += sale.customer_fee.to_d
+      end
+
+      # Proveedores: RET.COMP (gross - provider_commission) menos transfers hasta la fecha
+      suppliers = Hash.new { |h, k| h[k] = { ret_comp: 0.to_d, transferred: 0.to_d } }
+      sales_scope.find_each do |sale|
+        ret_comp = sale.gross_deposit.to_d - sale.provider_commission.to_d
+        suppliers[sale.supplier_id][:ret_comp] += ret_comp
+      end
+
+      supplier_transfers = Transfer
+                             .where("occurred_at <= ?", business_date.end_of_day)
+                             .group(:supplier_id)
+                             .sum(:amount)
+      supplier_transfers.each do |supplier_id, amount|
+        suppliers[supplier_id][:transferred] += amount.to_d
+      end
+
+      {
+        customers: customers,
+        suppliers: suppliers
+      }
     end
   end
 end

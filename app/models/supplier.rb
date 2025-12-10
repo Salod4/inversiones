@@ -14,6 +14,12 @@ class Supplier < ApplicationRecord
             numericality: { greater_than_or_equal_to: 0, less_than: 1 },
             allow_nil: true
 
+  def available_transfer_total
+    ret_comp_total = sales.sum(Arel.sql("COALESCE(gross_deposit,0) - COALESCE(provider_commission,0)")).to_d
+    transferred = transfers.sum(:amount).to_d
+    ret_comp_total - transferred
+  end
+
   def self.ransackable_attributes(_auth = nil)
     %w[id code name created_at updated_at]
   end

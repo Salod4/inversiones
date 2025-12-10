@@ -54,6 +54,7 @@ DUMA_SPLITS_BY_SUPPLIER = {
 }.freeze
 
 SUPPLIER_ALIASES = {
+  "KLING" => "KJS",
   "JJS135" => "KJS",
   "JJS175" => "KJS"
 }.freeze
@@ -1018,6 +1019,10 @@ CUSTOMER_FEE_OVERRIDES = {
   }
   # TODO: agrega overrides para más proveedores
 }.freeze
+
+CUSTOMER_FEE_OVERRIDES_EXPANDED = CUSTOMER_FEE_OVERRIDES.merge(
+  SUPPLIER_ALIASES.transform_values { |source| CUSTOMER_FEE_OVERRIDES.fetch(source, {}) }
+).freeze
 
 COMMISSION_SPLITS = {
   "KJS" => {
@@ -2978,7 +2983,7 @@ ActiveRecord::Base.transaction do
       customer, customer_status = ensure_customer!(customer_name, default_customer_fee_pct: default_fee)
       counters["customers_#{customer_status}".to_sym] += 1
 
-      fee_override = CUSTOMER_FEE_OVERRIDES.dig(supplier_code, customer_name)
+      fee_override = CUSTOMER_FEE_OVERRIDES_EXPANDED.dig(supplier_code, customer_name)
       link, link_status = link_customer_supplier!(customer, supplier, fee_pct: fee_override)
       counters["customer_suppliers_#{link_status}".to_sym] += 1
 

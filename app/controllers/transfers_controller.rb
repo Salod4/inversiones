@@ -80,6 +80,8 @@ class TransfersController < ApplicationController
     @suppliers = supplier ? [ supplier ] : Supplier.order(:name)
     @customers = Customer.order(:name)
     @users = User.order(:name)
+    @supplier_balances = supplier_balances_for(@suppliers)
+    @user_balances = {}
   end
 
   def transfer_params
@@ -89,6 +91,7 @@ class TransfersController < ApplicationController
       :supplier_id,
       :amount,
       :note,
+      :payment_method,
       :from_entity_ref,
       :to_entity_ref
     )
@@ -108,6 +111,18 @@ class TransfersController < ApplicationController
     when "Customer" then Customer.find_by(id: id)
     when "Supplier" then Supplier.find_by(id: id)
     when "User" then User.find_by(id: id)
+    end
+  end
+
+  def supplier_balances_for(suppliers)
+    ids = suppliers.map(&:id)
+    return {} if ids.empty?
+    sales_sum = Sale.where(supplier_id: ids).group(:supplier_id).sum(Arel.sql("COALESCE(gross_deposit,0) - COALESCE(provider_commission,0)"))
+    transfer_sum = Transfer.where(supplier_id: ids).group(:supplier_id).sum(:amount)
+    ids.index_with do |sid|
+      gross = BigDecimal(sales_sum[sid] || 0)
+      transferred = BigDecimal(transfer_sum[sid] || 0)
+      gross - transferred
     end
   end
 end

@@ -11,6 +11,7 @@ class Transfer < ApplicationRecord
   validates :amount, numericality: { greater_than: 0 }
   validates :from_entity_type, :from_entity_id, :to_entity_type, :to_entity_id, presence: true
   validates :from_entity_type, :to_entity_type, inclusion: { in: ALLOWED_ENTITY_TYPES }
+  validates :payment_method, inclusion: { in: %w[deposito efectivo] }
   validate :amount_does_not_exceed_sale_balance
   validate :customer_matches_sale
   validate :supplier_matches_sale
@@ -82,6 +83,7 @@ class Transfer < ApplicationRecord
   def assign_defaults
     self.customer ||= sale&.customer
     self.supplier ||= sale&.supplier
+    self.payment_method ||= "deposito"
     self.occurred_at ||= Time.current
     assign_code if code.blank?
   end
@@ -115,7 +117,13 @@ class Transfer < ApplicationRecord
     supplier_code = supplier&.code || sale&.supplier&.code || "SUP"
     sale_code = sale&.code || sale_id
     stamp = Time.zone.today.strftime("%-d%b").upcase
-    base_code = "SPEI-#{sale_code}-#{supplier_code}-#{stamp}"
+    if payment_method == "efectivo"
+      from_code = entity_code(from_entity) || "ORIG"
+      to_code = entity_code(to_entity) || "DEST"
+      base_code = "EFE-#{from_code}-#{to_code}-#{stamp}"
+    else
+      base_code = "SPEI-#{sale_code}-#{supplier_code}-#{stamp}"
+    end
     self.code = unique_code(base_code)
   end
 
@@ -127,5 +135,10 @@ class Transfer < ApplicationRecord
       counter += 1
     end
     candidate
+  end
+
+  def entity_code(entity)
+    return unless entity
+    entity.respond_to?(:code) ? entity.code.presence : nil
   end
 end

@@ -35,6 +35,15 @@
     <%= form.hidden_field :sale_id, value: sale&.id %>
   <% end %>
 
+  <div>
+    <%= form.label :payment_method, "Tipo de transferencia" %>
+    <%= form.select :payment_method,
+                    options_for_select([["Depósito", "deposito"], ["Efectivo", "efectivo"]], transfer.payment_method || "deposito"),
+                    {},
+                    class: "select" %>
+    <p class="hint">Depósito usa el código SPEI actual; Efectivo genera código EFE-ORIG-DEST-fecha.</p>
+  </div>
+
 <% options_collection = [] %>
 <% if defined?(@customers)
      @customers.each do |c|
@@ -43,12 +52,12 @@
    end %>
 <% if defined?(@suppliers)
      @suppliers.each do |s|
-       options_collection << [s.name, "Supplier:#{s.id}", { "data-entity-type": "Supplier", "data-balance": "" }]
+       options_collection << [s.name, "Supplier:#{s.id}", { "data-entity-type": "Supplier", "data-balance": (@supplier_balances && @supplier_balances[s.id]) || "" }]
      end
    end %>
 <% if defined?(@users)
      @users.each do |u|
-       options_collection << [u.name || u.email, "User:#{u.id}", { "data-entity-type": "User", "data-balance": "" }]
+       options_collection << [u.name || u.email, "User:#{u.id}", { "data-entity-type": "User", "data-balance": (@user_balances && @user_balances[u.id]) || "" }]
      end
    end %>
 

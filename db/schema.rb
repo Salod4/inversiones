@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_08_010000) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_08_021000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -141,7 +141,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_08_010000) do
   create_table "transfers", force: :cascade do |t|
     t.string "code", null: false
     t.datetime "occurred_at", null: false
-    t.bigint "sale_id", null: false
+    t.bigint "sale_id"
     t.bigint "supplier_id"
     t.decimal "amount", precision: 15, scale: 2, null: false
     t.text "note"
@@ -152,6 +152,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_08_010000) do
     t.bigint "from_entity_id", null: false
     t.string "to_entity_type", null: false
     t.bigint "to_entity_id", null: false
+    t.string "payment_method", default: "deposito", null: false
     t.index ["code"], name: "index_transfers_on_code", unique: true
     t.index ["customer_id"], name: "index_transfers_on_customer_id"
     t.index ["from_entity_type", "from_entity_id"], name: "index_transfers_on_from_entity"
