@@ -1,12 +1,124 @@
-<h1>Supplier Closing</h1>
+<h1>Resumen del proveedor</h1>
 
-<p><strong>Closing:</strong> <%= link_to @closing.business_date, closing_path(@closing), class: "button button-ghost" %></p>
-<p><strong>Supplier:</strong> <%= @supplier_closing.supplier&.name %></p>
-<p><strong>Supplier Credit:</strong> <%= @supplier_closing.supplier_credit %></p>
-<p><strong>Amount Owed To Supplier:</strong> <%= @supplier_closing.amount_owed_to_supplier %></p>
+<p><strong>Fecha del cierre:</strong> <%= @supplier_closing.closing.business_date %></p>
+<p><strong>Proveedor:</strong> <%= [@supplier_closing.supplier&.code, @supplier_closing.supplier&.name].compact.join(" - ") %></p>
+
+<section>
+  <h2>Totales del día</h2>
+  <dl class="summary-list">
+    <div>
+      <dt>Depósito bruto</dt>
+      <dd><%= number_to_currency(@totals[:gross_deposit]) %></dd>
+    </div>
+    <div>
+      <dt>Base neta</dt>
+      <dd><%= number_to_currency(@totals[:net_base]) %></dd>
+    </div>
+    <div>
+      <dt>Comisión proveedor</dt>
+      <dd><%= number_to_currency(@totals[:provider_commission]) %></dd>
+    </div>
+    <div>
+      <dt>SPEI aplicados</dt>
+      <dd><%= number_to_currency(@totals[:total_transfer_applied]) %></dd>
+    </div>
+    <div>
+      <dt>Cantidad de transferencias</dt>
+      <dd><%= @totals[:transfer_count] %></dd>
+    </div>
+    <div>
+      <dt>Monto transferido</dt>
+      <dd><%= number_to_currency(@totals[:transfer_amount]) %></dd>
+    </div>
+    <div>
+      <dt>Crédito proveedor al cierre</dt>
+      <dd><%= number_to_currency(@totals[:supplier_credit_at_closing]) %></dd>
+    </div>
+    <div>
+      <dt>Por pagar al proveedor al cierre</dt>
+      <dd><%= number_to_currency(@totals[:amount_owed_to_supplier_at_closing]) %></dd>
+    </div>
+  </dl>
+</section>
+
+<section>
+  <h2>Ventas del proveedor</h2>
+  <% if @sales.any? %>
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Fecha</th>
+          <th>Cliente</th>
+          <th>Depósito bruto</th>
+          <th>Base neta</th>
+          <th>Comisión prov.</th>
+          <th>SPEI aplicados</th>
+          <th>Capital de trabajo</th>
+          <th>Saldo cliente</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @sales.each do |sale| %>
+          <tr>
+            <td><%= link_to sale.code, sale_path(sale) %></td>
+            <td><%= sale.date %></td>
+            <td><%= [sale.customer&.code, sale.customer&.name].compact.join(" - ") %></td>
+            <td><%= number_to_currency(sale.gross_deposit) %></td>
+            <td><%= number_to_currency(sale.net_base) %></td>
+            <td><%= number_to_currency(sale.provider_commission) %></td>
+            <td><%= number_to_currency(sale.total_transfer_applied) %></td>
+            <td><%= number_to_currency(sale.working_capital) %></td>
+            <td><%= number_to_currency(sale.customer_balance) %></td>
+            <td><%= sale.status %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>Este proveedor no tuvo ventas en este cierre.</p>
+  <% end %>
+</section>
+
+<section>
+  <h2>Transferencias del día</h2>
+  <% if @transfers.any? %>
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Fecha y hora</th>
+          <th>Venta</th>
+          <th>Cliente</th>
+          <th>Monto</th>
+          <th>Método</th>
+          <th>De</th>
+          <th>Hacia</th>
+          <th>Nota</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @transfers.each do |transfer| %>
+          <tr>
+            <td><%= transfer.code %></td>
+            <td><%= transfer.occurred_at %></td>
+            <td><%= transfer.sale&.code %></td>
+            <td><%= [transfer.customer&.code, transfer.customer&.name].compact.join(" - ") %></td>
+            <td><%= number_to_currency(transfer.amount) %></td>
+            <td><%= transfer.payment_method %></td>
+            <td><%= "#{transfer.from_entity_type} ##{transfer.from_entity_id}" %></td>
+            <td><%= "#{transfer.to_entity_type} ##{transfer.to_entity_id}" %></td>
+            <td><%= transfer.note %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No hay transferencias registradas para este día.</p>
+  <% end %>
+</section>
 
 <div class="button-group">
-  <%= link_to "Edit", edit_closing_supplier_closing_path(@closing, @supplier_closing), class: "button" %>
-  <%= link_to "Delete", closing_supplier_closing_path(@closing, @supplier_closing), class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
-  <%= link_to "Back", closing_supplier_closings_path(@closing), class: "button button-ghost" %>
+  <%= link_to "Volver al cierre", closing_path(@supplier_closing.closing), class: "button button-ghost" %>
 </div>
