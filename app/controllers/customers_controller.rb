@@ -40,11 +40,19 @@ class CustomersController < ApplicationController
     @group_total_deposit = base_sales_scope.sum(:gross_deposit).to_d
     @group_total_after_pcts = sales_scope.sum { |s| s.net_after_provider_and_sellers.to_d }
     @group_total_transferred = sales_scope.sum { |s| s.total_transfer_applied.to_d }
-    @group_available_balance = @group_total_after_pcts - @group_total_transferred
+    direct_received = Transfer.where(
+      customer_id: filtered_customer_ids,
+      sale_id: nil,
+      to_entity_type: "Customer"
+    ).group(:customer_id).sum(:amount)
+
+    @group_total_direct_received = direct_received.values.sum.to_d
+    @group_available_balance = @group_total_after_pcts - @group_total_transferred - @group_total_direct_received
 
     @per_customer_deposit = Hash.new(0)
     @per_customer_after_pcts = Hash.new(0)
     @per_customer_transfers = Hash.new(0)
+    @per_customer_direct_received = Hash.new(0)
     @per_customer_balances = Hash.new(0)
 
     sales_scope.group_by(&:customer_id).each do |cid, sales|
@@ -54,7 +62,9 @@ class CustomersController < ApplicationController
       @per_customer_deposit[cid] = gross_total
       @per_customer_after_pcts[cid] = net_total
       @per_customer_transfers[cid] = transfers_total
-      @per_customer_balances[cid] = net_total - transfers_total
+      direct = direct_received[cid].to_d
+      @per_customer_direct_received[cid] = direct
+      @per_customer_balances[cid] = net_total - transfers_total - direct
     end
 
     @sales = sales_scope.order(date: :desc).limit(50)
@@ -70,12 +80,19 @@ class CustomersController < ApplicationController
     @customer_total_deposit = base_sales_scope.sum(:gross_deposit).to_d
     @customer_total_after_pcts = sales_scope.sum { |s| s.net_after_provider_and_sellers.to_d }
     @customer_total_transferred = sales_scope.sum { |s| s.total_transfer_applied.to_d }
-    @customer_available_balance = @customer_total_after_pcts - @customer_total_transferred
+
+    # Transfers recibidos directamente (sin venta) que reducen lo adeudado
+    @customer_direct_received = Transfer.where(
+      customer_id: @customer.id,
+      sale_id: nil,
+      to_entity_type: "Customer"
+    ).sum(:amount).to_d
+
+    @customer_available_balance = @customer_total_after_pcts - @customer_total_transferred - @customer_direct_received
 
     @customer_transfers = Transfer
-                            .joins(:sale)
                             .includes(:supplier, :sale)
-                            .where(sales: { customer_id: @customer.id })
+                            .where(customer_id: @customer.id)
                             .order(occurred_at: :desc)
   end
 

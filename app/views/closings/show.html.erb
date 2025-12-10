@@ -8,28 +8,26 @@
 
 <section>
   <h2>Customer Closings</h2>
-  <div class="button-group">
-    <%= link_to "New Customer Closing", new_closing_customer_closing_path(@closing), class: "button" %>
-  </div>
-  <% if @customer_closings.any? %>
+  <% if @customer_group_totals.present? %>
     <table>
       <thead>
         <tr>
-          <th>Customer</th>
+          <th>Grupo</th>
           <th>Customer Balance</th>
-          <th>Receivables</th>
-          <th></th>
         </tr>
       </thead>
       <tbody>
-        <% @customer_closings.each do |customer_closing| %>
+        <% @customer_group_totals.each do |row| %>
           <tr>
-            <td><%= customer_closing.customer&.name %></td>
-            <td><%= customer_closing.customer_balance %></td>
-            <td><%= customer_closing.receivables %></td>
-            <td>
-              <%= link_to "Show", closing_customer_closing_path(@closing, customer_closing), class: "button button-secondary" %>
-            </td>
+            <td><%= row[:name] %></td>
+            <td><%= number_to_currency(row[:balance], unit: "$") %></td>
+          </tr>
+        <% end %>
+        <% @customer_ungrouped.each do |customer_id, balance| %>
+          <% customer_name = Customer.find_by(id: customer_id)&.name || "Cliente ##{customer_id}" %>
+          <tr>
+            <td><%= customer_name %></td>
+            <td><%= number_to_currency(balance, unit: "$") %></td>
           </tr>
         <% end %>
       </tbody>
@@ -40,7 +38,7 @@
 </section>
 
 <section>
-  <h2>Supplier Closings</h2>
+  <h2>Proveedor Cierres</h2>
   <div class="button-group">
     <%= link_to "New Supplier Closing", new_closing_supplier_closing_path(@closing), class: "button" %>
   </div>
@@ -49,9 +47,10 @@
       <thead>
         <tr>
           <th>Supplier</th>
-          <th>Supplier Credit</th>
-          <th>Amount Owed To Supplier</th>
-          <th></th>
+          <th>Depositado a Proveedor</th>
+          <th>Total de proveedor</th>
+          
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -69,6 +68,38 @@
     </table>
   <% else %>
     <p>No supplier closings recorded.</p>
+  <% end %>
+</section>
+
+<section>
+  <h2>Transfers del día</h2>
+  <% if @closing_transfers.any? %>
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Código</th>
+          <th>Origen</th>
+          <th>Destino</th>
+          <th>Monto</th>
+          <th>Venta</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @closing_transfers.each do |transfer| %>
+          <tr id="<%= dom_id(transfer) %>">
+            <td><%= l(transfer.occurred_at, format: :short) %></td>
+            <td><%= transfer.code %></td>
+            <td><%= [transfer.from_entity_type, transfer.from_entity_id].join(" ") %></td>
+            <td><%= [transfer.to_entity_type, transfer.to_entity_id].join(" ") %></td>
+            <td><%= number_to_currency(transfer.amount, unit: "$") %></td>
+            <td><%= link_to transfer.sale&.code, transfer.sale if transfer.sale.present? %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No hubo transfers en este día.</p>
   <% end %>
 </section>
 

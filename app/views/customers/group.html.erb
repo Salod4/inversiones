@@ -33,6 +33,11 @@
   </div>
 
   <div class="customer-summary__stat">
+    <p class="label">Transfers recibidos (sin venta)</p>
+    <p class="stat"><%= number_to_currency(@group_total_direct_received || 0, unit: "$") %></p>
+  </div>
+
+  <div class="customer-summary__stat">
     <p class="label">Total cliente</p>
     <p class="stat"><%= number_to_currency(@group_available_balance || 0, unit: "$") %></p>
   </div>
@@ -48,6 +53,7 @@
         <th>Total depositado</th>
         <th>Total después de %s</th>
         <th>Transferido</th>
+        <th>Transfers recibidos</th>
         <th>Saldo disponible</th>
         <th></th>
       </tr>
@@ -60,6 +66,7 @@
           <td><%= number_to_currency(@per_customer_deposit[c.id].to_f, unit: "$") %></td>
           <td><%= number_to_currency(@per_customer_after_pcts[c.id].to_f, unit: "$") %></td>
           <td><%= number_to_currency(@per_customer_transfers[c.id].to_f, unit: "$") %></td>
+          <td><%= number_to_currency(@per_customer_direct_received[c.id].to_f, unit: "$") %></td>
           <td><%= number_to_currency(@per_customer_balances[c.id].to_f, unit: "$") %></td>
           <td><%= link_to "Agregar transfer", new_customer_transfer_path(c), class: "button button--small" %></td>
         </tr>
