@@ -1,22 +1,55 @@
 <h1>Sale <%= @sale.code %></h1>
+<div class="button-group" style="margin-bottom: 1rem;">
+  <a class="button" href="#sale_attachments">Adjuntar archivo</a>
+</div>
 
 <p><strong>Fecha de la venta:</strong> <%= @sale.date %></p>
 <p><strong>Cliente:</strong> <%= @sale.customer&.name %></p>
 <p><strong>Proveedor:</strong> <%= @sale.supplier&.name %></p>
 <p><strong>Cierre:</strong> <%= @sale.closing&.business_date %></p>
-<p><strong>Deposito bruto:</strong> <%= @sale.gross_deposit %></p>
-<p><strong>Deposito - IVA:</strong> <%= @sale.net_base %></p>
+<p><strong>Deposito bruto:</strong> <%= number_to_currency(@sale.gross_deposit, unit: "$") %></p>
+<p><strong>Deposito - IVA:</strong> <%= number_to_currency(@sale.net_base, unit: "$") %></p>
 <p><strong>% Proveedor:</strong> <%= @sale.provider_pct %></p>
 <p><strong>% Cliente:</strong> <%= @sale.customer_fee_pct %></p>
-<p><strong>Comision de proveedor:</strong> <%= @sale.provider_commission %></p>
-<p><strong>Comision de cliente:</strong> <%= @sale.customer_fee %></p>
-<p><strong>Total de SPEI en venta:</strong> <%= @sale.total_transfer_applied %></p>
+<p><strong>Comision de proveedor:</strong> <%= number_to_currency(@sale.provider_commission, unit: "$") %></p>
+<p><strong>Comision de cliente:</strong> <%= number_to_currency(@sale.customer_fee, unit: "$") %></p>
+<p><strong>Total de SPEI en venta:</strong> <%= number_to_currency(@sale.total_transfer_applied, unit: "$") %></p>
 <p><strong>Status:</strong> <%= @sale.status %></p>
 
-<p><strong>Total comision del vendedor:</strong> <%= @sale.total_seller_commission %></p>
-<p><strong>Total despues de %'s: </strong> <%= @sale.net_after_provider_and_sellers %></p>
-<p><strong>Balance despues de SPEI:</strong> <%= @sale.balance_after_transfers %></p>
-<p><strong>Ret Comp:</strong> <%= @sale.ret_comp %></p>
+<p><strong>Total comision del vendedor:</strong> <%= number_to_currency(@sale.total_seller_commission, unit: "$") %></p>
+<p><strong>Total despues de %'s: </strong> <%= number_to_currency(@sale.net_after_provider_and_sellers, unit: "$") %></p>
+<p><strong>Balance despues de SPEI:</strong> <%= number_to_currency(@sale.balance_after_transfers, unit: "$") %></p>
+<p><strong>Ret Comp:</strong> <%= number_to_currency(@sale.ret_comp, unit: "$") %></p>
+
+<section id="sale_attachments">
+  <h2>Adjuntos</h2>
+  <%= form_with url: attach_file_sale_path(@sale), method: :post, local: true, html: { multipart: true, id: "sale_show_attachments_form" } do |f| %>
+    <div class="attachment-dropzone" id="sale_show_dropzone" style="border:1px dashed #ccc; padding:12px; border-radius:6px; margin-bottom:8px;">
+      <p>Arrastra y suelta aquí o haz clic para seleccionar archivos</p>
+      <%= f.file_field :attachments, multiple: true, accept: "image/*,.pdf", id: "sale_show_attachments_input", style: "display:none;" %>
+      <button type="button" class="button button-secondary" id="sale_show_attachments_trigger">Elegir archivos</button>
+      <%= f.submit "Subir", class: "button" %>
+    </div>
+    <ul class="list" id="sale_show_preview"></ul>
+  <% end %>
+
+  <% if @sale.attachments.attached? %>
+    <ul class="list">
+      <% @sale.attachments.each do |att| %>
+        <li style="display:flex; align-items:center; gap:8px;">
+          <% if att.image? %>
+            <%= image_tag att.variant(resize_to_limit: [120, 120]), alt: att.filename.to_s, style: "max-height:120px; max-width:120px;" %>
+          <% end %>
+          <%= link_to att.filename.to_s, rails_blob_path(att, disposition: "attachment"), target: "_blank" %>
+          (<%= number_to_human_size(att.byte_size) %>)
+          <%= button_to "Eliminar", delete_attachment_sale_path(@sale, attachment_id: att.id), method: :delete, data: { turbo_confirm: "¿Eliminar adjunto?" }, class: "button button--small button-danger" %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p>Sin adjuntos.</p>
+  <% end %>
+</section>
 
 <section>
   <h2>Vendedores</h2>
@@ -38,7 +71,7 @@
           <tr>
             <td><%= sales_user_display_name(@sale, sales_user) %></td>
             <td><%= sales_user.commission_pct %></td>
-            <td><%= sales_user.commission_amount %></td>
+            <td><%= number_to_currency(sales_user.commission_amount, unit: "$") %></td>
           </tr>
         <% end %>
       </tbody>
@@ -71,7 +104,7 @@
             <td><%= transfer.code %></td>
             <td><%= transfer.occurred_at %></td>
             <td><%= transfer.supplier&.name %></td>
-            <td><%= transfer.amount %></td>
+            <td><%= number_to_currency(transfer.amount, unit: "$") %></td>
             <td><%= link_to "Ver", transfer_path(transfer), class: "button button-secondary" %></td>
           </tr>
         <% end %>
@@ -81,6 +114,61 @@
     <p>No tiene ningun SPEI registrado.</p>
   <% end %>
 </section>
+
+<script>
+  (() => {
+    const form = document.getElementById("sale_show_attachments_form");
+    const dropzone = document.getElementById("sale_show_dropzone");
+    const input = document.getElementById("sale_show_attachments_input");
+    const trigger = document.getElementById("sale_show_attachments_trigger");
+    const preview = document.getElementById("sale_show_preview");
+    if (!form || !dropzone || !input || !trigger || !preview) return;
+
+    function updatePreview(files) {
+      preview.innerHTML = "";
+      Array.from(files).forEach((file) => {
+        const li = document.createElement("li");
+        if (file.type && file.type.startsWith("image/")) {
+          const img = document.createElement("img");
+          img.style.maxHeight = "150px";
+          img.style.maxWidth = "150px";
+          const reader = new FileReader();
+          reader.onload = (e) => { img.src = e.target.result; };
+          reader.readAsDataURL(file);
+          li.appendChild(img);
+          li.appendChild(document.createTextNode(` ${file.name} (${Math.round(file.size / 1024)} KB)`));
+        } else {
+          li.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+        }
+        preview.appendChild(li);
+      });
+    }
+
+    trigger.addEventListener("click", () => input.click());
+    input.addEventListener("change", (e) => updatePreview(e.target.files));
+
+    ["dragenter", "dragover"].forEach((evt) => {
+      dropzone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.style.borderColor = "#3b82f6";
+      });
+    });
+    ["dragleave", "drop"].forEach((evt) => {
+      dropzone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.style.borderColor = "#ccc";
+      });
+    });
+    dropzone.addEventListener("drop", (e) => {
+      const dt = e.dataTransfer;
+      if (!dt?.files?.length) return;
+      input.files = dt.files;
+      updatePreview(dt.files);
+    });
+  })();
+</script>
 
 <div class="button-group">
   <%= link_to "Edit", edit_sale_path(@sale), class: "button" %>

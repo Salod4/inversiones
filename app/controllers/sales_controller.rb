@@ -1,6 +1,7 @@
 class SalesController < ApplicationController
   before_action :set_sale, only: [ :show, :edit, :update, :destroy ]
   before_action :set_collections, only: [ :new, :create, :edit, :update ]
+  before_action :prepare_sales_users_for_form, only: [ :new, :edit ]
 
   def index
     @pagy, @sales = pagy(Sale.includes(:customer, :supplier).order(date: :desc))
@@ -53,7 +54,7 @@ class SalesController < ApplicationController
     if @sale.save
       redirect_to @sale, notice: "Venta creada."
     else
-      Sales::Prefill.call(@sale) if @sale.customer_id.present? && @sale.supplier_id.present?
+      prepare_sales_users_for_form
       render :new, status: :unprocessable_entity
     end
   end
@@ -62,6 +63,7 @@ class SalesController < ApplicationController
     if @sale.update(sale_params)
       redirect_to @sale, notice: "Sale was successfully updated."
     else
+      prepare_sales_users_for_form
       render :edit, status: :unprocessable_entity
     end
   end
@@ -71,6 +73,37 @@ class SalesController < ApplicationController
       redirect_to sales_url, notice: "Sale was successfully destroyed."
     else
       redirect_to sales_url, alert: @sale.errors.full_messages.to_sentence
+    end
+  end
+
+  def attach_file
+    @sale = Sale.find(params[:id])
+    if params[:attachments].present?
+      @sale.attachments.attach(params[:attachments])
+      redirect_to @sale, notice: "Archivo adjuntado."
+    else
+      redirect_to @sale, alert: "No se seleccionó archivo."
+    end
+  end
+
+  def delete_attachment
+    @sale = Sale.find(params[:id])
+    attachment = @sale.attachments.find_by(id: params[:attachment_id])
+    if attachment
+      attachment.purge
+      redirect_to @sale, notice: "Adjunto eliminado."
+    else
+      redirect_to @sale, alert: "Adjunto no encontrado."
+    end
+  end
+
+  def attach_file
+    @sale = Sale.find(params[:id])
+    if params[:attachments].present?
+      @sale.attachments.attach(params[:attachments])
+      redirect_to @sale, notice: "Archivo adjuntado."
+    else
+      redirect_to @sale, alert: "No se seleccionó archivo."
     end
   end
    def close_today
@@ -104,6 +137,7 @@ class SalesController < ApplicationController
       :provider_pct_override,
       :customer_fee_pct_override,
       :status,
+      attachments: [],
       sales_users_attributes: [
         :id,
         :user_id,
@@ -129,5 +163,10 @@ class SalesController < ApplicationController
     else
       sales_user.user&.name || sales_user.user&.email || "Vendedor"
     end
+  end
+
+  def prepare_sales_users_for_form
+    return unless defined?(@sale) && @sale
+    @sales_users_for_form = @sale.sales_users.order(:id).to_a.uniq { |su| su.user_id }.first(Sale::MAX_SELLERS)
   end
 end

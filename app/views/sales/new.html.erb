@@ -1,6 +1,9 @@
 <h1>New Sale</h1>
 
+<div class="button-group" style="margin-bottom: 1rem;">
+  <%= link_to "Adjuntar archivo", "#sale_attachments", class: "button" %>
+</div>
+
 <%= render "form", sale: @sale %>
 
 <p><%= link_to "Back", sales_path, class: "button button-ghost" %></p>
-
