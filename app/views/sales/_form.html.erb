@@ -52,19 +52,40 @@
     <%= f.select :status, options_for_select([["Open", "open"], ["Closed", "closed"], ["Canceled", "canceled"]], sale.status), include_blank: true %>
   </div>
 
+  <div id="sale_attachments">
+    <%= f.label :attachments, "Adjuntos (imágenes o PDF)" %>
+    <div class="attachment-dropzone" id="sale_attachments_dropzone" style="border:1px dashed #ccc; padding:12px; border-radius:6px; margin-bottom:8px;">
+      <p>Arrastra y suelta aquí o haz clic para seleccionar archivos</p>
+      <%= f.file_field :attachments, multiple: true, accept: "image/*,.pdf", id: "sale_attachments_input", style: "display:none;" %>
+      <button type="button" class="button button-secondary" id="sale_attachments_trigger">Elegir archivos</button>
+    </div>
+    <ul class="list" id="sale_attachments_preview"></ul>
+
+    <% if sale.attachments.attached? %>
+      <ul class="list">
+        <% sale.attachments.each do |att| %>
+          <li style="display:flex; align-items:center; gap:8px;">
+            <% if att.image? %>
+              <%= image_tag att.variant(resize_to_limit: [120, 120]), alt: att.filename.to_s, style: "max-height:120px; max-width:120px;" %>
+            <% end %>
+            <span><%= att.filename.to_s %> (<%= number_to_human_size(att.byte_size) %>)</span>
+            <%= button_to "Eliminar", delete_attachment_sale_path(sale, attachment_id: att.id), method: :delete, data: { turbo_confirm: "¿Eliminar adjunto?" }, class: "button button--small button-danger" %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </div>
+
   <div id="preview_sales_users">
-    <% sale.sales_users.each do |su| %>
+    <% collection = @sales_users_for_form || sale.sales_users %>
+    <%= f.fields_for :sales_users, collection do |su_fields| %>
+      <% su = su_fields.object %>
       <% display_name = sales_user_display_name(sale, su) %>
       <div data-user-id="<%= su.user_id %>">
         <label><%= display_name %> (<%= su.commission_pct %>)</label>
-        <input
-          type="number"
-          step="0.0001"
-          name="sale[sales_users_attributes][][commission_pct_override]"
-          value="<%= su.commission_pct_override %>"
-          placeholder="<%= su.commission_pct %>"
-        >
-        <input type="hidden" name="sale[sales_users_attributes][][user_id]" value="<%= su.user_id %>">
+        <%= su_fields.hidden_field :id %>
+        <%= su_fields.hidden_field :user_id %>
+        <%= su_fields.number_field :commission_pct_override, step: 0.0001, placeholder: su.commission_pct %>
       </div>
     <% end %>
   </div>
@@ -73,3 +94,57 @@
     <%= f.submit %>
   </div>
 <% end %>
+
+<script>
+  (() => {
+    const dropzone = document.getElementById("sale_attachments_dropzone");
+    const input = document.getElementById("sale_attachments_input");
+    const trigger = document.getElementById("sale_attachments_trigger");
+    const preview = document.getElementById("sale_attachments_preview");
+    if (!dropzone || !input || !trigger || !preview) return;
+
+    function updatePreview(files) {
+      preview.innerHTML = "";
+      Array.from(files).forEach((file) => {
+        const li = document.createElement("li");
+        if (file.type && file.type.startsWith("image/")) {
+          const img = document.createElement("img");
+          img.style.maxHeight = "150px";
+          img.style.maxWidth = "150px";
+          const reader = new FileReader();
+          reader.onload = (e) => { img.src = e.target.result; };
+          reader.readAsDataURL(file);
+          li.appendChild(img);
+          li.appendChild(document.createTextNode(` ${file.name} (${Math.round(file.size / 1024)} KB)`));
+        } else {
+          li.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+        }
+        preview.appendChild(li);
+      });
+    }
+
+    trigger.addEventListener("click", () => input.click());
+    input.addEventListener("change", (e) => updatePreview(e.target.files));
+
+    ["dragenter", "dragover"].forEach((evt) => {
+      dropzone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.style.borderColor = "#3b82f6";
+      });
+    });
+    ["dragleave", "drop"].forEach((evt) => {
+      dropzone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.style.borderColor = "#ccc";
+      });
+    });
+    dropzone.addEventListener("drop", (e) => {
+      const dt = e.dataTransfer;
+      if (!dt?.files?.length) return;
+      input.files = dt.files;
+      updatePreview(dt.files);
+    });
+  })();
+</script>

@@ -6,6 +6,7 @@ class Sale < ApplicationRecord
   MAX_SELLERS = 4
 
   before_validation :assign_defaults, on: :create
+  before_validation :enforce_max_sellers
 
   belongs_to :customer
   belongs_to :supplier
@@ -14,6 +15,7 @@ class Sale < ApplicationRecord
   has_many :sales_users, dependent: :destroy
   has_many :users, through: :sales_users
   has_many :transfers, dependent: :restrict_with_error
+  has_many_attached :attachments
 
   scope :for_customer_closing, ->(customer_closing) {
     where(
@@ -50,6 +52,24 @@ class Sale < ApplicationRecord
     active_sales_users = sales_users.reject(&:marked_for_destruction?)
     if active_sales_users.size > MAX_SELLERS
       errors.add(:sales_users, "exceeds the maximum of #{MAX_SELLERS} sellers per sale")
+    end
+  end
+
+  def enforce_max_sellers
+    seen = {}
+    count = 0
+    sales_users.each do |su|
+      uid = su.user_id
+      if uid.nil?
+        su.mark_for_destruction
+        next
+      end
+      if seen[uid] || count >= MAX_SELLERS
+        su.mark_for_destruction
+      else
+        seen[uid] = true
+        count += 1
+      end
     end
   end
 

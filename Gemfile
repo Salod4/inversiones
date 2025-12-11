@@ -18,6 +18,7 @@ gem "stimulus-rails"
 gem "tailwindcss-rails"
 
 gem "tailwindcss-ruby"
+gem "image_processing"
 
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
