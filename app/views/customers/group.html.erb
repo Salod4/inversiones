@@ -1,5 +1,5 @@
 <h1>Grupo <%= @group[:name] %></h1>
-<p><%= pluralize(@display_customers.size, "cliente") %> incluidos<% if @group_search_query.present? %> (filtro: "<%= @group_search_query %>")<% end %>:</p>
+<p><%= pluralize(number_with_delimiter(@display_customers.size), "cliente") %> incluidos<% if @group_search_query.present? %> (filtro: "<%= @group_search_query %>")<% end %>:</p>
 
 <div class="filters">
   <%= form_with url: group_customers_path(name: @group[:name]), method: :get, local: true do %>

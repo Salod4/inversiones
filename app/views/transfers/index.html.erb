@@ -35,7 +35,7 @@
         <td><%= transfer.entity_label(:from) %></td>
         <td><%= transfer.entity_label(:to) %></td>
         <td><%= transfer.sale&.code %></td>
-        <td><%= transfer.amount %></td>
+        <td><%= number_to_currency(transfer.amount, unit: "$") %></td>
         <td>
           <%= link_to "Show", transfer_path(transfer), class: "button button-secondary" %>
         </td>
