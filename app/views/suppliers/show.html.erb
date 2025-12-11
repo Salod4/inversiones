@@ -87,6 +87,8 @@
         <tr>
           <th>Fecha</th>
           <th>Código</th>
+          <th>Origen</th>
+          <th>Destino</th>
           <th>Venta</th>
           <th>Monto</th>
           <th>Nota</th>
@@ -98,6 +100,8 @@
           <tr id="<%= dom_id(transfer) %>">
             <td><%= l(transfer.occurred_at, format: :short) %></td>
             <td><%= transfer.code %></td>
+            <td><%= transfer.entity_label(:from) %></td>
+            <td><%= transfer.entity_label(:to) %></td>
             <td><%= link_to transfer.sale&.code, transfer.sale if transfer.sale.present? %></td>
             <td><%= number_to_currency(transfer.amount, unit: "$") %></td>
             <td><%= transfer.note.presence || "—" %></td>

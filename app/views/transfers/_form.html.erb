@@ -44,25 +44,68 @@
     <p class="hint">Depósito usa el código SPEI actual; Efectivo genera código EFE-ORIG-DEST-fecha.</p>
   </div>
 
-<% options_collection = [] %>
-<% if defined?(@customers)
-     @customers.each do |c|
-       options_collection << [c.name, "Customer:#{c.id}", { "data-entity-type": "Customer", "data-balance": c.available_transfer_total(excluding: transfer).to_f }]
-     end
-   end %>
-<% if defined?(@suppliers)
-     @suppliers.each do |s|
-       options_collection << [s.name, "Supplier:#{s.id}", { "data-entity-type": "Supplier", "data-balance": (@supplier_balances && @supplier_balances[s.id]) || "" }]
-     end
-   end %>
-<% if defined?(@users)
-     @users.each do |u|
-       options_collection << [u.name || u.email, "User:#{u.id}", { "data-entity-type": "User", "data-balance": (@user_balances && @user_balances[u.id]) || "" }]
-     end
-   end %>
+<%
+  grouped_options = {}
+  customer_groups = (defined?(@customer_groups) && @customer_groups.any?) ? @customer_groups : []
+  if customer_groups.any?
+    grouped_options["Grupos"] = customer_groups.map do |group|
+      [
+        "Grupo #{group[:name]} (#{group[:count]})",
+        "CustomerGroup:#{group[:name]}",
+        { "data-entity-type": "CustomerGroup", "data-group": group[:name] }
+      ]
+    end
+  end
 
-<% from_selected = "#{transfer.from_entity_type}:#{transfer.from_entity_id}" if transfer.from_entity_type && transfer.from_entity_id %>
-<% to_selected = "#{transfer.to_entity_type}:#{transfer.to_entity_id}" if transfer.to_entity_type && transfer.to_entity_id %>
+  ungrouped_customers = defined?(@ungrouped_customers) ? @ungrouped_customers : []
+  if ungrouped_customers.any?
+    grouped_options["Clientes sin grupo"] = ungrouped_customers.map do |c|
+      [
+        c.name,
+        "Customer:#{c.id}",
+        {
+          "data-entity-type": "Customer",
+          "data-balance": c.available_transfer_total(excluding: transfer).to_f,
+          "data-group": "Clientes sin grupo"
+        }
+      ]
+    end
+  end
+
+  suppliers = defined?(@suppliers) ? @suppliers : []
+  grouped_options["Proveedores"] = suppliers.map do |s|
+    [
+      s.name,
+      "Supplier:#{s.id}",
+      { "data-entity-type": "Supplier", "data-balance": (@supplier_balances && @supplier_balances[s.id]) || "", "data-group": "Proveedores" }
+    ]
+  end
+
+  users = defined?(@users) ? @users : []
+  grouped_options["Vendedores"] = users.map do |u|
+    [
+      u.name || u.email,
+      "User:#{u.id}",
+      { "data-entity-type": "User", "data-balance": (@user_balances && @user_balances[u.id]) || "", "data-group": "Vendedores" }
+    ]
+  end
+%>
+
+<% if transfer.from_entity_type == "CustomerGroup" %>
+  <% from_selected = "CustomerGroup:#{transfer.from_group}" if transfer.from_group.present? %>
+<% elsif transfer.from_entity_type && transfer.from_entity_id %>
+  <% from_selected = "#{transfer.from_entity_type}:#{transfer.from_entity_id}" %>
+<% end %>
+<% if transfer.to_entity_type == "CustomerGroup" %>
+  <% to_selected = "CustomerGroup:#{transfer.to_group}" if transfer.to_group.present? %>
+<% elsif transfer.to_entity_type && transfer.to_entity_id %>
+  <% to_selected = "#{transfer.to_entity_type}:#{transfer.to_entity_id}" %>
+<% end %>
+
+  <div class="entity-filter">
+    <label for="customer_filter" class="hint">Filtrar clientes (como en la tabla de clientes)</label>
+    <input id="customer_filter" type="text" placeholder="Nombre o código" />
+  </div>
 
   <div class="entity-picker">
     <label>Origen</label>
@@ -74,7 +117,7 @@
         <option value="User">Vendedor</option>
       </select>
       <%= select_tag "transfer[from_entity_ref]",
-                    options_for_select(options_collection, from_selected),
+                    grouped_options_for_select(grouped_options, from_selected),
                     include_blank: "Selecciona origen",
                     id: "from_entity_ref",
                     class: "select entity-options" %>
@@ -92,7 +135,7 @@
         <option value="User">Vendedor</option>
       </select>
       <%= select_tag "transfer[to_entity_ref]",
-                    options_for_select(options_collection, to_selected),
+                    grouped_options_for_select(grouped_options, to_selected),
                     include_blank: "Selecciona destino",
                     id: "to_entity_ref",
                     class: "select entity-options" %>
@@ -128,28 +171,107 @@
 
 <script>
   (() => {
-    function setupEntitySelector(typeSelectId, entitySelectId, balanceHintId) {
+    function setupEntitySelector(typeSelectId, entitySelectId, balanceHintId, customerFilterId) {
       const typeSelect = document.getElementById(typeSelectId);
       const entitySelect = document.getElementById(entitySelectId);
       const hint = document.getElementById(balanceHintId);
+      const customerFilter = document.getElementById(customerFilterId);
       if (!typeSelect || !entitySelect) return;
 
-      const options = Array.from(entitySelect.options);
+      const baseOptions = Array.from(entitySelect.options)
+        .filter((opt) => opt.value)
+        .map((opt) => {
+          const rawValue = opt.value || "";
+          const valueType = rawValue.split(":")[0] || "";
+          return {
+            value: rawValue,
+            text: opt.textContent || "",
+            entityType: opt.dataset.entityType || valueType,
+            balance: opt.dataset.balance,
+            group: opt.dataset.group || "",
+            selected: opt.selected
+          };
+        });
+      const preselected = baseOptions.find((opt) => opt.selected);
+
+      function buildOption(opt) {
+        const clone = document.createElement("option");
+        clone.value = opt.value;
+        clone.textContent = opt.text;
+        clone.dataset.entityType = opt.entityType || "";
+        clone.dataset.balance = opt.balance || "";
+        clone.dataset.group = opt.group || "";
+        return clone;
+      }
 
       function filterOptions() {
-        const type = typeSelect.value;
+      const type = typeSelect.value;
+      const term = type === "Customer"
+        ? (customerFilter?.value || "").trim().toLowerCase()
+        : "";
+        const currentValue = entitySelect.value;
+        const selectedOpt = baseOptions.find((opt) => opt.value === currentValue) || preselected;
         entitySelect.innerHTML = "";
         const placeholder = document.createElement("option");
         placeholder.value = "";
         placeholder.textContent = "Selecciona";
         entitySelect.appendChild(placeholder);
 
-        options.forEach((opt) => {
-          const optType = opt.dataset.entityType;
-          if (!type || optType === type) {
-            entitySelect.appendChild(opt.cloneNode(true));
-          }
+        const matches = baseOptions.filter((opt) => {
+          const matchesType = !type || opt.entityType === type || (type === "Customer" && opt.entityType === "CustomerGroup");
+          const labelText = opt.text.toLowerCase();
+          const groupText = (opt.group || "").toLowerCase();
+          const matchesTerm = !term || labelText.includes(term) || groupText.includes(term);
+          return matchesType && matchesTerm;
         });
+
+        if (type === "Customer" && !term) {
+          const groups = baseOptions.filter((opt) => opt.entityType === "CustomerGroup");
+          if (groups.length) {
+            const og = document.createElement("optgroup");
+            og.label = "Grupos";
+            groups.forEach((opt) => og.appendChild(buildOption(opt)));
+            entitySelect.appendChild(og);
+          }
+
+          const ungrouped = baseOptions.filter((opt) => opt.entityType === "Customer" && !opt.group);
+          if (ungrouped.length) {
+            const og = document.createElement("optgroup");
+            og.label = "Clientes sin grupo";
+            ungrouped.forEach((opt) => {
+              const clone = buildOption(opt);
+              if (selectedOpt && selectedOpt.value === opt.value) clone.selected = true;
+              og.appendChild(clone);
+            });
+            entitySelect.appendChild(og);
+          }
+        } else {
+          const grouped = {};
+          matches.forEach((opt) => {
+            const key = opt.entityType === "CustomerGroup" ? "Grupos" : (opt.entityType === "Customer" ? (opt.group || "Clientes") : (opt.entityType === "Supplier" ? "Proveedores" : "Vendedores"));
+            grouped[key] = grouped[key] || [];
+            grouped[key].push(opt);
+          });
+
+          Object.entries(grouped).forEach(([ groupLabel, opts ]) => {
+            const og = document.createElement("optgroup");
+            og.label = groupLabel;
+            opts.forEach((opt) => og.appendChild(buildOption(opt)));
+            entitySelect.appendChild(og);
+          });
+        }
+
+        if (currentValue) {
+          const toSelect = Array.from(entitySelect.options).find((opt) => opt.value === currentValue);
+          if (toSelect) toSelect.selected = true;
+        }
+        if (!entitySelect.selectedIndex && entitySelect.options.length === 1) {
+          const noResults = document.createElement("option");
+          noResults.value = "";
+          noResults.textContent = "Sin resultados";
+          noResults.disabled = true;
+          entitySelect.appendChild(noResults);
+        }
         updateHint();
       }
 
@@ -167,19 +289,27 @@
         }
       }
 
-      typeSelect.addEventListener("change", filterOptions);
+      if (preselected && !typeSelect.value && preselected.entityType) {
+        typeSelect.value = preselected.entityType === "CustomerGroup" ? "Customer" : preselected.entityType;
+      }
+
+      typeSelect.addEventListener("change", () => {
+        if (typeSelect.value === "Customer" && customerFilter) customerFilter.value = "";
+        filterOptions();
+      });
       entitySelect.addEventListener("change", updateHint);
+      customerFilter?.addEventListener("input", filterOptions);
 
       filterOptions();
     }
 
     document.addEventListener("turbo:load", () => {
-      setupEntitySelector("from_type", "from_entity_ref", "from_balance_hint");
-      setupEntitySelector("to_type", "to_entity_ref", "to_balance_hint");
+      setupEntitySelector("from_type", "from_entity_ref", "from_balance_hint", "customer_filter");
+      setupEntitySelector("to_type", "to_entity_ref", "to_balance_hint", "customer_filter");
     });
     document.addEventListener("DOMContentLoaded", () => {
-      setupEntitySelector("from_type", "from_entity_ref", "from_balance_hint");
-      setupEntitySelector("to_type", "to_entity_ref", "to_balance_hint");
+      setupEntitySelector("from_type", "from_entity_ref", "from_balance_hint", "customer_filter");
+      setupEntitySelector("to_type", "to_entity_ref", "to_balance_hint", "customer_filter");
     });
   })();
 </script>
