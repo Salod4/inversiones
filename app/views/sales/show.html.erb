@@ -7,14 +7,10 @@
 <p><strong>Cliente:</strong> <%= @sale.customer&.name %></p>
 <p><strong>Proveedor:</strong> <%= @sale.supplier&.name %></p>
 <p><strong>Cierre:</strong> <%= @sale.closing&.business_date %></p>
-<p><strong>Deposito bruto:</strong> <%= number_to_currency(@sale.gross_deposit, unit: "$") %></p>
-<p><strong>Deposito - IVA:</strong> <%= number_to_currency(@sale.net_base, unit: "$") %></p>
-<p><strong>% Proveedor:</strong> <%= @sale.provider_pct %></p>
-<p><strong>% Cliente:</strong> <%= @sale.customer_fee_pct %></p>
-<p><strong>Comision de proveedor:</strong> <%= number_to_currency(@sale.provider_commission, unit: "$") %></p>
-<p><strong>Comision de cliente:</strong> <%= number_to_currency(@sale.customer_fee, unit: "$") %></p>
-<p><strong>Total de SPEI en venta:</strong> <%= number_to_currency(@sale.total_transfer_applied, unit: "$") %></p>
-<p><strong>Status:</strong> <%= @sale.status %></p>
+<p><strong>Deposito bruto:</strong> <%= @sale.gross_deposit %></p>
+
+<p><strong>Total de SPEI en venta:</strong> <%= @sale.total_transfer_applied %></p>
+
 
 <p><strong>Total comision del vendedor:</strong> <%= number_to_currency(@sale.total_seller_commission, unit: "$") %></p>
 <p><strong>Total despues de %'s: </strong> <%= number_to_currency(@sale.net_after_provider_and_sellers, unit: "$") %></p>
