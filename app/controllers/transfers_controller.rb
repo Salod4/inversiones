@@ -79,6 +79,9 @@ class TransfersController < ApplicationController
     supplier = current_sale&.supplier || @transfer&.supplier
     @suppliers = supplier ? [ supplier ] : Supplier.order(:name)
     @customers = Customer.order(:name)
+    @customer_groups = CustomerGroups.build(@customers)
+    grouped_ids = @customer_groups.flat_map { |g| g[:customers].map(&:id) }
+    @ungrouped_customers = @customers.reject { |c| grouped_ids.include?(c.id) }
     @users = User.order(:name)
     @supplier_balances = supplier_balances_for(@suppliers)
     @user_balances = {}
@@ -98,15 +101,29 @@ class TransfersController < ApplicationController
   end
 
   def assign_entities_from_params(transfer)
-    from_ref = transfer_params[:from_entity_ref]
-    to_ref = transfer_params[:to_entity_ref]
-    transfer.from_entity = resolve_entity_ref(from_ref) if from_ref.present?
-    transfer.to_entity = resolve_entity_ref(to_ref) if to_ref.present?
+    apply_ref_to_transfer(transfer, :from, transfer_params[:from_entity_ref])
+    apply_ref_to_transfer(transfer, :to, transfer_params[:to_entity_ref])
   end
 
-  def resolve_entity_ref(ref)
-    type, id = ref.to_s.split(":")
-    return nil unless Transfer::ALLOWED_ENTITY_TYPES.include?(type) && id.present?
+  def apply_ref_to_transfer(transfer, prefix, ref)
+    return if ref.blank?
+    type, token = ref.to_s.split(":", 2)
+    return unless Transfer::ALLOWED_ENTITY_TYPES.include?(type)
+
+    if type == "CustomerGroup"
+      transfer.send("#{prefix}_entity_type=", "CustomerGroup")
+      transfer.send("#{prefix}_entity_id=", nil)
+      transfer.send("#{prefix}_group=", token)
+      return
+    end
+
+    entity = resolve_entity_ref(type, token)
+    transfer.send("#{prefix}_group=", nil)
+    transfer.send("#{prefix}_entity=", entity) if entity
+  end
+
+  def resolve_entity_ref(type, id)
+    return nil unless id.present?
     case type
     when "Customer" then Customer.find_by(id: id)
     when "Supplier" then Supplier.find_by(id: id)

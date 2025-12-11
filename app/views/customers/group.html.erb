@@ -33,8 +33,8 @@
   </div>
 
   <div class="customer-summary__stat">
-    <p class="label">Transfers recibidos (sin venta)</p>
-    <p class="stat"><%= number_to_currency(@group_total_direct_received || 0, unit: "$") %></p>
+    <p class="label">Transfers recibidos </p>
+    <p class="stat"><%= number_to_currency(@group_total_received || 0, unit: "$") %></p>
   </div>
 
   <div class="customer-summary__stat">
@@ -73,6 +73,41 @@
       <% end %>
     </tbody>
   </table>
+</section>
+
+<section class="card">
+  <h2>Transfers del grupo</h2>
+  <% if @group_transfers.any? %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Código</th>
+          <th>Origen</th>
+          <th>Destino</th>
+          <th>Monto</th>
+          <th>Venta</th>
+          <th>Nota</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @group_transfers.each do |t| %>
+          <% labels = @group_transfer_labels[t] || {} %>
+          <tr id="<%= dom_id(t) %>">
+            <td><%= l(t.occurred_at, format: :short) %></td>
+            <td><%= t.code %></td>
+            <td><%= labels[:from] %></td>
+            <td><%= labels[:to] %></td>
+            <td><%= number_to_currency(t.amount, unit: "$") %></td>
+            <td><%= link_to t.sale&.code, t.sale if t.sale.present? %></td>
+            <td><%= t.note %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No hay transfers para este grupo.</p>
+  <% end %>
 </section>
 
 <section class="card">
