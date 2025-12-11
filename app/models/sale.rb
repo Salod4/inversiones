@@ -50,8 +50,7 @@ class Sale < ApplicationRecord
   before_validation :enforce_max_sellers
 
   def seller_limit
-    active_sales_users = sales_users.reject(&:marked_for_destruction?)
-    unique_count = active_sales_users.map(&:user_id).compact.uniq.size
+    unique_count = sales_users.map(&:user_id).compact.uniq.size
     if unique_count > MAX_SELLERS
       errors.add(:sales_users, "exceeds the maximum of #{MAX_SELLERS} sellers per sale")
     end
@@ -59,14 +58,12 @@ class Sale < ApplicationRecord
 
   def enforce_max_sellers
     seen = {}
-    count = 0
     sales_users.each do |su|
       uid = su.user_id
-      if uid.nil? || seen[uid] || count >= MAX_SELLERS
+      if uid.nil? || seen[uid]
         su.mark_for_destruction
       else
         seen[uid] = true
-        count += 1
       end
     end
   end
