@@ -390,6 +390,7 @@ DEPENDENCIES
   image_processing
   importmap-rails
   kamal
+  mini_magick
   minitest-reporters
   pagy (~> 6.4)
   pg (~> 1.1)

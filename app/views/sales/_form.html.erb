@@ -21,10 +21,25 @@
     <%= f.label :supplier_id, "Proveedor" %>
     <%= f.collection_select :supplier_id, @suppliers || Supplier.order(:name), :id, :name, {}, { id: "sale_supplier_id" } %>
   </div>
-  
+
   <div>
     <%= f.label :customer_id, "Cliente" %>
-    <%= f.collection_select :customer_id, @customers || Customer.order(:name), :id, :name, {}, { id: "sale_customer_id" } %>
+
+    <div>
+      <label for="sale_customer_search">Buscar cliente</label>
+      <input
+        type="text"
+        id="sale_customer_search"
+        placeholder="Escribe para filtrar clientes..."
+        autocomplete="off"
+        class="form-control"
+        data-customers='<%= raw(@customers.select(:id, :code, :name).map { |c| { id: c.id, code: c.code, name: c.name } }.to_json) %>'
+      >
+    </div>
+
+    <%= f.hidden_field :customer_id, id: "sale_customer_id" %>
+
+    <div id="sale_customer_results" class="customer-results"></div>
   </div>
 
 
