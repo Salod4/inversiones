@@ -46,8 +46,13 @@ class CustomersController < ApplicationController
       to_entity_type: "Customer"
     ).group(:customer_id).sum(:amount)
 
-    @group_total_direct_received = direct_received.values.sum.to_d
-    @group_available_balance = @group_total_after_pcts - @group_total_transferred - @group_total_direct_received
+    direct_to_customers = direct_received.values.sum.to_d
+    direct_to_group = Transfer.where(
+      to_entity_type: "CustomerGroup"
+    ).where("lower(to_group) = ?", @group[:name].downcase).sum(:amount).to_d
+
+    @group_total_received = direct_to_customers + direct_to_group
+    @group_available_balance = @group_total_after_pcts - @group_total_transferred - @group_total_received
 
     @per_customer_deposit = Hash.new(0)
     @per_customer_after_pcts = Hash.new(0)
@@ -68,6 +73,14 @@ class CustomersController < ApplicationController
     end
 
     @sales = sales_scope.order(date: :desc).limit(50)
+
+    @group_transfers = transfers_for_group(@group[:name])
+    @group_transfer_labels = @group_transfers.index_with do |t|
+      {
+        from: entity_label_for(t, :from),
+        to: entity_label_for(t, :to)
+      }
+    end
   end
 
   def show
@@ -135,5 +148,32 @@ class CustomersController < ApplicationController
 
   def customer_params
     params.require(:customer).permit(:code, :name, :default_customer_fee_pct)
+  end
+
+  def transfers_for_group(group_name)
+    return Transfer.none if group_name.blank?
+    target = group_name.to_s.downcase
+    Transfer
+      .where(
+        "(to_entity_type = ? AND lower(to_group) = ?) OR (from_entity_type = ? AND lower(from_group) = ?)",
+        "CustomerGroup", target, "CustomerGroup", target
+      )
+      .order(occurred_at: :desc)
+  end
+
+  def entity_label_for(transfer, side)
+    type = transfer.send("#{side}_entity_type")
+    return "" if type.blank?
+
+    case type
+    when "CustomerGroup"
+      "Grupo #{transfer.send("#{side}_group")}"
+    when "Customer", "Supplier", "User"
+      entity = transfer.send("#{side}_entity")
+      name = entity&.name || entity&.email || entity&.code
+      name.presence || "#{type} ##{transfer.send("#{side}_entity_id")}"
+    else
+      "#{type} #{transfer.send("#{side}_entity_id")}"
+    end
   end
 end

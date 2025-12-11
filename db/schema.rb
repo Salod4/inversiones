@@ -149,10 +149,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_08_021000) do
     t.datetime "updated_at", null: false
     t.bigint "customer_id"
     t.string "from_entity_type", null: false
-    t.bigint "from_entity_id", null: false
+    t.bigint "from_entity_id"
     t.string "to_entity_type", null: false
-    t.bigint "to_entity_id", null: false
+    t.bigint "to_entity_id"
     t.string "payment_method", default: "deposito", null: false
+    t.string "from_group"
+    t.string "to_group"
     t.index ["code"], name: "index_transfers_on_code", unique: true
     t.index ["customer_id"], name: "index_transfers_on_customer_id"
     t.index ["from_entity_type", "from_entity_id"], name: "index_transfers_on_from_entity"

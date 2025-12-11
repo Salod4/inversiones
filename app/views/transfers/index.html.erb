@@ -20,8 +20,8 @@
     <tr>
       <th>Code</th>
       <th>Occurred At</th>
-      <th>Supplier</th>
-      <th>Customer</th>
+      <th>Origen</th>
+      <th>Destino</th>
       <th>Sale</th>
       <th>Amount</th>
       <th></th>
@@ -32,8 +32,8 @@
       <tr>
         <td><%= transfer.code %></td>
         <td><%= transfer.occurred_at %></td>
-        <td><%= transfer.supplier&.name %></td>
-        <td><%= transfer.customer&.name %></td>
+        <td><%= transfer.entity_label(:from) %></td>
+        <td><%= transfer.entity_label(:to) %></td>
         <td><%= transfer.sale&.code %></td>
         <td><%= transfer.amount %></td>
         <td>
