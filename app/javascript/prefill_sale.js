@@ -46,5 +46,77 @@ function initSalePrefill() {
   fetchPrefill();
 }
 
-document.addEventListener("turbo:load", initSalePrefill);
-document.addEventListener("DOMContentLoaded", initSalePrefill);
+function initCustomerSearch() {
+  const searchInput = document.getElementById("sale_customer_search");
+  const hiddenId    = document.getElementById("sale_customer_id");
+  const resultsBox  = document.getElementById("sale_customer_results");
+
+  if (!searchInput || !hiddenId || !resultsBox) return;
+  if (searchInput.dataset.customerSearchBound) return;
+  searchInput.dataset.customerSearchBound = "true";
+
+  let customers = [];
+  try {
+    customers = JSON.parse(searchInput.dataset.customers || "[]");
+  } catch (e) {
+    console.error("Error parsing customers data", e);
+    return;
+  }
+
+  const clearResults = () => {
+    resultsBox.innerHTML = "";
+  };
+
+  const renderResults = (matches) => {
+    clearResults();
+    if (matches.length === 0) return;
+
+    matches.forEach((c) => {
+      const item = document.createElement("div");
+      item.className = "customer-result-item";
+      item.textContent = `${c.code} - ${c.name}`;
+
+      item.addEventListener("click", () => {
+        searchInput.value = `${c.code} - ${c.name}`;
+        hiddenId.value = c.id;
+        clearResults();
+
+        const evt = new Event("change", { bubbles: true });
+        hiddenId.dispatchEvent(evt);
+      });
+
+      resultsBox.appendChild(item);
+    });
+  };
+
+  searchInput.addEventListener("input", () => {
+    const term = searchInput.value.toLowerCase().trim();
+    hiddenId.value = "";
+    if (!term) {
+      clearResults();
+      return;
+    }
+
+    const matches = customers
+      .filter((c) => `${c.code} - ${c.name}`.toLowerCase().includes(term))
+      .slice(0, 20);
+
+    renderResults(matches);
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!resultsBox.contains(e.target) && e.target !== searchInput) {
+      clearResults();
+    }
+  });
+}
+
+document.addEventListener("turbo:load", () => {
+  initSalePrefill();
+  initCustomerSearch();
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  initSalePrefill();
+  initCustomerSearch();
+});
