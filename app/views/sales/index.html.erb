@@ -37,12 +37,12 @@
         <td><%= sale.date %></td>
         <td><%= sale.customer&.name %></td>
         <td><%= sale.supplier&.name %></td>
-        <td><%= sale.gross_deposit %></td>
-        <td><%= sale.provider_commission %></td>
-        <td><%= sale.total_transfer_applied %></td>
-        <td><%= sale.working_capital %></td>
-        <td><%= sale.customer_balance %></td>
-        <td><%= sale.ret_comp %></td>
+        <td><%= number_to_currency(sale.gross_deposit, unit: "$") %></td>
+        <td><%= number_to_currency(sale.provider_commission, unit: "$") %></td>
+        <td><%= number_to_currency(sale.total_transfer_applied, unit: "$") %></td>
+        <td><%= number_to_currency(sale.working_capital, unit: "$") %></td>
+        <td><%= number_to_currency(sale.customer_balance, unit: "$") %></td>
+        <td><%= number_to_currency(sale.ret_comp, unit: "$") %></td>
         <td><%= sale.status %></td>
         
         <td>

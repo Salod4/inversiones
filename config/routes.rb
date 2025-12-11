@@ -18,6 +18,8 @@ Rails.application.routes.draw do
     collection do
       post :close_today # /sales/close_today
     end
+    post :attach_file, on: :member
+    delete :delete_attachment, on: :member
   end
 
   resources :sales_users, only: [ :index ]

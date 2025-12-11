@@ -9,7 +9,7 @@
 <% end %>
 <p><strong>Occurred At:</strong> <%= @transfer.occurred_at %></p>
 <p><strong>Supplier:</strong> <%= @transfer.supplier&.name %></p>
-<p><strong>Amount:</strong> <%= @transfer.amount %></p>
+<p><strong>Amount:</strong> <%= number_to_currency(@transfer.amount, unit: "$") %></p>
 <p><strong>Note:</strong> <%= @transfer.note %></p>
 
 <div class="button-group">
