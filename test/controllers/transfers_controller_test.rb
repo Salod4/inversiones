@@ -2,6 +2,9 @@ require "test_helper"
 
 class TransfersControllerTest < ActionDispatch::IntegrationTest
   setup do
+    @user = users(:jack)
+    sign_in @user
+
     customer = Customer.create!(code: "CUST1", name: "Customer One")
     @supplier = Supplier.create!(code: "SUP1", name: "Supplier One")
     @sale = Sale.create!(
