@@ -15,6 +15,12 @@
   </div>
 
   <div class="customer-summary__stat">
+    <p class="label">Saldo inicial</p>
+    <p class="stat"><%= number_to_currency(@customer_opening_balance || 0, unit: "$") %></p>
+    <p class="hint">Saldo de arranque cargado por kickoff.</p>
+  </div>
+
+  <div class="customer-summary__stat">
     <p class="label">Transferencias</p>
     <p class="stat"><%= number_to_currency(@customer_total_transferred || 0, unit: "$") %></p>
     <p class="hint">Total enviado mediante SPEI.</p>

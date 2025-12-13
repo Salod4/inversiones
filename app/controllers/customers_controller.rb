@@ -40,6 +40,7 @@ class CustomersController < ApplicationController
     @group_total_deposit = base_sales_scope.sum(:gross_deposit).to_d
     @group_total_after_pcts = sales_scope.sum { |s| s.net_after_provider_and_sellers.to_d }
     @group_total_transferred = sales_scope.sum { |s| s.total_transfer_applied.to_d }
+    @group_opening_balance = OpeningBalance.total_for_group(@group[:name])
     direct_received = Transfer.where(
       customer_id: filtered_customer_ids,
       sale_id: nil,
@@ -52,7 +53,7 @@ class CustomersController < ApplicationController
     ).where("lower(to_group) = ?", @group[:name].downcase).sum(:amount).to_d
 
     @group_total_received = direct_to_customers + direct_to_group
-    @group_available_balance = @group_total_after_pcts - @group_total_transferred - @group_total_received
+    @group_available_balance = @group_total_after_pcts + @group_opening_balance - @group_total_transferred - @group_total_received
 
     @per_customer_deposit = Hash.new(0)
     @per_customer_after_pcts = Hash.new(0)
@@ -64,12 +65,13 @@ class CustomersController < ApplicationController
       gross_total = sales.sum { |s| s.gross_deposit.to_d }
       net_total = sales.sum { |s| s.net_after_provider_and_sellers.to_d }
       transfers_total = sales.sum { |s| s.total_transfer_applied.to_d }
+      opening = OpeningBalance.total_for_customer(cid)
       @per_customer_deposit[cid] = gross_total
       @per_customer_after_pcts[cid] = net_total
       @per_customer_transfers[cid] = transfers_total
       direct = direct_received[cid].to_d
       @per_customer_direct_received[cid] = direct
-      @per_customer_balances[cid] = net_total - transfers_total - direct
+      @per_customer_balances[cid] = net_total + opening - transfers_total - direct
     end
 
     @sales = sales_scope.order(date: :desc).limit(50)
@@ -93,6 +95,7 @@ class CustomersController < ApplicationController
     @customer_total_deposit = base_sales_scope.sum(:gross_deposit).to_d
     @customer_total_after_pcts = sales_scope.sum { |s| s.net_after_provider_and_sellers.to_d }
     @customer_total_transferred = sales_scope.sum { |s| s.total_transfer_applied.to_d }
+    @customer_opening_balance = OpeningBalance.total_for_customer(@customer.id)
 
     # Transfers recibidos directamente (sin venta) que reducen lo adeudado
     @customer_direct_received = Transfer.where(
@@ -101,7 +104,7 @@ class CustomersController < ApplicationController
       to_entity_type: "Customer"
     ).sum(:amount).to_d
 
-    @customer_available_balance = @customer_total_after_pcts - @customer_total_transferred - @customer_direct_received
+    @customer_available_balance = @customer_total_after_pcts + @customer_opening_balance - @customer_total_transferred - @customer_direct_received
 
     @customer_transfers = Transfer
                             .includes(:supplier, :sale)

@@ -16,7 +16,7 @@ class Customer < ApplicationRecord
   end
 
   def total_customer_balance
-    sales.sum(:customer_balance).to_d
+    sales.sum(:customer_balance).to_d + OpeningBalance.total_for_customer(id)
   end
 
   def available_transfer_total(excluding: nil)

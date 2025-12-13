@@ -1,4 +1,5 @@
 class TransfersController < ApplicationController
+  include TransferParamHelpers
   before_action :set_transfer, only: [ :show, :edit, :update, :destroy ]
   before_action :set_sale, only: [ :index, :new, :create ]
   before_action :set_entities, only: [ :new, :create, :edit, :update ]
@@ -24,33 +25,52 @@ class TransfersController < ApplicationController
     else
       @transfer = Transfer.new
     end
+    @destination_entries = prefill_destination_entries(@transfer)
   end
 
   def edit
     @sale = @transfer.sale
+    @destination_entries = prefill_destination_entries(@transfer)
   end
 
   def create
-    @transfer = (@sale ? @sale.transfers.build : Transfer.new)
-    assign_entities_from_params(@transfer)
-    @transfer.assign_attributes(transfer_params.except(:from_entity_ref, :to_entity_ref))
-    if @sale
-      @transfer.customer ||= @sale.customer
-      @transfer.supplier ||= @sale.supplier
-    end
-    if @transfer.save
-      redirect_to(@sale ? sale_transfers_path(@sale) : transfers_path, notice: "Transfer was successfully created.")
-    else
+    base_attrs = transfer_params.except(:from_entity_ref, :to_entity_ref, :destination_entries, :amount)
+    @destination_entries = destination_entries_from_params(transfer_params)
+    from_ref = transfer_params[:from_entity_ref].presence
+    from_ref ||= "Customer:#{@sale.customer_id}" if @sale&.customer_id
+    builder = -> { build_transfer_with_base(base_attrs, from_ref) }
+    created, error_transfer = persist_destination_batch(
+      base_attrs: base_attrs,
+      destination_entries: @destination_entries,
+      from_ref: from_ref,
+      sale: @sale,
+      builder: builder
+    )
+
+    if error_transfer
+      @transfer = error_transfer
       render :new, status: :unprocessable_entity
+    else
+      @transfer = created.first
+      notice = created.size > 1 ? "Transfers creados correctamente." : "Transfer was successfully created."
+      redirect_to(@sale ? sale_transfers_path(@sale) : transfers_path, notice: notice)
     end
   end
 
   def update
     @sale = @transfer.sale
-    assign_entities_from_params(@transfer)
-    if @transfer.update(transfer_params.except(:from_entity_ref, :to_entity_ref))
+    base_attrs = transfer_params.except(:from_entity_ref, :to_entity_ref, :destination_entries, :amount)
+    @destination_entries = destination_entries_from_params(transfer_params)
+    from_ref = transfer_params[:from_entity_ref].presence || entity_ref_for(@transfer, :from)
+    to_ref = @destination_entries.first&.dig(:to_entity_ref).presence || transfer_params[:to_entity_ref].presence || entity_ref_for(@transfer, :to)
+    amount_value = @destination_entries.first&.dig(:amount) || transfer_params[:amount] || @transfer.amount
+
+    assign_entities_from_refs(@transfer, from_ref: from_ref, to_ref: to_ref)
+
+    if @transfer.update(base_attrs.merge(amount: amount_value))
       redirect_to transfer_path(@transfer), notice: "Transfer was successfully updated."
     else
+      @destination_entries = @destination_entries.presence || prefill_destination_entries(@transfer)
       render :edit, status: :unprocessable_entity
     end
   end
@@ -96,39 +116,20 @@ class TransfersController < ApplicationController
       :note,
       :payment_method,
       :from_entity_ref,
-      :to_entity_ref
+      :to_entity_ref,
+      destination_entries: [ :to_entity_ref, :amount ]
     )
   end
 
-  def assign_entities_from_params(transfer)
-    apply_ref_to_transfer(transfer, :from, transfer_params[:from_entity_ref])
-    apply_ref_to_transfer(transfer, :to, transfer_params[:to_entity_ref])
-  end
-
-  def apply_ref_to_transfer(transfer, prefix, ref)
-    return if ref.blank?
-    type, token = ref.to_s.split(":", 2)
-    return unless Transfer::ALLOWED_ENTITY_TYPES.include?(type)
-
-    if type == "CustomerGroup"
-      transfer.send("#{prefix}_entity_type=", "CustomerGroup")
-      transfer.send("#{prefix}_entity_id=", nil)
-      transfer.send("#{prefix}_group=", token)
-      return
+  def build_transfer_with_base(base_attrs, from_ref)
+    transfer = (@sale ? @sale.transfers.build : Transfer.new)
+    transfer.assign_attributes(base_attrs)
+    assign_entities_from_refs(transfer, from_ref: from_ref, to_ref: nil)
+    if @sale
+      transfer.customer ||= @sale.customer
+      transfer.supplier ||= @sale.supplier
     end
-
-    entity = resolve_entity_ref(type, token)
-    transfer.send("#{prefix}_group=", nil)
-    transfer.send("#{prefix}_entity=", entity) if entity
-  end
-
-  def resolve_entity_ref(type, id)
-    return nil unless id.present?
-    case type
-    when "Customer" then Customer.find_by(id: id)
-    when "Supplier" then Supplier.find_by(id: id)
-    when "User" then User.find_by(id: id)
-    end
+    transfer
   end
 
   def supplier_balances_for(suppliers)
