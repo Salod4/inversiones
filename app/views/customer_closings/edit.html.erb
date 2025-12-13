@@ -1,5 +1,36 @@
-<h1>Edit Customer Closing</h1>
+<h1>Editar cierre de cliente</h1>
 
-<%= render "form" %>
+<p>
+  <strong>Fecha:</strong> <%= @closing.business_date %><br>
+  <strong>Cliente:</strong> <%= @customer_closing.customer.name %>
+  </p>
 
-<p><%= link_to "Back", closing_customer_closing_path(@closing, @customer_closing), class: "button button-ghost" %></p>
+<%= form_with(model: [@closing, @customer_closing]) do |f| %>
+  <% if @customer_closing.errors.any? %>
+    <div class="errors">
+      <h2><%= pluralize(@customer_closing.errors.count, "error") %> impidieron guardar:</h2>
+      <ul>
+        <% @customer_closing.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= f.label :customer_balance, "Saldo del cliente" %>
+    <%= f.number_field :customer_balance, step: 0.01 %>
+  </div>
+
+  <div>
+    <%= f.label :receivables, "Por cobrar (receivables)" %>
+    <%= f.number_field :receivables, step: 0.01 %>
+  </div>
+
+  <div class="button-group">
+    <%= f.submit "Guardar cambios", class: "button" %>
+    <%= link_to "Cancelar",
+                closing_customer_closing_path(@closing, @customer_closing),
+                class: "button button-ghost" %>
+  </div>
+<% end %>

@@ -1,0 +1,34 @@
+<h1>Grupo <%= @group_name %> – Cierre de <%= @closing.business_date %></h1>
+
+<p>
+  <strong>Total del grupo:</strong>
+  <%= number_to_currency(@group_total, unit: "$") %>
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Cliente</th>
+      <th>Saldo</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @customer_closings.each do |cc| %>
+      <tr>
+        <td><%= cc.customer.name %></td>
+        <td><%= number_to_currency(cc.customer_balance, unit: "$") %></td>
+        <td>
+          <%= link_to "Ver cierre", closing_customer_closing_path(@closing, cc),
+                      class: "button button-secondary" %>
+          <%= link_to "Editar", edit_closing_customer_closing_path(@closing, cc),
+                      class: "button button-ghost" %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<div class="button-group">
+  <%= link_to "Regresar al cierre", closing_path(@closing), class: "button button-ghost" %>
+</div>

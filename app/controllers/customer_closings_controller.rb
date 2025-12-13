@@ -1,49 +1,37 @@
 class CustomerClosingsController < ApplicationController
-  before_action :set_closing, except: :show
-  before_action :set_customer_closing, only: [ :edit, :update, :destroy ]
-  before_action :set_customers, only: [ :new, :create, :edit, :update ]
+  before_action :set_closing
+  before_action :set_customer_closing, only: [ :show, :edit, :update ]
 
   def index
-    @pagy, @customer_closings = pagy(@closing.customer_closings.includes(:customer))
+    @customer_closings = @closing.customer_closings.includes(:customer)
   end
 
   def show
-    @customer_closing = CustomerClosing
-      .includes(:closing, :customer)
-      .find(params[:id])
-
     @sales  = @customer_closing.sales_for_closing
     @totals = @customer_closing.totals
   end
+   def group
+    @group_name = params[:name]
 
-  def new
-    @customer_closing = @closing.customer_closings.build
+    # Regla de negocio: grupos por prefijo (coincide con las seeds)
+    @customers = Customer.where("name LIKE ?", "#{@group_name}%")
+
+    @customer_closings = CustomerClosing
+      .where(closing: @closing, customer: @customers)
+      .includes(:customer)
+      .order("customer_closings.customer_balance DESC")
+
+    @group_total = @customer_closings.sum(:customer_balance)
   end
 
   def edit; end
 
-  def create
-    @customer_closing = @closing.customer_closings.build(customer_closing_params)
-    if @customer_closing.save
-      redirect_to closing_path(@closing), notice: "Customer closing was successfully created."
-    else
-      render :new, status: :unprocessable_entity
-    end
-  end
-
   def update
     if @customer_closing.update(customer_closing_params)
-      redirect_to closing_path(@closing), notice: "Customer closing was successfully updated."
+      redirect_to closing_customer_closing_path(@closing, @customer_closing),
+                  notice: "Cierre de cliente actualizado correctamente."
     else
       render :edit, status: :unprocessable_entity
-    end
-  end
-
-  def destroy
-    if @customer_closing.destroy
-      redirect_to closing_path(@closing), notice: "Customer closing was successfully destroyed."
-    else
-      redirect_to closing_path(@closing), alert: @customer_closing.errors.full_messages.to_sentence
     end
   end
 
@@ -57,11 +45,7 @@ class CustomerClosingsController < ApplicationController
     @customer_closing = @closing.customer_closings.find(params[:id])
   end
 
-  def set_customers
-    @customers = Customer.order(:name)
-  end
-
   def customer_closing_params
-    params.require(:customer_closing).permit(:customer_id, :customer_balance, :receivables)
+    params.require(:customer_closing).permit(:customer_balance, :receivables)
   end
 end
