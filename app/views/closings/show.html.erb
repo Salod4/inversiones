@@ -8,12 +8,14 @@
 
 <section>
   <h2>Customer Closings</h2>
+
   <% if @customer_group_totals.present? %>
     <table>
       <thead>
         <tr>
           <th>Grupo</th>
           <th>Customer Balance</th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -21,13 +23,30 @@
           <tr>
             <td><%= row[:name] %></td>
             <td><%= number_to_currency(row[:balance], unit: "$") %></td>
+            <td>
+               <%= link_to "Ver grupo",
+                    group_closing_customer_closings_path(@closing, name: row[:name]),
+                    class: "button button-secondary" %>
+            </td>
           </tr>
         <% end %>
         <% @customer_ungrouped.each do |customer_id, balance| %>
-          <% customer_name = Customer.find_by(id: customer_id)&.name || "Cliente ##{customer_id}" %>
+          <% customer = Customer.find_by(id: customer_id) %>
+          <% customer_name = customer&.name || "Cliente ##{customer_id}" %>
+          <% customer_closing = CustomerClosing.find_by(closing_id: @closing.id, customer_id: customer_id) %>
           <tr>
             <td><%= customer_name %></td>
             <td><%= number_to_currency(balance, unit: "$") %></td>
+            <td>
+              <% if customer_closing.present? %>
+                <%= link_to "Ver cierre",
+                            closing_customer_closing_path(@closing, customer_closing),
+                            class: "button button-secondary" %>
+                <%= link_to "Editar",
+                            edit_closing_customer_closing_path(@closing, customer_closing),
+                            class: "button button-ghost" %>
+              <% end %>
+            </td>
           </tr>
         <% end %>
       </tbody>
@@ -39,9 +58,7 @@
 
 <section>
   <h2>Proveedor Cierres</h2>
-  <div class="button-group">
-    <%= link_to "New Supplier Closing", new_closing_supplier_closing_path(@closing), class: "button" %>
-  </div>
+
   <% if @supplier_closings.any? %>
     <table>
       <thead>
@@ -49,7 +66,7 @@
           <th>Supplier</th>
           <th>Depositado a Proveedor</th>
           <th>Total de proveedor</th>
-          
+
           <th>Acciones</th>
         </tr>
       </thead>
@@ -61,6 +78,7 @@
             <td><%= supplier_closing.amount_owed_to_supplier %></td>
             <td>
               <%= link_to "Show", closing_supplier_closing_path(@closing, supplier_closing), class: "button button-secondary" %>
+              <%= link_to "Edit", edit_closing_supplier_closing_path(@closing, supplier_closing), class: "button button-ghost" %>
             </td>
           </tr>
         <% end %>

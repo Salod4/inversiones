@@ -1,5 +1,36 @@
-<h1>Edit Supplier Closing</h1>
+<h1>Editar cierre de proveedor</h1>
 
-<%= render "form" %>
+<p>
+  <strong>Fecha:</strong> <%= @closing.business_date %><br>
+  <strong>Proveedor:</strong> <%= @supplier_closing.supplier.name %>
+</p>
 
-<p><%= link_to "Back", closing_supplier_closing_path(@closing, @supplier_closing), class: "button button-ghost" %></p>
+<%= form_with(model: [@closing, @supplier_closing]) do |f| %>
+  <% if @supplier_closing.errors.any? %>
+    <div class="errors">
+      <h2><%= pluralize(@supplier_closing.errors.count, "error") %> impidieron guardar:</h2>
+      <ul>
+        <% @supplier_closing.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= f.label :supplier_credit, "Depositado a proveedor" %>
+    <%= f.number_field :supplier_credit, step: 0.01 %>
+  </div>
+
+  <div>
+    <%= f.label :amount_owed_to_supplier, "Total de proveedor" %>
+    <%= f.number_field :amount_owed_to_supplier, step: 0.01 %>
+  </div>
+
+  <div class="button-group">
+    <%= f.submit "Guardar cambios", class: "button" %>
+    <%= link_to "Cancelar",
+                closing_supplier_closing_path(@closing, @supplier_closing),
+                class: "button button-ghost" %>
+  </div>
+<% end %>

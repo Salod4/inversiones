@@ -1,6 +1,6 @@
 class SupplierClosingsController < ApplicationController
-  before_action :set_closing, except: :show
-  before_action :set_supplier_closing, only: [ :edit, :update, :destroy ]
+  before_action :set_closing
+  before_action :set_supplier_closing, only: [ :show, :edit, :update, :destroy ]
   before_action :set_suppliers, only: [ :new, :create, :edit, :update ]
 
   def index
@@ -8,20 +8,14 @@ class SupplierClosingsController < ApplicationController
   end
 
   def show
-    @supplier_closing = SupplierClosing
-      .includes(:closing, :supplier)
-      .find(params[:id])
-
     @sales     = @supplier_closing.sales_for_closing
     @transfers = @supplier_closing.transfers_for_closing
     @totals    = @supplier_closing.totals
   end
 
   def new
-    @supplier_closing = @closing.supplier_closings.build
+    @supplier_closing = @closing.supplier_closings.new
   end
-
-  def edit; end
 
   def create
     @supplier_closing = @closing.supplier_closings.build(supplier_closing_params)
@@ -32,6 +26,8 @@ class SupplierClosingsController < ApplicationController
     end
   end
 
+  def edit; end
+
   def update
     if @supplier_closing.update(supplier_closing_params)
       redirect_to closing_path(@closing), notice: "Supplier closing was successfully updated."
@@ -41,11 +37,8 @@ class SupplierClosingsController < ApplicationController
   end
 
   def destroy
-    if @supplier_closing.destroy
-      redirect_to closing_path(@closing), notice: "Supplier closing was successfully destroyed."
-    else
-      redirect_to closing_path(@closing), alert: @supplier_closing.errors.full_messages.to_sentence
-    end
+    @supplier_closing.destroy
+    redirect_to closing_path(@closing), notice: "Supplier closing was successfully destroyed."
   end
 
   private

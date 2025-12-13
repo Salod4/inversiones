@@ -26,7 +26,11 @@ Rails.application.routes.draw do
   resources :transfers, only: [ :new, :create, :show, :edit, :update, :destroy, :index ]
 
   resources :closings do
-    resources :customer_closings
+    resources :customer_closings do
+      collection do
+        get :group # /closings/:closing_id/customer_closings/group?name=ARQUI
+      end
+    end
     resources :supplier_closings
   end
 
