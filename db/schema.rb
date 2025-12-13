@@ -100,6 +100,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_08_021000) do
     t.index ["code"], name: "index_customers_on_code", unique: true
   end
 
+  create_table "opening_balances", force: :cascade do |t|
+    t.string "reference_type", null: false
+    t.bigint "reference_id"
+    t.string "group_name"
+    t.decimal "amount", precision: 15, scale: 2, null: false
+    t.string "source"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["group_name"], name: "index_opening_balances_on_group_name"
+    t.index ["reference_type", "reference_id"], name: "index_opening_balances_on_reference_type_and_reference_id"
+  end
+
   create_table "sales", force: :cascade do |t|
     t.string "code", null: false
     t.date "date", null: false

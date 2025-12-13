@@ -9,7 +9,8 @@ class SuppliersController < ApplicationController
     @supplier_total_deposit = @supplier.sales.sum(:gross_deposit).to_d
     @supplier_total_ret_comp = @supplier.sales.sum("COALESCE(gross_deposit,0) - COALESCE(provider_commission,0)").to_d
     @supplier_total_transferred = @supplier.transfers.sum(:amount).to_d
-    @supplier_available_balance = @supplier_total_ret_comp - @supplier_total_transferred
+    @supplier_opening_balance = OpeningBalance.total_for_supplier(@supplier.id)
+    @supplier_available_balance = @supplier_total_ret_comp + @supplier_opening_balance - @supplier_total_transferred
 
 
     @sales = @supplier.sales

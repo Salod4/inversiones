@@ -28,6 +28,11 @@
   </div>
 
   <div class="customer-summary__stat">
+    <p class="label">Saldo inicial (grupo)</p>
+    <p class="stat"><%= number_to_currency(@group_opening_balance || 0, unit: "$") %></p>
+  </div>
+
+  <div class="customer-summary__stat">
     <p class="label">Transferido a proveedores</p>
     <p class="stat"><%= number_to_currency(@group_total_transferred || 0, unit: "$") %></p>
   </div>

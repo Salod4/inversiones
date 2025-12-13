@@ -16,6 +16,12 @@
   </div>
 
   <div class="supplier-summary__stat">
+    <p class="label">Saldo inicial</p>
+    <p class="stat"><%= number_to_currency(@supplier_opening_balance || 0, unit: "$") %></p>
+    <p class="hint">Kickoff de proveedor.</p>
+  </div>
+
+  <div class="supplier-summary__stat">
     <p class="label">Transferido</p>
     <p class="stat"><%= number_to_currency(@supplier_total_transferred || 0, unit: "$") %></p>
     <p class="hint">Monto ya enviado mediante transfers.</p>
@@ -24,7 +30,7 @@
   <div class="supplier-summary__stat">
     <p class="label">Saldo pendiente</p>
     <p class="stat"><%= number_to_currency(@supplier_available_balance || 0, unit: "$") %></p>
-    <p class="hint">RET.COMP total menos transfers.</p>
+    <p class="hint">RET.COMP total + saldo inicial menos transfers.</p>
   </div>
 
   <div class="supplier-summary__actions">

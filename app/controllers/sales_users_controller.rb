@@ -5,8 +5,15 @@ class SalesUsersController < ApplicationController
 
   def index
     @pagy, @sales_users = pagy(SalesUser.includes(:user, sale: :supplier).order(created_at: :desc))
-    @totals_by_user = SalesUser.group(:user_id).sum(:commission_amount)
-    @users = User.where(id: @totals_by_user.keys + @sales_users.map(&:user_id)).index_by(&:id)
+    commissions = SalesUser.group(:user_id).sum(:commission_amount)
+    openings = OpeningBalance.users.group(:reference_id).sum(:amount)
+    merged = commissions.dup
+    openings.each do |uid, amt|
+      merged[uid] = merged.fetch(uid, 0).to_d + amt.to_d
+    end
+    @totals_by_user = merged
+    ids = @totals_by_user.keys + @sales_users.map(&:user_id)
+    @users = User.where(id: ids).index_by(&:id)
   end
 
   def new

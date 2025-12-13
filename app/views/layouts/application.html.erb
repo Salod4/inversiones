@@ -33,11 +33,15 @@
           <%= link_to "Vendedores", sales_users_path, class: "button button-nav" %>
           <%= link_to "Closings", closings_path, class: "button button-nav" %>
           <%= link_to "Transfers", transfers_path, class: "button button-nav" %>
+          <%= link_to "Kickoff", kickoff_path, class: "button button-nav button-ghost" %>
         </nav>
       </div>
     </header>
 
     <main class="container mx-auto px-5 flex">
+      <% flash.each do |key, message| %>
+        <div class="flash flash-<%= key %>"><%= message %></div>
+      <% end %>
       <%= yield %>
     </main>
   </body>
