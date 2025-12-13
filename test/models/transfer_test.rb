@@ -134,4 +134,20 @@ class TransferTest < ActiveSupport::TestCase
 
     assert transfer.valid?
   end
+
+  test "defaults occurred_at to open business date if today is closed" do
+    travel_to Time.zone.local(2024, 1, 12, 10, 30) do
+      Closing.create!(business_date: Date.new(2024, 1, 12), status: "closed")
+
+      transfer = Transfer.create!(
+        sale: @sale,
+        customer: @customer,
+        supplier: @supplier,
+        amount: 50,
+        code: "TRX-DATE"
+      )
+
+      assert_equal Date.new(2024, 1, 13), transfer.occurred_at.to_date
+    end
+  end
 end

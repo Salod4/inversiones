@@ -43,16 +43,54 @@ class TransfersControllerTest < ActionDispatch::IntegrationTest
     assert_difference("Transfer.count") do
       post sale_transfers_url(@sale), params: {
         transfer: {
-          code: "TRX2",
-          occurred_at: Time.current,
           supplier_id: @supplier.id,
-          amount: 200,
+          from_entity_ref: "Customer:#{@sale.customer_id}",
+          destination_entries: [
+            {
+              to_entity_ref: "Supplier:#{@supplier.id}",
+              amount: 200
+            }
+          ],
           note: "Test transfer"
         }
       }
     end
 
     assert_redirected_to sale_transfers_url(@sale)
+  end
+
+  test "creates multiple transfers in one request" do
+    assert_difference("Transfer.count", 2) do
+      post sale_transfers_url(@sale), params: {
+        transfer: {
+          supplier_id: @supplier.id,
+          from_entity_ref: "Customer:#{@sale.customer_id}",
+          destination_entries: [
+            { to_entity_ref: "Supplier:#{@supplier.id}", amount: 100 },
+            { to_entity_ref: "Supplier:#{@supplier.id}", amount: 50 }
+          ]
+        }
+      }
+    end
+
+    assert_redirected_to sale_transfers_url(@sale)
+  end
+
+  test "rejects batch that exceeds available balance" do
+    assert_no_difference("Transfer.count") do
+      post sale_transfers_url(@sale), params: {
+        transfer: {
+          supplier_id: @supplier.id,
+          from_entity_ref: "Customer:#{@sale.customer_id}",
+          destination_entries: [
+            { to_entity_ref: "Supplier:#{@supplier.id}", amount: 500 },
+            { to_entity_ref: "Supplier:#{@supplier.id}", amount: 400 }
+          ]
+        }
+      }
+    end
+
+    assert_response :unprocessable_entity
   end
 
   test "should show transfer" do

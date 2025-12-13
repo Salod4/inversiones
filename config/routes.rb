@@ -30,5 +30,8 @@ Rails.application.routes.draw do
     resources :supplier_closings
   end
 
+  resource :kickoff, only: [ :show, :create ]
+  get "kickoff/template/:type", to: "kickoffs#template", as: :kickoff_template
+
   root "sales#index"
 end

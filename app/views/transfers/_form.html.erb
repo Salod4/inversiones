@@ -96,11 +96,10 @@
 <% elsif transfer.from_entity_type && transfer.from_entity_id %>
   <% from_selected = "#{transfer.from_entity_type}:#{transfer.from_entity_id}" %>
 <% end %>
-<% if transfer.to_entity_type == "CustomerGroup" %>
-  <% to_selected = "CustomerGroup:#{transfer.to_group}" if transfer.to_group.present? %>
-<% elsif transfer.to_entity_type && transfer.to_entity_id %>
-  <% to_selected = "#{transfer.to_entity_type}:#{transfer.to_entity_id}" %>
-<% end %>
+<% destination_entries = local_assigns[:destination_entries] || @destination_entries || [] %>
+<% initial_destinations_json = destination_entries.map { |d| { to_entity_ref: d[:to_entity_ref], amount: d[:amount].present? ? d[:amount].to_f : nil } }.to_json %>
+<% sale_available = sale.present? ? sale.available_transfer_amount(excluding: transfer) : nil %>
+<% allow_multiple_destinations = local_assigns.key?(:allow_multiple_destinations) ? local_assigns[:allow_multiple_destinations] : !transfer.persisted? %>
 
   <div class="entity-filter">
     <label for="customer_filter" class="hint">Filtrar clientes (como en la tabla de clientes)</label>
@@ -125,28 +124,62 @@
     <p class="hint" id="from_balance_hint"></p>
   </div>
 
-  <div class="entity-picker">
-    <label>Destino</label>
-    <div class="entity-picker__row">
-      <select id="to_type" class="select">
-        <option value="">Selecciona tipo</option>
-        <option value="Customer">Cliente</option>
-        <option value="Supplier">Proveedor</option>
-        <option value="User">Vendedor</option>
-      </select>
-      <%= select_tag "transfer[to_entity_ref]",
-                    grouped_options_for_select(grouped_options, to_selected),
-                    include_blank: "Selecciona destino",
-                    id: "to_entity_ref",
-                    class: "select entity-options" %>
-    </div>
-    <p class="hint" id="to_balance_hint"></p>
+  <div class="origin-balance">
+    <p class="hint">
+      Saldo del origen:
+      <strong id="origin_balance_value" data-sale-available="<%= sale_available&.to_f %>">
+        <%= sale_available ? number_to_currency(sale_available, unit: "$") : "—" %>
+      </strong>
+      · Restante: <strong id="origin_remaining_value">—</strong>
+    </p>
   </div>
 
-  <div>
-    <%= form.label :amount %>
-    <%= form.number_field :amount, step: 0.01 %>
+  <div class="destinations-block"
+       id="destinations_block"
+       data-sale-available="<%= sale_available&.to_f %>"
+       data-initial-destinations="<%= j(initial_destinations_json) %>"
+       data-allow-multiple="<%= allow_multiple_destinations %>">
+    <div class="destinations-block__header">
+      <label>Destinos</label>
+      <button type="button" id="add_destination" class="button button-secondary button-small">Agregar destino</button>
+    </div>
+    <p class="hint">Agrega uno o varios destinos y define cuánto enviar a cada uno. El saldo restante se actualiza en vivo.</p>
+    <div id="destination_list"></div>
   </div>
+
+  <template id="destination_row_template">
+    <div class="destination-row" data-index="__INDEX__">
+      <div class="entity-picker">
+        <label>Destino</label>
+        <div class="entity-picker__row">
+          <select class="select destination-type" data-role="destination-type">
+            <option value="">Selecciona tipo</option>
+            <option value="Customer">Cliente</option>
+            <option value="Supplier">Proveedor</option>
+            <option value="User">Vendedor</option>
+          </select>
+          <select name="transfer[destination_entries][__INDEX__][to_entity_ref]"
+                  class="select entity-options"
+                  data-role="destination-entity">
+            <option value="">Selecciona destino</option>
+            <%= grouped_options_for_select(grouped_options) %>
+          </select>
+        </div>
+        <p class="hint" data-role="destination-balance"></p>
+      </div>
+      <div>
+        <label>Monto</label>
+        <input type="number"
+               step="0.01"
+               name="transfer[destination_entries][__INDEX__][amount]"
+               data-role="destination-amount" />
+      </div>
+      <div class="destination-row__actions">
+        <button type="button" class="button button-ghost remove-destination">Quitar destino</button>
+      </div>
+    </div>
+  </template>
+
   <% if sale.present? %>
     <p class="hint">
       Balance del cliente en esta venta: <strong><%= number_to_currency(sale.customer_balance.to_f, unit: "$") %></strong><br>
@@ -171,11 +204,15 @@
 
 <script>
   (() => {
-    function setupEntitySelector(typeSelectId, entitySelectId, balanceHintId, customerFilterId) {
-      const typeSelect = document.getElementById(typeSelectId);
-      const entitySelect = document.getElementById(entitySelectId);
-      const hint = document.getElementById(balanceHintId);
-      const customerFilter = document.getElementById(customerFilterId);
+    let destinationBlock;
+    let fromSelect;
+
+    function formatCurrency(value) {
+      if (value === null || Number.isNaN(value)) return "—";
+      return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(value));
+    }
+
+    function setupEntitySelector({ typeSelect, entitySelect, balanceHint, customerFilter, selectedValue, onChange }) {
       if (!typeSelect || !entitySelect) return;
 
       const baseOptions = Array.from(entitySelect.options)
@@ -188,11 +225,13 @@
             text: opt.textContent || "",
             entityType: opt.dataset.entityType || valueType,
             balance: opt.dataset.balance,
-            group: opt.dataset.group || "",
-            selected: opt.selected
+            group: opt.dataset.group || ""
           };
         });
-      const preselected = baseOptions.find((opt) => opt.selected);
+      let currentSelected = selectedValue || entitySelect.dataset.selected || entitySelect.value || "";
+      const preselected = currentSelected
+        ? baseOptions.find((opt) => opt.value === currentSelected)
+        : undefined;
 
       function buildOption(opt) {
         const clone = document.createElement("option");
@@ -204,13 +243,27 @@
         return clone;
       }
 
+      function updateHint() {
+        const selected = entitySelect.selectedOptions[0];
+        if (!selected || !selected.dataset) {
+          if (balanceHint) balanceHint.textContent = "";
+          return;
+        }
+        const balance = selected.dataset.balance;
+        if (balanceHint && balance && balance.length > 0) {
+          balanceHint.textContent = `Saldo disponible: ${formatCurrency(Number(balance))}`;
+        } else if (balanceHint) {
+          balanceHint.textContent = "";
+        }
+        onChange?.();
+      }
+
       function filterOptions() {
-      const type = typeSelect.value;
-      const term = type === "Customer"
-        ? (customerFilter?.value || "").trim().toLowerCase()
-        : "";
-        const currentValue = entitySelect.value;
-        const selectedOpt = baseOptions.find((opt) => opt.value === currentValue) || preselected;
+        const type = typeSelect.value;
+        const term = (customerFilter?.value || "").trim().toLowerCase();
+        const targetValue = entitySelect.value || currentSelected;
+        const selectedOpt = targetValue ? baseOptions.find((opt) => opt.value === targetValue) || preselected : preselected;
+
         entitySelect.innerHTML = "";
         const placeholder = document.createElement("option");
         placeholder.value = "";
@@ -219,52 +272,25 @@
 
         const matches = baseOptions.filter((opt) => {
           const matchesType = !type || opt.entityType === type || (type === "Customer" && opt.entityType === "CustomerGroup");
+          if (!matchesType) return false;
+          if (!term) return true;
+          if (type && type !== "Customer") return true; // filtro solo aplicado para clientes
           const labelText = opt.text.toLowerCase();
           const groupText = (opt.group || "").toLowerCase();
-          const matchesTerm = !term || labelText.includes(term) || groupText.includes(term);
-          return matchesType && matchesTerm;
+          return labelText.includes(term) || groupText.includes(term);
         });
 
-        if (type === "Customer" && !term) {
-          const groups = baseOptions.filter((opt) => opt.entityType === "CustomerGroup");
-          if (groups.length) {
-            const og = document.createElement("optgroup");
-            og.label = "Grupos";
-            groups.forEach((opt) => og.appendChild(buildOption(opt)));
-            entitySelect.appendChild(og);
-          }
-
-          const ungrouped = baseOptions.filter((opt) => opt.entityType === "Customer" && !opt.group);
-          if (ungrouped.length) {
-            const og = document.createElement("optgroup");
-            og.label = "Clientes sin grupo";
-            ungrouped.forEach((opt) => {
-              const clone = buildOption(opt);
-              if (selectedOpt && selectedOpt.value === opt.value) clone.selected = true;
-              og.appendChild(clone);
-            });
-            entitySelect.appendChild(og);
-          }
-        } else {
-          const grouped = {};
-          matches.forEach((opt) => {
-            const key = opt.entityType === "CustomerGroup" ? "Grupos" : (opt.entityType === "Customer" ? (opt.group || "Clientes") : (opt.entityType === "Supplier" ? "Proveedores" : "Vendedores"));
-            grouped[key] = grouped[key] || [];
-            grouped[key].push(opt);
-          });
-
-          Object.entries(grouped).forEach(([ groupLabel, opts ]) => {
-            const og = document.createElement("optgroup");
-            og.label = groupLabel;
-            opts.forEach((opt) => og.appendChild(buildOption(opt)));
-            entitySelect.appendChild(og);
-          });
+        const selectedIsCompatible = selectedOpt && (!type || selectedOpt.entityType === type || (type === "Customer" && selectedOpt.entityType === "CustomerGroup"));
+        if (selectedOpt && selectedIsCompatible && !matches.some((opt) => opt.value === selectedOpt.value)) {
+          matches.unshift(selectedOpt);
         }
 
-        if (currentValue) {
-          const toSelect = Array.from(entitySelect.options).find((opt) => opt.value === currentValue);
-          if (toSelect) toSelect.selected = true;
-        }
+        matches.forEach((opt) => {
+          const option = buildOption(opt);
+          if (selectedOpt && selectedOpt.value === opt.value) option.selected = true;
+          entitySelect.appendChild(option);
+        });
+
         if (!entitySelect.selectedIndex && entitySelect.options.length === 1) {
           const noResults = document.createElement("option");
           noResults.value = "";
@@ -275,20 +301,6 @@
         updateHint();
       }
 
-      function updateHint() {
-        const selected = entitySelect.selectedOptions[0];
-        if (!selected || !selected.dataset) {
-          if (hint) hint.textContent = "";
-          return;
-        }
-        const balance = selected.dataset.balance;
-        if (hint && balance && balance.length > 0) {
-          hint.textContent = `Saldo disponible: ${new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(balance))}`;
-        } else if (hint) {
-          hint.textContent = "";
-        }
-      }
-
       if (preselected && !typeSelect.value && preselected.entityType) {
         typeSelect.value = preselected.entityType === "CustomerGroup" ? "Customer" : preselected.entityType;
       }
@@ -297,19 +309,149 @@
         if (typeSelect.value === "Customer" && customerFilter) customerFilter.value = "";
         filterOptions();
       });
-      entitySelect.addEventListener("change", updateHint);
+      entitySelect.addEventListener("change", () => {
+        currentSelected = entitySelect.value;
+        updateHint();
+      });
       customerFilter?.addEventListener("input", filterOptions);
 
       filterOptions();
     }
 
-    document.addEventListener("turbo:load", () => {
-      setupEntitySelector("from_type", "from_entity_ref", "from_balance_hint", "customer_filter");
-      setupEntitySelector("to_type", "to_entity_ref", "to_balance_hint", "customer_filter");
-    });
-    document.addEventListener("DOMContentLoaded", () => {
-      setupEntitySelector("from_type", "from_entity_ref", "from_balance_hint", "customer_filter");
-      setupEntitySelector("to_type", "to_entity_ref", "to_balance_hint", "customer_filter");
-    });
+    function computeBaseBalance() {
+      const saleAvailable = destinationBlock?.dataset.saleAvailable;
+      if (saleAvailable && saleAvailable.length > 0 && !Number.isNaN(Number(saleAvailable))) {
+        return Number(saleAvailable);
+      }
+      const selected = fromSelect?.selectedOptions?.[0];
+      const balance = selected?.dataset.balance;
+      if (balance && balance.length > 0 && !Number.isNaN(Number(balance))) {
+        return Number(balance);
+      }
+      return null;
+    }
+
+    function updateRemainingBalance() {
+      const base = computeBaseBalance();
+      const balanceEl = document.getElementById("origin_balance_value");
+      const remainingEl = document.getElementById("origin_remaining_value");
+      const amountInputs = document.querySelectorAll("[data-role='destination-amount']");
+      const total = Array.from(amountInputs).reduce((sum, input) => {
+        const val = Number(input.value || 0);
+        return Number.isNaN(val) ? sum : sum + val;
+      }, 0);
+
+      if (balanceEl) balanceEl.textContent = base === null ? "—" : formatCurrency(base);
+      if (remainingEl) {
+        const remaining = base === null ? null : (base - total);
+        remainingEl.textContent = remaining === null ? "—" : formatCurrency(remaining);
+        remainingEl.classList.toggle("negative", remaining !== null && remaining < 0);
+      }
+    }
+
+    function initDestinations(customerFilter) {
+      destinationBlock = document.getElementById("destinations_block");
+      const list = document.getElementById("destination_list");
+      const template = document.getElementById("destination_row_template");
+      const addBtn = document.getElementById("add_destination");
+      if (!destinationBlock || !list || !template) return;
+
+      const allowMultiple = destinationBlock.dataset.allowMultiple === "true";
+      if (!allowMultiple && addBtn) addBtn.style.display = "none";
+
+      let nextIndex = 0;
+      let initialEntries = [];
+      try {
+        initialEntries = JSON.parse(destinationBlock.dataset.initialDestinations || "[]");
+      } catch (e) {
+        initialEntries = [];
+      }
+      if (!Array.isArray(initialEntries) || initialEntries.length === 0) {
+        initialEntries = [ {} ];
+      }
+
+      initialEntries.forEach((entry) => addRow(entry));
+      addBtn?.addEventListener("click", () => addRow({}));
+
+      function addRow(entry) {
+        if (!allowMultiple && list.children.length >= 1) return;
+        const node = document.createElement("div");
+        node.innerHTML = template.innerHTML.replace(/__INDEX__/g, nextIndex);
+        const row = node.firstElementChild;
+        if (!row) return;
+
+        const typeSelect = row.querySelector("[data-role='destination-type']");
+        const entitySelect = row.querySelector("[data-role='destination-entity']");
+        const balanceHint = row.querySelector("[data-role='destination-balance']");
+        const amountInput = row.querySelector("[data-role='destination-amount']");
+        const removeBtn = row.querySelector(".remove-destination");
+
+        if (entry.to_entity_ref || entry.toEntityRef) {
+          entitySelect.dataset.selected = entry.to_entity_ref || entry.toEntityRef || "";
+        }
+        if (entry.amount !== undefined && entry.amount !== null && entry.amount !== "") {
+          amountInput.value = entry.amount;
+        }
+
+        setupEntitySelector({
+          typeSelect,
+          entitySelect,
+          balanceHint,
+          customerFilter,
+          selectedValue: entitySelect.dataset.selected,
+          onChange: updateRemainingBalance
+        });
+
+        amountInput.addEventListener("input", updateRemainingBalance);
+        entitySelect.addEventListener("change", updateRemainingBalance);
+        removeBtn?.addEventListener("click", () => {
+          if (list.children.length <= 1) return;
+          row.remove();
+          updateRemainingBalance();
+          toggleRemoveButtons();
+        });
+
+        list.appendChild(row);
+        nextIndex += 1;
+        toggleRemoveButtons();
+        updateRemainingBalance();
+      }
+
+      function toggleRemoveButtons() {
+        const rows = Array.from(list.querySelectorAll(".destination-row"));
+        rows.forEach((row) => {
+          const btn = row.querySelector(".remove-destination");
+          if (!btn) return;
+          const disabled = rows.length === 1;
+          btn.disabled = disabled;
+          btn.classList.toggle("disabled", disabled);
+        });
+      }
+    }
+
+    function initTransferForm() {
+      if (window.__transferFormInitialized) return;
+      window.__transferFormInitialized = true;
+      const customerFilter = document.getElementById("customer_filter");
+      const fromType = document.getElementById("from_type");
+      fromSelect = document.getElementById("from_entity_ref");
+      const fromHint = document.getElementById("from_balance_hint");
+      destinationBlock = document.getElementById("destinations_block");
+
+      setupEntitySelector({
+        typeSelect: fromType,
+        entitySelect: fromSelect,
+        balanceHint: fromHint,
+        customerFilter,
+        selectedValue: fromSelect?.dataset.selected,
+        onChange: updateRemainingBalance
+      });
+
+      initDestinations(customerFilter);
+      updateRemainingBalance();
+    }
+
+    document.addEventListener("turbo:load", initTransferForm, { once: true });
+    document.addEventListener("DOMContentLoaded", initTransferForm, { once: true });
   })();
 </script>

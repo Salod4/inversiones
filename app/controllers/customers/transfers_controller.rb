@@ -1,5 +1,6 @@
 module Customers
   class TransfersController < ApplicationController
+    include TransferParamHelpers
     before_action :set_customer
     before_action :set_sales
     before_action :set_sale
@@ -8,15 +9,30 @@ module Customers
 
     def new
       @transfer = build_transfer_for_customer
+      @destination_entries = prefill_destination_entries(@transfer)
     end
 
     def create
-      @transfer = build_transfer_for_customer(transfer_params)
+      base_attrs = transfer_params.except(:from_entity_ref, :to_entity_ref, :destination_entries, :amount)
+      @destination_entries = destination_entries_from_params(transfer_params)
+      from_ref = transfer_params[:from_entity_ref].presence || "Customer:#{@customer.id}"
+      builder = -> { build_transfer_for_customer(base_attrs, from_ref) }
 
-      if @transfer.save
-        redirect_to customer_path(@customer), notice: "Transfer registrado correctamente."
-      else
+      created, error_transfer = persist_destination_batch(
+        base_attrs: base_attrs,
+        destination_entries: @destination_entries,
+        from_ref: from_ref,
+        sale: @sale,
+        builder: builder
+      )
+
+      if error_transfer
+        @transfer = error_transfer
         render :new, status: :unprocessable_entity
+      else
+        @transfer = created.first
+        notice = created.size > 1 ? "Transfers registrados correctamente." : "Transfer registrado correctamente."
+        redirect_to customer_path(@customer), notice: notice
       end
     end
 
@@ -53,22 +69,35 @@ module Customers
 
       total_after_pcts = sales_scope.sum { |s| s.net_after_provider_and_sellers.to_d }
       total_transferred = sales_scope.sum { |s| s.total_transfer_applied.to_d }
+      opening = OpeningBalance.total_for_customer(@customer.id)
 
-      @customer_available_balance = total_after_pcts - total_transferred
+      @customer_available_balance = total_after_pcts + opening - total_transferred
       @sale_available_balance = @sale&.available_transfer_amount(excluding: @transfer)
     end
 
     def transfer_params
-      params.require(:transfer).permit(:sale_id, :supplier_id, :amount, :note, :payment_method)
+      params.require(:transfer).permit(
+        :sale_id,
+        :supplier_id,
+        :amount,
+        :note,
+        :payment_method,
+        :from_entity_ref,
+        :to_entity_ref,
+        destination_entries: [ :to_entity_ref, :amount ]
+      )
     end
 
-    def build_transfer_for_customer(attributes = {})
-      Transfer.new(attributes.merge(from_entity: @customer)).tap do |transfer|
-        transfer.customer = @customer
-        transfer.sale = @sale if @sale
-        transfer.supplier ||= @sale&.supplier
-        transfer.to_entity ||= @sale&.supplier
-      end
+    def build_transfer_for_customer(attributes = {}, from_ref = nil)
+      from_ref ||= "Customer:#{@customer.id}"
+      transfer = Transfer.new(attributes)
+      assign_entities_from_refs(transfer, from_ref: from_ref, to_ref: nil)
+      transfer.from_entity ||= @customer
+      transfer.customer = @customer
+      transfer.sale = @sale if @sale
+      transfer.supplier ||= @sale&.supplier
+      transfer.to_entity ||= @sale&.supplier
+      transfer
     end
 
     def supplier_balances_for(suppliers)

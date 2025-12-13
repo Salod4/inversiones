@@ -119,7 +119,11 @@ class Transfer < ApplicationRecord
     self.customer ||= sale&.customer
     self.supplier ||= sale&.supplier
     self.payment_method ||= "deposito"
-    self.occurred_at ||= Time.current
+    self.occurred_at ||= begin
+      business_date = Closing.open_business_date(Time.zone.today)
+      now = Time.zone.now
+      now.change(year: business_date.year, month: business_date.month, day: business_date.day)
+    end
     assign_code if code.blank?
   end
 

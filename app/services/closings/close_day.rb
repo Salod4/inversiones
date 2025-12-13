@@ -86,6 +86,10 @@ module Closings
         cust[:receivables] += sale.customer_fee.to_d
       end
 
+      OpeningBalance.customers.find_each do |ob|
+        customers[ob.reference_id][:balance] += ob.amount.to_d
+      end
+
       # Transfers sin venta: restan saldo al cliente receptor (pago de deuda)
       extra_transfers = Transfer.where(sale_id: nil).where("occurred_at <= ?", business_date.end_of_day)
       extra_transfers.find_each do |t|
@@ -99,6 +103,10 @@ module Closings
       sales_scope.find_each do |sale|
         ret_comp = sale.gross_deposit.to_d - sale.provider_commission.to_d
         suppliers[sale.supplier_id][:ret_comp] += ret_comp
+      end
+
+      OpeningBalance.suppliers.find_each do |ob|
+        suppliers[ob.reference_id][:ret_comp] += ob.amount.to_d
       end
 
       supplier_transfers = Transfer
