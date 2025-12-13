@@ -2,6 +2,9 @@ require "test_helper"
 
 class SupplierClosingsControllerTest < ActionDispatch::IntegrationTest
   setup do
+    @user = users(:jack)
+    sign_in @user
+
     @closing = Closing.create!(business_date: Date.current, status: "open")
     @supplier = Supplier.create!(code: "SUP1", name: "Supplier One")
     @supplier_closing = SupplierClosing.create!(

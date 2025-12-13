@@ -2,6 +2,9 @@ require "test_helper"
 
 class SalesControllerTest < ActionDispatch::IntegrationTest
   setup do
+    @user = users(:jack)
+    sign_in @user
+
     @customer = Customer.create!(code: "CUST1", name: "Customer One")
     @supplier = Supplier.create!(code: "SUP1", name: "Supplier One")
     @closing = Closing.create!(business_date: Date.current, status: "open")

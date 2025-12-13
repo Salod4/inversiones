@@ -2,6 +2,9 @@ require "test_helper"
 
 class SuppliersControllerTest < ActionDispatch::IntegrationTest
   setup do
+    @user = users(:jack)
+    sign_in @user
+
     @supplier = Supplier.create!(code: "SUP1", name: "Supplier One")
   end
 

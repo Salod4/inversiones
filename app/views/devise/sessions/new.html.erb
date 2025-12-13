@@ -1,0 +1,17 @@
+<h1>Iniciar sesión</h1>
+
+<%= form_with url: session_path(:user), scope: :user, local: true do |f| %>
+  <div>
+    <%= f.label :email, "Email" %>
+    <%= f.email_field :email, autofocus: true, autocomplete: "email" %>
+  </div>
+
+  <div>
+    <%= f.label :password, "Password" %>
+    <%= f.password_field :password, autocomplete: "current-password" %>
+  </div>
+
+  <div>
+    <%= f.submit "Entrar", class: "button" %>
+  </div>
+<% end %>
