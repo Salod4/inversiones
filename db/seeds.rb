@@ -2908,7 +2908,9 @@ def ensure_user!(email:, name:, code:, **_opts)
   user = User.find_or_initialize_by(email: email)
   user.name = name
   user.code = code
-  user.password ||= SecureRandom.hex(16)
+  if user.encrypted_password.blank?
+    user.password = ENV.fetch("SEED_USER_PASSWORD", "password123")
+  end
   status = save_with_status!(user)
   [ user, status ]
 end

@@ -1,5 +1,5 @@
 Rails.application.routes.draw do
-  devise_for :users
+  devise_for :users, skip: [ :registrations ]
 
   get "up" => "rails/health#show", as: :rails_health_check
 
@@ -37,5 +37,5 @@ Rails.application.routes.draw do
   resource :kickoff, only: [ :show, :create ]
   get "kickoff/template/:type", to: "kickoffs#template", as: :kickoff_template
 
-  root "sales#index"
+  root "closings#index"
 end
