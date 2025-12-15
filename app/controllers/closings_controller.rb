@@ -33,6 +33,15 @@ class ClosingsController < ApplicationController
     grouped_ids = group_defs.flat_map { |g| g[:customers].map(&:id) }
     @customer_ungrouped = balances_by_customer.reject { |cid, _| grouped_ids.include?(cid) }
 
+    @customer_closing_by_customer_id = @customer_closings.index_by(&:customer_id)
+    @customer_rows = @customer_closings.map do |cc|
+      {
+        customer_name: cc.customer&.name || "Cliente ##{cc.customer_id}",
+        balance: cc.customer_balance,
+        customer_closing: cc
+      }
+    end
+
     # Totales rápidos tomando los agregados históricos
     @sales_totals = {
       gross_deposit: @sales.sum(:gross_deposit),
