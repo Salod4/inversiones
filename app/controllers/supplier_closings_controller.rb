@@ -1,6 +1,6 @@
 class SupplierClosingsController < ApplicationController
   before_action :set_closing
-  before_action :set_supplier_closing, only: [ :show, :edit, :update, :destroy ]
+  before_action :set_supplier_closing, only: [ :show, :edit, :update, :destroy, :pdf ]
   before_action :set_suppliers, only: [ :new, :create, :edit, :update ]
 
   def index
@@ -39,6 +39,17 @@ class SupplierClosingsController < ApplicationController
   def destroy
     @supplier_closing.destroy
     redirect_to closing_path(@closing), notice: "Supplier closing was successfully destroyed."
+  end
+
+  def pdf
+    pdf_data = SupplierClosings::PdfReport.new(@supplier_closing).render
+    supplier_code = @supplier_closing.supplier&.code.presence || @supplier_closing.supplier_id
+    filename = "supplier_closing_#{@closing.id}_#{supplier_code}.pdf"
+
+    send_data pdf_data,
+              filename: filename,
+              type: "application/pdf",
+              disposition: "attachment"
   end
 
   private

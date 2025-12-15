@@ -1,5 +1,5 @@
 class ClosingsController < ApplicationController
-  before_action :set_closing, only: [ :show, :edit, :update, :destroy ]
+  before_action :set_closing, only: [ :show, :edit, :update, :destroy, :customer_group_pdf ]
 
   def index
     @pagy, @closings = pagy(Closing.order(business_date: :desc))
@@ -32,6 +32,15 @@ class ClosingsController < ApplicationController
 
     grouped_ids = group_defs.flat_map { |g| g[:customers].map(&:id) }
     @customer_ungrouped = balances_by_customer.reject { |cid, _| grouped_ids.include?(cid) }
+
+    @customer_closing_by_customer_id = @customer_closings.index_by(&:customer_id)
+    @customer_rows = @customer_closings.map do |cc|
+      {
+        customer_name: cc.customer&.name || "Cliente ##{cc.customer_id}",
+        balance: cc.customer_balance,
+        customer_closing: cc
+      }
+    end
 
     # Totales rápidos tomando los agregados históricos
     @sales_totals = {
@@ -74,6 +83,19 @@ class ClosingsController < ApplicationController
     else
       redirect_to closings_url, alert: @closing.errors.full_messages.to_sentence
     end
+  end
+
+  def customer_group_pdf
+    group_name = params[:group_name]
+    pdf_data = CustomerGroups::PdfReport.new(closing: @closing, group_name: group_name).render
+    filename = "customer_group_#{@closing.id}_#{group_name.to_s.parameterize}.pdf"
+
+    send_data pdf_data,
+              filename: filename,
+              type: "application/pdf",
+              disposition: "attachment"
+  rescue CustomerGroups::PdfReport::GroupNotFound
+    redirect_to closing_path(@closing), alert: "Grupo #{group_name} no encontrado para este cierre."
   end
 
   private

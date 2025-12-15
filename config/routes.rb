@@ -26,12 +26,22 @@ Rails.application.routes.draw do
   resources :transfers, only: [ :new, :create, :show, :edit, :update, :destroy, :index ]
 
   resources :closings do
+    member do
+      get "customer_groups/:group_name/pdf", to: "closings#customer_group_pdf", as: :customer_group_pdf
+    end
     resources :customer_closings do
       collection do
         get :group # /closings/:closing_id/customer_closings/group?name=ARQUI
       end
+      member do
+        get :pdf
+      end
     end
-    resources :supplier_closings
+    resources :supplier_closings do
+      member do
+        get :pdf
+      end
+    end
   end
 
   resource :dashboard, only: [ :show ]

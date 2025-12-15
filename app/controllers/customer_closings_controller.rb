@@ -1,6 +1,6 @@
 class CustomerClosingsController < ApplicationController
   before_action :set_closing
-  before_action :set_customer_closing, only: [ :show, :edit, :update, :destroy ]
+  before_action :set_customer_closing, only: [ :show, :edit, :update, :destroy, :pdf ]
   before_action :set_customers, only: [ :new, :create, :edit, :update ]
 
   def index
@@ -48,6 +48,16 @@ class CustomerClosingsController < ApplicationController
   def destroy
     @customer_closing.destroy
     redirect_to closing_path(@closing), notice: "Customer closing was successfully destroyed."
+  end
+
+  def pdf
+    pdf_data = CustomerClosings::PdfReport.new(@customer_closing).render
+    filename = "customer_closing_#{@closing.id}_#{@customer_closing.customer_id}.pdf"
+
+    send_data pdf_data,
+              filename: filename,
+              type: "application/pdf",
+              disposition: "attachment"
   end
 
   private

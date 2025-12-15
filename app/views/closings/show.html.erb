@@ -7,9 +7,9 @@
 <p><strong>Difference:</strong> <%= @closing.difference %></p>
 
 <section>
-  <h2>Customer Closings</h2>
+  <h2>Group Closings</h2>
 
-  <% if @customer_group_totals.present? %>
+  <% if @customer_group_totals.any? %>
     <table>
       <thead>
         <tr>
@@ -27,24 +27,48 @@
                <%= link_to "Ver grupo",
                     group_closing_customer_closings_path(@closing, name: row[:name]),
                     class: "button button-secondary" %>
+               <%= link_to "Archivo grupo",
+                    customer_group_pdf_closing_path(@closing, group_name: row[:name]),
+                    class: "button button-secondary" %>
             </td>
           </tr>
         <% end %>
-        <% @customer_ungrouped.each do |customer_id, balance| %>
-          <% customer = Customer.find_by(id: customer_id) %>
-          <% customer_name = customer&.name || "Cliente ##{customer_id}" %>
-          <% customer_closing = CustomerClosing.find_by(closing_id: @closing.id, customer_id: customer_id) %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No group closings recorded.</p>
+  <% end %>
+</section>
+
+<section>
+  <h2>Customer Closings</h2>
+
+  <% if @customer_rows.any? %>
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Balance</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @customer_rows.each do |row| %>
+          <% cc = row[:customer_closing] %>
           <tr>
-            <td><%= customer_name %></td>
-            <td><%= number_to_currency(balance, unit: "$") %></td>
+            <td><%= row[:customer_name] %></td>
+            <td><%= number_to_currency(row[:balance], unit: "$") %></td>
             <td>
-              <% if customer_closing.present? %>
+              <% if cc.present? %>
                 <%= link_to "Ver cierre",
-                            closing_customer_closing_path(@closing, customer_closing),
+                            closing_customer_closing_path(@closing, cc),
                             class: "button button-secondary" %>
                 <%= link_to "Editar",
-                            edit_closing_customer_closing_path(@closing, customer_closing),
+                            edit_closing_customer_closing_path(@closing, cc),
                             class: "button button-ghost" %>
+                <%= link_to "Archivo",
+                            pdf_closing_customer_closing_path(@closing, cc),
+                            class: "button button-secondary" %>
               <% end %>
             </td>
           </tr>
@@ -79,6 +103,9 @@
             <td>
               <%= link_to "Show", closing_supplier_closing_path(@closing, supplier_closing), class: "button button-secondary" %>
               <%= link_to "Edit", edit_closing_supplier_closing_path(@closing, supplier_closing), class: "button button-ghost" %>
+              <%= link_to "Archivo",
+                          pdf_closing_supplier_closing_path(@closing, supplier_closing),
+                          class: "button button-secondary" %>
             </td>
           </tr>
         <% end %>
