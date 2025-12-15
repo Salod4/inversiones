@@ -1,5 +1,5 @@
 class ClosingsController < ApplicationController
-  before_action :set_closing, only: [ :show, :edit, :update, :destroy ]
+  before_action :set_closing, only: [ :show, :edit, :update, :destroy, :customer_group_pdf ]
 
   def index
     @pagy, @closings = pagy(Closing.order(business_date: :desc))
@@ -74,6 +74,19 @@ class ClosingsController < ApplicationController
     else
       redirect_to closings_url, alert: @closing.errors.full_messages.to_sentence
     end
+  end
+
+  def customer_group_pdf
+    group_name = params[:group_name]
+    pdf_data = CustomerGroups::PdfReport.new(closing: @closing, group_name: group_name).render
+    filename = "customer_group_#{@closing.id}_#{group_name.to_s.parameterize}.pdf"
+
+    send_data pdf_data,
+              filename: filename,
+              type: "application/pdf",
+              disposition: "attachment"
+  rescue CustomerGroups::PdfReport::GroupNotFound
+    redirect_to closing_path(@closing), alert: "Grupo #{group_name} no encontrado para este cierre."
   end
 
   private

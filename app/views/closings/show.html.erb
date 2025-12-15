@@ -27,6 +27,9 @@
                <%= link_to "Ver grupo",
                     group_closing_customer_closings_path(@closing, name: row[:name]),
                     class: "button button-secondary" %>
+               <%= link_to "Archivo grupo",
+                    customer_group_pdf_closing_path(@closing, group_name: row[:name]),
+                    class: "button button-secondary" %>
             </td>
           </tr>
         <% end %>
@@ -45,6 +48,9 @@
                 <%= link_to "Editar",
                             edit_closing_customer_closing_path(@closing, customer_closing),
                             class: "button button-ghost" %>
+                <%= link_to "Archivo",
+                            pdf_closing_customer_closing_path(@closing, customer_closing),
+                            class: "button button-secondary" %>
               <% end %>
             </td>
           </tr>
@@ -66,7 +72,7 @@
           <th>Supplier</th>
           <th>Depositado a Proveedor</th>
           <th>Total de proveedor</th>
-
+          
           <th>Acciones</th>
         </tr>
       </thead>
@@ -79,6 +85,9 @@
             <td>
               <%= link_to "Show", closing_supplier_closing_path(@closing, supplier_closing), class: "button button-secondary" %>
               <%= link_to "Edit", edit_closing_supplier_closing_path(@closing, supplier_closing), class: "button button-ghost" %>
+              <%= link_to "Archivo",
+                          pdf_closing_supplier_closing_path(@closing, supplier_closing),
+                          class: "button button-secondary" %>
             </td>
           </tr>
         <% end %>

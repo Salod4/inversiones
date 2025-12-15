@@ -67,4 +67,12 @@ class CustomerClosingsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to closing_url(@closing)
   end
+
+  test "should get pdf" do
+    get pdf_closing_customer_closing_url(@closing, @customer_closing)
+
+    assert_response :success
+    assert_includes @response.headers["Content-Type"], "application/pdf"
+    assert_not_empty @response.body
+  end
 end

@@ -7,7 +7,7 @@ class Sale < ApplicationRecord
 
   before_validation :assign_defaults, on: :create
   before_validation :enforce_max_sellers
-
+  validates :gross_deposit, presence: true
   belongs_to :customer
   belongs_to :supplier
   belongs_to :closing, optional: true
