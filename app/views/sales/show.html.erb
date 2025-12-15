@@ -80,8 +80,16 @@
 <section>
   <h2>Transfers</h2>
   <div class="button-group">
-    <%= link_to "SPEI", new_sale_transfer_path(@sale), class: "button" %>
     <%= link_to "Ver todos los SPEI", sale_transfers_path(@sale), class: "button button-secondary" %>
+  </div>
+  <div class="card" style="margin-bottom:1rem;">
+    <h3>Registrar SPEI</h3>
+    <%= render "transfers/form",
+               transfer: @transfer,
+               sale: @sale,
+               form_url: sale_transfers_path(@sale),
+               include_sale_field: true,
+               destination_entries: @destination_entries %>
   </div>
   <% if @transfers.any? %>
     <table>

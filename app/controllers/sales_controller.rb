@@ -11,6 +11,7 @@ class SalesController < ApplicationController
   def show
     @sales_users = @sale.sales_users.includes(:user)
     @transfers = @sale.transfers.order(occurred_at: :desc)
+    prepare_transfer_form_support
   end
 
   def new
@@ -117,6 +118,32 @@ class SalesController < ApplicationController
 
   def set_sale
     @sale = Sale.find(params[:id])
+  end
+
+  def prepare_transfer_form_support
+    @transfer = @sale.transfers.build
+
+    @suppliers = [ @sale.supplier ].compact
+    @customers = Customer.order(:name)
+    @customer_groups = CustomerGroups.build(@customers)
+    grouped_ids = @customer_groups.flat_map { |g| g[:customers].map(&:id) }
+    @ungrouped_customers = @customers.reject { |c| grouped_ids.include?(c.id) }
+    @users = User.order(:name)
+    @supplier_balances = supplier_balances_for(@suppliers)
+    @user_balances = {}
+    @destination_entries = []
+  end
+
+  def supplier_balances_for(suppliers)
+    ids = suppliers.map(&:id)
+    return {} if ids.empty?
+    sales_sum = Sale.where(supplier_id: ids).group(:supplier_id).sum(Arel.sql("COALESCE(gross_deposit,0) - COALESCE(provider_commission,0)"))
+    transfer_sum = Transfer.where(supplier_id: ids).group(:supplier_id).sum(:amount)
+    ids.index_with do |sid|
+      gross = BigDecimal(sales_sum[sid] || 0)
+      transferred = BigDecimal(transfer_sum[sid] || 0)
+      gross - transferred
+    end
   end
 
   def set_collections
