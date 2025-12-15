@@ -1,0 +1,52 @@
+<h1>Dashboard</h1>
+
+<section class="card">
+  <h2>Visión rápida</h2>
+  <div class="stats-grid">
+    <div class="stat">
+      <p class="label">Ventas hoy</p>
+      <p class="value"><%= @sales_today_count %></p>
+    </div>
+    <div class="stat">
+      <p class="label">Closing de hoy</p>
+      <p class="value"><%= @closing_done ? "Cerrado" : "Pendiente" %></p>
+      <% if @closing_today %>
+        <p class="hint">Status: <%= @closing_today.status %></p>
+      <% end %>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Saldos pendientes</p>
+  <div class="stats-grid">
+    <div class="stat">
+      <p class="label">Clientes</p>
+      <p class="value"><%= number_to_currency(@customer_pending, unit: "$") %></p>
+    </div>
+    <div class="stat">
+      <p class="label">Proveedores</p>
+      <p class="value"><%= number_to_currency(@supplier_pending, unit: "$") %></p>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Comisiones por vendedor</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Vendedor</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @seller_commissions_by_user.each do |uid, total| %>
+        <tr>
+          <td><%= @seller_names[uid] || "Vendedor ##{uid}" %></td>
+          <td><%= number_to_currency(total.to_f, unit: "$") %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>
