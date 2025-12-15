@@ -66,4 +66,17 @@ class ClosingsControllerTest < ActionDispatch::IntegrationTest
     end
     assert_redirected_to closings_url
   end
+
+  test "should get customer group pdf" do
+    customer_a = Customer.create!(code: "C1", name: "ARQUI Uno")
+    customer_b = Customer.create!(code: "C2", name: "ARQUI Dos")
+    CustomerClosing.create!(closing: @closing, customer: customer_a, customer_balance: 50, receivables: 10)
+    CustomerClosing.create!(closing: @closing, customer: customer_b, customer_balance: 75, receivables: 20)
+
+    get customer_group_pdf_closing_url(@closing, group_name: "ARQUI")
+
+    assert_response :success
+    assert_includes @response.headers["Content-Type"], "application/pdf"
+    assert_not_empty @response.body
+  end
 end

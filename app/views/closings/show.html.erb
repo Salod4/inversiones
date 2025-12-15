@@ -67,7 +67,7 @@
                             edit_closing_customer_closing_path(@closing, cc),
                             class: "button button-ghost" %>
                 <%= link_to "Archivo",
-                            pdf_closing_customer_closing_path(@closing, cc),
+                            pdf_closing_customer_closing_path(@closing, customer_closing),
                             class: "button button-secondary" %>
               <% end %>
             </td>
@@ -90,7 +90,7 @@
           <th>Supplier</th>
           <th>Depositado a Proveedor</th>
           <th>Total de proveedor</th>
-
+          
           <th>Acciones</th>
         </tr>
       </thead>

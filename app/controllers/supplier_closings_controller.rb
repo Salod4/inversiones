@@ -43,8 +43,7 @@ class SupplierClosingsController < ApplicationController
 
   def pdf
     pdf_data = SupplierClosings::PdfReport.new(@supplier_closing).render
-    supplier_code = @supplier_closing.supplier&.code.presence || @supplier_closing.supplier_id
-    filename = "supplier_closing_#{@closing.id}_#{supplier_code}.pdf"
+    filename = pdf_filename
 
     send_data pdf_data,
               filename: filename,
@@ -64,6 +63,11 @@ class SupplierClosingsController < ApplicationController
 
   def set_suppliers
     @suppliers = Supplier.order(:name)
+  end
+
+  def pdf_filename
+    supplier_code = @supplier_closing.supplier&.code.presence || @supplier_closing.supplier_id
+    "supplier_closing_#{@closing.id}_#{supplier_code}.pdf"
   end
 
   def supplier_closing_params
