@@ -53,7 +53,7 @@ module Google
 
       msg = "Missing Google OAuth credentials: #{missing.join(', ')}"
       if Rails.env.test?
-        return
+        nil
       elsif Rails.env.development?
         raise MissingCredentialsError, msg
       else
