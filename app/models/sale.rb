@@ -121,7 +121,7 @@ class Sale < ApplicationRecord
   end
 
   def assign_defaults
-    self.date ||= Date.current
+    self.date ||= Closing.open_business_date(Date.current)
     assign_code if code.blank?
   end
 

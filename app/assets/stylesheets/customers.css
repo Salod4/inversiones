@@ -1,37 +1,42 @@
 .customer-summary {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.9rem;
   align-items: stretch;
-  gap: 1.5rem;
+}
+
+.customer-summary.card {
+  padding: 1.1rem;
 }
 
 .customer-summary__stat {
-  flex: 1 1 220px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.8rem 1rem;
+  box-shadow: var(--shadow-light);
 }
 
 .customer-summary .label {
   text-transform: uppercase;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   letter-spacing: 0.08em;
-  color: #94a3b8;
-  margin-bottom: 0.35rem;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
 }
 
 .customer-summary .stat {
-  font-size: 2rem;
+  font-size: 1.65rem;
   font-weight: 700;
   margin: 0;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .customer-summary__actions {
-  flex: 1 1 220px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: flex-end;
-  text-align: right;
+  justify-content: flex-start;
+  gap: 0.5rem;
 }
 
 #customer-transfers table {

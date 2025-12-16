@@ -1,5 +1,12 @@
-<h1>Edit Sale</h1>
+<div class="page-header">
+  <div>
+    <h1>Editar venta <%= @sale.code %></h1>
+    <p class="lead">Actualiza datos, adjuntos y vendedores.</p>
+  </div>
+  <div class="sales-actions">
+    <%= link_to "Ver venta", sale_path(@sale), class: "button button-secondary" %>
+    <%= link_to "Regresar", sales_path, class: "button button-ghost" %>
+  </div>
+</div>
 
 <%= render "form", sale: @sale %>
-
-<p><%= link_to "Back", sale_path(@sale), class: "button button-ghost" %></p>

@@ -1,0 +1,16 @@
+.kickoff-templates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.kickoff-upload {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.kickoff-upload .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}

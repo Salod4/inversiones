@@ -1,24 +1,23 @@
-<h1>Ganancias de vendedores</h1>
+<div class="page-header">
+  <div>
+    <h1>Ganancias de vendedores</h1>
+    <p class="lead">Totales y detalle de comisiones por venta.</p>
+  </div>
+</div>
 
 <section class="card">
   <h2>Totales por vendedor</h2>
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Vendedor</th>
-        <th>Total de comisión</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @totals_by_user.each do |user_id, total| %>
-        <% user = @users[user_id] %>
-        <tr>
-          <td><%= user&.name || user&.email || "Vendedor ##{user_id}" %></td>
-          <td><%= number_to_currency(total.to_f, unit: "$") %></td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
+  <div class="stats-grid">
+    <% @totals_by_user.each do |user_id, total| %>
+      <% user = @users[user_id] %>
+      <div class="stat">
+        <div class="label">Vendedor</div>
+        <p class="value"><%= user&.name || user&.email || "Vendedor ##{user_id}" %></p>
+        <p class="hint">Total comisión</p>
+        <p class="value"><%= number_to_currency(total.to_f, unit: "$") %></p>
+      </div>
+    <% end %>
+  </div>
 </section>
 
 <section class="card">
@@ -30,8 +29,8 @@
         <th>Venta</th>
         <th>Proveedor</th>
         <th>Fecha</th>
-        <th>Comisión %</th>
-        <th>Comisión $</th>
+        <th class="numeric">Comisión %</th>
+        <th class="numeric">Comisión $</th>
       </tr>
     </thead>
     <tbody>
@@ -41,8 +40,8 @@
           <td><%= su.sale&.code %></td>
           <td><%= su.sale&.supplier&.name %></td>
           <td><%= su.sale&.date %></td>
-          <td><%= number_to_percentage(su.effective_commission_pct.to_f * 100, precision: 2) %></td>
-          <td><%= number_to_currency(su.commission_amount.to_f, unit: "$") %></td>
+          <td class="numeric"><%= number_to_percentage(su.effective_commission_pct.to_f * 100, precision: 2) %></td>
+          <td class="numeric"><%= number_to_currency(su.commission_amount.to_f, unit: "$") %></td>
         </tr>
       <% end %>
     </tbody>

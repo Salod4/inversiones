@@ -1,23 +1,52 @@
-<h1>Transfer <%= @transfer.code %></h1>
+<div class="page-header">
+  <div>
+    <h1>Transfer <%= @transfer.code %></h1>
+    <p class="lead">Detalle del movimiento y relación con venta/origen/destino.</p>
+  </div>
+  <div class="transfer-actions">
+    <%= link_to "Editar", edit_transfer_path(@transfer), class: "button button-secondary" %>
+    <%= link_to "Eliminar", transfer_path(@transfer), class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
+    <% if @sale %>
+      <%= link_to "Volver a la venta", sale_transfers_path(@sale), class: "button button-ghost" %>
+    <% else %>
+      <%= link_to "Regresar", transfers_path, class: "button button-ghost" %>
+    <% end %>
+  </div>
+</div>
 
-<p><strong>Origen:</strong> <%= @transfer.entity_label(:from) %></p>
-<p><strong>Destino:</strong> <%= @transfer.entity_label(:to) %></p>
-<% if @sale %>
-  <p><strong>Sale:</strong> <%= link_to @sale.code, sale_path(@sale), class: "button button-ghost" %></p>
-<% else %>
-  <p><strong>Sale:</strong> —</p>
-<% end %>
-<p><strong>Occurred At:</strong> <%= @transfer.occurred_at %></p>
-<p><strong>Supplier:</strong> <%= @transfer.supplier&.name %></p>
-<p><strong>Amount:</strong> <%= number_to_currency(@transfer.amount, unit: "$") %></p>
-<p><strong>Note:</strong> <%= @transfer.note %></p>
-
-<div class="button-group">
-  <%= link_to "Edit", edit_transfer_path(@transfer), class: "button" %>
-  <%= link_to "Delete", transfer_path(@transfer), class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
-  <% if @sale %>
-    <%= link_to "Back to Sale Transfers", sale_transfers_path(@sale), class: "button button-ghost" %>
-  <% else %>
-    <%= link_to "Back to Transfers", transfers_path, class: "button button-ghost" %>
-  <% end %>
+<div class="transfer-detail-grid">
+  <div class="transfer-detail">
+    <span class="label">Origen</span>
+    <span class="value"><%= @transfer.entity_label(:from) %></span>
+  </div>
+  <div class="transfer-detail">
+    <span class="label">Destino</span>
+    <span class="value"><%= @transfer.entity_label(:to) %></span>
+  </div>
+  <div class="transfer-detail">
+    <span class="label">Venta</span>
+    <span class="value"><%= @sale ? link_to(@sale.code, sale_path(@sale)) : "—" %></span>
+  </div>
+  <div class="transfer-detail">
+    <span class="label">Fecha</span>
+    <span class="value"><%= l(@transfer.occurred_at, format: :long) %></span>
+  </div>
+  <div class="transfer-detail">
+    <span class="label">Proveedor</span>
+    <span class="value"><%= @transfer.supplier&.name || "—" %></span>
+  </div>
+  <div class="transfer-detail">
+    <span class="label">Método</span>
+    <% pill_class = @transfer.payment_method == "efectivo" ? "payment-pill cash" : "payment-pill deposit" %>
+    <% pill_label = @transfer.payment_method == "efectivo" ? "Efectivo" : "Depósito" %>
+    <span class="value"><span class="<%= pill_class %>"><%= pill_label %></span></span>
+  </div>
+  <div class="transfer-detail">
+    <span class="label">Monto</span>
+    <span class="value"><%= number_to_currency(@transfer.amount, unit: "$") %></span>
+  </div>
+  <div class="transfer-detail">
+    <span class="label">Nota</span>
+    <span class="value"><%= @transfer.note.presence || "—" %></span>
+  </div>
 </div>

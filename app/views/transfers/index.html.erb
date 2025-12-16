@@ -1,47 +1,92 @@
-<h1>
-  <% if @sale %>
-    Transfers for Sale <%= @sale.code %>
-  <% else %>
-    Transfers
-  <% end %>
-</h1>
+<div class="transfers-page">
+  <div class="page-header">
+    <div>
+      <h1>
+        <% if @sale %>
+          Transfers de la venta <%= @sale.code %>
+        <% else %>
+          Transfers
+        <% end %>
+      </h1>
+      <p class="lead">Movimientos SPEI o efectivo entre clientes, grupos, proveedores y vendedores.</p>
+    </div>
+    <div class="transfer-actions">
+      <% if @sale %>
+        <%= link_to "Nuevo transfer", new_sale_transfer_path(@sale), class: "button" %>
+        <%= link_to "Regresar a la venta", sale_path(@sale), class: "button button-ghost" %>
+      <% else %>
+        <%= link_to "Nuevo transfer", new_transfer_path, class: "button" %>
+      <% end %>
+    </div>
+  </div>
 
-<div class="button-group">
-  <% if @sale %>
-    <%= link_to "New Transfer", new_sale_transfer_path(@sale), class: "button" %>
-    <%= link_to "Back to Sale", sale_path(@sale), class: "button button-ghost" %>
-  <% else %>
-    <%= link_to "New Transfer", new_transfer_path, class: "button" %>
-  <% end %>
+  <% total_amount = @transfers.sum { |t| t.amount.to_d } %>
+  <% total_depositos = @transfers.count { |t| t.payment_method == "deposito" } %>
+  <% total_efectivo = @transfers.count { |t| t.payment_method == "efectivo" } %>
+
+  <div class="transfers-stats">
+    <div class="transfer-stat">
+      <span class="label">Total transfers</span>
+      <span class="value"><%= @transfers.count %></span>
+    </div>
+    <div class="transfer-stat">
+      <span class="label">Monto total</span>
+      <span class="value"><%= number_to_currency(total_amount, unit: "$") %></span>
+    </div>
+    <div class="transfer-stat">
+      <span class="label">Depósitos</span>
+      <span class="value"><%= total_depositos %></span>
+    </div>
+    <div class="transfer-stat">
+      <span class="label">Efectivo</span>
+      <span class="value"><%= total_efectivo %></span>
+    </div>
+  </div>
+
+  <div class="card transfers-table">
+    <div class="table-subtitle">Listado de transfers</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Fecha</th>
+          <th>Origen</th>
+          <th>Destino</th>
+          <th>Sale</th>
+          <th>Método</th>
+          <th>Monto</th>
+          <th class="actions-cell">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if @transfers.any? %>
+          <% @transfers.each do |transfer| %>
+            <% pill_class = transfer.payment_method == "efectivo" ? "payment-pill cash" : "payment-pill deposit" %>
+            <% pill_label = transfer.payment_method == "efectivo" ? "Efectivo" : "Depósito" %>
+            <tr>
+              <td><%= transfer.code %></td>
+              <td><%= l(transfer.occurred_at, format: :short) %></td>
+              <td><%= transfer.entity_label(:from) %></td>
+              <td><%= transfer.entity_label(:to) %></td>
+              <td><%= transfer.sale&.code || "—" %></td>
+              <td><span class="<%= pill_class %>"><%= pill_label %></span></td>
+              <td><%= number_to_currency(transfer.amount, unit: "$") %></td>
+              <td class="actions-cell">
+                <div class="actions-stack">
+                  <%= link_to "Ver", transfer_path(transfer), class: "button button-secondary" %>
+                  <%= link_to "Editar", edit_transfer_path(transfer), class: "button button-ghost" %>
+                  <%= link_to "Eliminar", transfer_path(transfer), class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td colspan="8">No hay transfers registrados.</td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <%= pagination_nav(@pagy, item_name: "transfers") %>
+  </div>
 </div>
-
-<table>
-  <thead>
-    <tr>
-      <th>Code</th>
-      <th>Occurred At</th>
-      <th>Origen</th>
-      <th>Destino</th>
-      <th>Sale</th>
-      <th>Amount</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @transfers.each do |transfer| %>
-      <tr>
-        <td><%= transfer.code %></td>
-        <td><%= transfer.occurred_at %></td>
-        <td><%= transfer.entity_label(:from) %></td>
-        <td><%= transfer.entity_label(:to) %></td>
-        <td><%= transfer.sale&.code %></td>
-        <td><%= number_to_currency(transfer.amount, unit: "$") %></td>
-        <td>
-          <%= link_to "Show", transfer_path(transfer), class: "button button-secondary" %>
-        </td>
-      </tr>
-    <% end %>
-  </tbody>
-</table>
-
-<%= pagination_nav(@pagy) %>

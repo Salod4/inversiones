@@ -1,26 +1,62 @@
-<h1>Sale <%= @sale.code %></h1>
-<div class="button-group" style="margin-bottom: 1rem;">
-  <a class="button" href="#sale_attachments">Adjuntar archivo</a>
+<div class="page-header">
+  <div>
+    <h1>Venta <%= @sale.code %></h1>
+    <p class="lead">Detalle completo de la venta, adjuntos, vendedores y SPEI.</p>
+  </div>
+  <div class="sales-actions">
+    <a class="button" href="#sale_attachments">Adjuntar archivo</a>
+    <%= link_to "Editar", edit_sale_path(@sale), class: "button button-secondary" %>
+    <%= link_to "Regresar", sales_path, class: "button button-ghost" %>
+  </div>
 </div>
 
-<p><strong>Fecha de la venta:</strong> <%= @sale.date %></p>
-<p><strong>Cliente:</strong> <%= @sale.customer&.name %></p>
-<p><strong>Proveedor:</strong> <%= @sale.supplier&.name %></p>
-<p><strong>Cierre:</strong> <%= @sale.closing&.business_date %></p>
-<p><strong>Deposito bruto:</strong> <%= @sale.gross_deposit %></p>
-
-<p><strong>Total de SPEI en venta:</strong> <%= @sale.total_transfer_applied %></p>
-
-
-<p><strong>Total comision del vendedor:</strong> <%= number_to_currency(@sale.total_seller_commission, unit: "$") %></p>
-<p><strong>Total despues de %'s: </strong> <%= number_to_currency(@sale.net_after_provider_and_sellers, unit: "$") %></p>
-<p><strong>Balance despues de SPEI:</strong> <%= number_to_currency(@sale.balance_after_transfers, unit: "$") %></p>
-<p><strong>Ret Comp:</strong> <%= number_to_currency(@sale.ret_comp, unit: "$") %></p>
+<div class="detail-grid">
+  <div class="detail-card">
+    <span class="label">Fecha</span>
+    <span class="value"><%= @sale.date %></span>
+  </div>
+  <div class="detail-card">
+    <span class="label">Cliente</span>
+    <span class="value"><%= @sale.customer&.name %></span>
+  </div>
+  <div class="detail-card">
+    <span class="label">Proveedor</span>
+    <span class="value"><%= @sale.supplier&.name %></span>
+  </div>
+  <div class="detail-card">
+    <span class="label">Cierre</span>
+    <span class="value"><%= @sale.closing&.business_date || "Pendiente" %></span>
+  </div>
+  <div class="detail-card">
+    <span class="label">Deposito bruto</span>
+    <span class="value"><%= number_to_currency(@sale.gross_deposit, unit: "$") %></span>
+  </div>
+  <div class="detail-card">
+    <span class="label">Total SPEI</span>
+    <span class="value"><%= number_to_currency(@sale.total_transfer_applied, unit: "$") %></span>
+  </div>
+  <div class="detail-card">
+    <span class="label">Comisión vendedores</span>
+    <span class="value"><%= number_to_currency(@sale.total_seller_commission, unit: "$") %></span>
+  </div>
+  <div class="detail-card">
+    <span class="label">Total después de %</span>
+    <span class="value"><%= number_to_currency(@sale.net_after_provider_and_sellers, unit: "$") %></span>
+  </div>
+  <div class="detail-card">
+    <span class="label">Balance después de SPEI</span>
+    <span class="value"><%= number_to_currency(@sale.balance_after_transfers, unit: "$") %></span>
+  </div>
+  <div class="detail-card">
+    <span class="label">Ret Comp</span>
+    <span class="value"><%= number_to_currency(@sale.ret_comp, unit: "$") %></span>
+  </div>
+</div>
 
 <section id="sale_attachments">
   <h2>Adjuntos</h2>
   <%= form_with url: attach_file_sale_path(@sale), method: :post, local: true, html: { multipart: true, id: "sale_show_attachments_form" } do |f| %>
-    <div class="attachment-dropzone" id="sale_show_dropzone" style="border:1px dashed #ccc; padding:12px; border-radius:6px; margin-bottom:8px;">
+    <div class="attachment-dropzone" id="sale_show_dropzone">
       <p>Arrastra y suelta aquí o haz clic para seleccionar archivos</p>
       <%= f.file_field :attachments, multiple: true, accept: "image/*,.pdf", id: "sale_show_attachments_input", style: "display:none;" %>
       <button type="button" class="button button-secondary" id="sale_show_attachments_trigger">Elegir archivos</button>
@@ -106,7 +142,7 @@
         <% @transfers.each do |transfer| %>
           <tr>
             <td><%= transfer.code %></td>
-            <td><%= transfer.occurred_at %></td>
+            <td><%= l(transfer.occurred_at, format: :short) %></td>
             <td><%= transfer.supplier&.name %></td>
             <td><%= number_to_currency(transfer.amount, unit: "$") %></td>
             <td><%= link_to "Ver", transfer_path(transfer), class: "button button-secondary" %></td>
@@ -173,8 +209,3 @@
     });
   })();
 </script>
-
-<div class="button-group">
-  <%= link_to "Edit", edit_sale_path(@sale), class: "button" %>
-  <%= link_to "Regresar", sales_path, class: "button button-ghost" %>
-</div>

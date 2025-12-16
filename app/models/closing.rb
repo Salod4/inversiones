@@ -11,6 +11,11 @@ class Closing < ApplicationRecord
     for_date(date).exists?
   end
   def self.open_business_date(today = Date.current)
-    closed_for?(today) ? today + 1.day : today
+    date = today
+    90.times do
+      return date unless closed_for?(date)
+      date += 1.day
+    end
+    date
   end
 end

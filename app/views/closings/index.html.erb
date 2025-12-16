@@ -1,36 +1,49 @@
-<h1>Closings</h1>
+<div class="page-header">
+  <div>
+    <h1>Closings</h1>
+    <p class="lead">Resumen de cierres diarios y su balance general.</p>
+  </div>
+  <div class="button-group">
+    <%= link_to "New Closing", new_closing_path, class: "button" %>
+  </div>
+</div>
 
-<p><%= link_to "New Closing", new_closing_path, class: "button" %></p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Business Date</th>
-      <th>Status</th>
-      <th>Total Customers</th>
-      <th>Total Suppliers</th>
-      <th>Difference</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @closings.each do |closing| %>
+<div class="card closings-table">
+  <table>
+    <thead>
       <tr>
-        <td><%= closing.business_date %></td>
-        <td><%= closing.status %></td>
-        <td><%= closing.total_customers %></td>
-        <td><%= closing.total_suppliers %></td>
-        <td><%= closing.difference %></td>
-        <td>
-          <div class="button-group">
-            <%= link_to "Show", closing, class: "button button-secondary" %>
-            <%= link_to "Edit", edit_closing_path(closing), class: "button button-secondary" %>
-            <%= link_to "Destroy", closing, class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
-          </div>
-        </td>
+        <th>Business Date</th>
+        <th>Status</th>
+        <th>Total Customers</th>
+        <th>Total Suppliers</th>
+        <th>Difference</th>
+        <th></th>
       </tr>
-    <% end %>
-  </tbody>
-</table>
+    </thead>
+    <tbody>
+      <% @closings.each do |closing| %>
+        <% diff_class = closing.difference.to_d.negative? ? "difference-negative" : "difference-positive" %>
+        <tr>
+          <td><%= closing.business_date %></td>
+          <td>
+            <span class="status-pill <%= closing.status == "closed" ? "status-closed" : "status-open" %>">
+              <%= closing.status&.capitalize || "Pendiente" %>
+            </span>
+          </td>
+          <td class="numeric"><%= number_to_currency(closing.total_customers, unit: "$") %></td>
+          <td class="numeric"><%= number_to_currency(closing.total_suppliers, unit: "$") %></td>
+          <td class="numeric <%= diff_class %>"><%= number_to_currency(closing.difference, unit: "$") %></td>
+          <td>
+            <div class="button-group">
+              <%= link_to "Show", closing, class: "button button-secondary" %>
+              <%= link_to "Edit", edit_closing_path(closing), class: "button button-ghost" %>
+              <%= link_to "Destroy", closing, class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
+            </div>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
 
-<%= pagination_nav(@pagy) %>
+<%= pagination_nav(@pagy, item_name: "cierres") %>

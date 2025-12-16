@@ -1,114 +1,111 @@
-<%= form_with(model: sale) do |f| %>
-  <% if sale.errors.any? %>
-    <div class="errors">
-      <h2><%= pluralize(sale.errors.count, "error") %> prevented this sale from being saved:</h2>
-      <ul>
-        <% sale.errors.full_messages.each do |message| %>
-          <li><%= message %></li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
-
-
-  <div>
-    <%= f.label :date %>
-    <%= f.date_field :date, value: (sale.date || Date.current) %>
-  </div>
-
-
-  <div>
-    <%= f.label :supplier_id, "Proveedor" %>
-    <%= f.collection_select :supplier_id, @suppliers || Supplier.order(:name), :id, :name, {}, { id: "sale_supplier_id" } %>
-  </div>
-
-  <div>
-    <%= f.label :customer_id, "Cliente" %>
-
-    <div>
-      <label for="sale_customer_search">Buscar cliente</label>
-      <input
-        type="text"
-        id="sale_customer_search"
-        placeholder="Escribe para filtrar clientes..."
-        autocomplete="off"
-        class="form-control"
-        data-customers='<%= raw(@customers.select(:id, :code, :name).map { |c| { id: c.id, code: c.code, name: c.name } }.to_json) %>'
-      >
-    </div>
-
-    <%= f.hidden_field :customer_id, id: "sale_customer_id" %>
-
-    <div id="sale_customer_results" class="customer-results"></div>
-  </div>
-
-
-
-  <div>
-    <%= f.label :gross_deposit, "Deposito del cliente" %>
-    <%= f.number_field :gross_deposit, step: 1 %>
-  </div>
-
-
-
-  <div>
-    <%= f.label :provider_pct_override, "% Que nos cobra el proveedor" %>
-    <%= f.number_field :provider_pct_override, step: 0.0001, id: "sale_provider_pct_override" %>
-  </div>
-
-  <div>
-    <%= f.label :customer_fee_pct_override, "% Al que le vendemos al cliente" %>
-    <%= f.number_field :customer_fee_pct_override, step: 0.0001, id: "sale_customer_fee_pct_override" %>
-  </div>
-
-
-  <div>
-    <%= f.label :status %>
-    <%= f.select :status, options_for_select([["Open", "open"], ["Closed", "closed"], ["Canceled", "canceled"]], sale.status), include_blank: true %>
-  </div>
-
-  <div id="sale_attachments">
-    <%= f.label :attachments, "Adjuntos (imágenes o PDF)" %>
-    <div class="attachment-dropzone" id="sale_attachments_dropzone" style="border:1px dashed #ccc; padding:12px; border-radius:6px; margin-bottom:8px;">
-      <p>Arrastra y suelta aquí o haz clic para seleccionar archivos</p>
-      <%= f.file_field :attachments, multiple: true, accept: "image/*,.pdf", id: "sale_attachments_input", style: "display:none;" %>
-      <button type="button" class="button button-secondary" id="sale_attachments_trigger">Elegir archivos</button>
-    </div>
-    <ul class="list" id="sale_attachments_preview"></ul>
-
-    <% if sale.attachments.attached? %>
-      <ul class="list">
-        <% sale.attachments.each do |att| %>
-          <li style="display:flex; align-items:center; gap:8px;">
-            <% if att.image? %>
-              <%= image_tag att.variant(resize_to_limit: [120, 120]), alt: att.filename.to_s, style: "max-height:120px; max-width:120px;" %>
-            <% end %>
-            <span><%= att.filename.to_s %> (<%= number_to_human_size(att.byte_size) %>)</span>
-            <%= button_to "Eliminar", delete_attachment_sale_path(sale, attachment_id: att.id), method: :delete, data: { turbo_confirm: "¿Eliminar adjunto?" }, class: "button button--small button-danger" %>
-          </li>
-        <% end %>
-      </ul>
-    <% end %>
-  </div>
-
-  <div id="preview_sales_users">
-    <% collection = @sales_users_for_form || sale.sales_users %>
-    <%= f.fields_for :sales_users, collection do |su_fields| %>
-      <% su = su_fields.object %>
-      <% display_name = sales_user_display_name(sale, su) %>
-      <div data-user-id="<%= su.user_id %>">
-        <label><%= display_name %> (<%= su.commission_pct %>)</label>
-        <%= su_fields.hidden_field :id %>
-        <%= su_fields.hidden_field :user_id %>
-        <%= su_fields.number_field :commission_pct_override, step: 0.0001, placeholder: su.commission_pct %>
+<div class="sales-form-card">
+  <%= form_with(model: sale) do |f| %>
+    <% if sale.errors.any? %>
+      <div class="errors">
+        <h2><%= pluralize(sale.errors.count, "error") %> prevented this sale from being saved:</h2>
+        <ul>
+          <% sale.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
       </div>
     <% end %>
-  </div>
 
-  <div>
-    <%= f.submit %>
-  </div>
-<% end %>
+    <div class="form-grid">
+      <div class="field">
+        <%= f.label :date %>
+        <%= f.date_field :date, value: (sale.date || Closing.open_business_date(Date.current)) %>
+      </div>
+
+      <div class="field">
+        <%= f.label :supplier_id, "Proveedor" %>
+        <%= f.collection_select :supplier_id, @suppliers || Supplier.order(:name), :id, :name, {}, { id: "sale_supplier_id" } %>
+      </div>
+
+      <div class="field">
+        <%= f.label :status %>
+        <%= f.select :status, options_for_select([["Open", "open"], ["Closed", "closed"], ["Canceled", "canceled"]], sale.status), include_blank: true %>
+      </div>
+
+      <div class="field">
+        <%= f.label :gross_deposit, "Deposito del cliente" %>
+        <%= f.number_field :gross_deposit, step: 1 %>
+      </div>
+
+      <div class="field">
+        <%= f.label :provider_pct_override, "% Que nos cobra el proveedor" %>
+        <%= f.number_field :provider_pct_override, step: 0.0001, id: "sale_provider_pct_override" %>
+      </div>
+
+      <div class="field">
+        <%= f.label :customer_fee_pct_override, "% Al que le vendemos al cliente" %>
+        <%= f.number_field :customer_fee_pct_override, step: 0.0001, id: "sale_customer_fee_pct_override" %>
+      </div>
+    </div>
+
+    <div class="card-section">
+      <h3 class="section-title">Cliente</h3>
+      <div class="field">
+        <label for="sale_customer_search">Buscar cliente</label>
+        <input
+          type="text"
+          id="sale_customer_search"
+          placeholder="Escribe para filtrar clientes..."
+          autocomplete="off"
+          class="form-control"
+          data-customers='<%= raw(@customers.select(:id, :code, :name).map { |c| { id: c.id, code: c.code, name: c.name } }.to_json) %>'
+        >
+      </div>
+
+      <%= f.hidden_field :customer_id, id: "sale_customer_id" %>
+      <div id="sale_customer_results" class="customer-results"></div>
+    </div>
+
+    <div id="sale_attachments" class="card-section">
+      <h3 class="section-title">Adjuntos (imágenes o PDF)</h3>
+      <div class="attachment-dropzone" id="sale_attachments_dropzone">
+        <p>Arrastra y suelta aquí o haz clic para seleccionar archivos</p>
+        <%= f.file_field :attachments, multiple: true, accept: "image/*,.pdf", id: "sale_attachments_input", style: "display:none;" %>
+        <button type="button" class="button button-secondary" id="sale_attachments_trigger">Elegir archivos</button>
+      </div>
+      <ul class="list" id="sale_attachments_preview"></ul>
+
+      <% if sale.attachments.attached? %>
+        <ul class="list">
+          <% sale.attachments.each do |att| %>
+            <li style="display:flex; align-items:center; gap:8px;">
+              <% if att.image? %>
+                <%= image_tag att.variant(resize_to_limit: [120, 120]), alt: att.filename.to_s, style: "max-height:120px; max-width:120px;" %>
+              <% end %>
+              <span><%= att.filename.to_s %> (<%= number_to_human_size(att.byte_size) %>)</span>
+              <%= button_to "Eliminar", delete_attachment_sale_path(sale, attachment_id: att.id), method: :delete, data: { turbo_confirm: "¿Eliminar adjunto?" }, class: "button button--small button-danger" %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </div>
+
+    <div id="preview_sales_users" class="card-section">
+      <h3 class="section-title">Vendedores</h3>
+      <% collection = @sales_users_for_form || sale.sales_users %>
+      <%= f.fields_for :sales_users, collection do |su_fields| %>
+        <% su = su_fields.object %>
+        <% display_name = sales_user_display_name(sale, su) %>
+        <div data-user-id="<%= su.user_id %>">
+          <label><%= display_name %> (<%= su.commission_pct %>)</label>
+          <%= su_fields.hidden_field :id %>
+          <%= su_fields.hidden_field :user_id %>
+          <%= su_fields.number_field :commission_pct_override, step: 0.0001, placeholder: su.commission_pct %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="sales-actions">
+      <%= f.submit "Guardar", class: "button" %>
+      <%= link_to "Cancelar", sale.persisted? ? sale_path(sale) : sales_path, class: "button button-ghost" %>
+    </div>
+  <% end %>
+</div>
 
 <script>
   (() => {

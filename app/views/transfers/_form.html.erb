@@ -5,44 +5,48 @@
                 sale ? sale_transfers_path(sale) : transfers_path
               end %>
 
-<%= form_with(model: transfer, url: form_url) do |form| %>
-  <% if transfer.errors.any? %>
-    <div class="errors">
-      <h2><%= pluralize(transfer.errors.count, "error") %> prevented this transfer from being saved:</h2>
-      <ul>
-        <% transfer.errors.full_messages.each do |message| %>
-          <li><%= message %></li>
-        <% end %>
-      </ul>
+<div class="transfer-form-card">
+  <%= form_with(model: transfer, url: form_url) do |form| %>
+    <% if transfer.errors.any? %>
+      <div class="errors">
+        <h2><%= pluralize(transfer.errors.count, "error") %> prevented this transfer from being saved:</h2>
+        <ul>
+          <% transfer.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="form-grid">
+      <% if transfer.persisted? %>
+        <div class="field">
+          <%= form.label :code %>
+          <%= form.text_field :code %>
+        </div>
+
+        <div class="field">
+          <%= form.label :occurred_at %>
+          <%= form.datetime_field :occurred_at %>
+        </div>
+      <% else %>
+        <div class="field">
+          <%= form.label :payment_method, "Tipo de transferencia" %>
+          <%= form.select :payment_method,
+                          options_for_select([["Depósito", "deposito"], ["Efectivo", "efectivo"]], transfer.payment_method || "deposito"),
+                          {},
+                          class: "select" %>
+          <p class="hint">Depósito usa el código SPEI actual; Efectivo genera código EFE-ORIG-DEST-fecha.</p>
+        </div>
+        <div class="field">
+          <p class="hint" style="margin-top: 1.8rem;">El código SPEI y la fecha se generarán automáticamente al guardar.</p>
+        </div>
+      <% end %>
     </div>
-  <% end %>
 
-  <% if transfer.persisted? %>
-    <div>
-      <%= form.label :code %>
-      <%= form.text_field :code %>
-    </div>
-
-    <div>
-      <%= form.label :occurred_at %>
-      <%= form.datetime_field :occurred_at %>
-    </div>
-  <% else %>
-    <p class="hint">El código SPEI y la fecha se generarán automáticamente al guardar.</p>
-  <% end %>
-
-  <% if local_assigns[:include_sale_field] && sale.present? %>
-    <%= form.hidden_field :sale_id, value: sale&.id %>
-  <% end %>
-
-  <div>
-    <%= form.label :payment_method, "Tipo de transferencia" %>
-    <%= form.select :payment_method,
-                    options_for_select([["Depósito", "deposito"], ["Efectivo", "efectivo"]], transfer.payment_method || "deposito"),
-                    {},
-                    class: "select" %>
-    <p class="hint">Depósito usa el código SPEI actual; Efectivo genera código EFE-ORIG-DEST-fecha.</p>
-  </div>
+    <% if local_assigns[:include_sale_field] && sale.present? %>
+      <%= form.hidden_field :sale_id, value: sale&.id %>
+    <% end %>
 
 <%
   grouped_options = {}
@@ -101,106 +105,108 @@
 <% sale_available = sale.present? ? sale.available_transfer_amount(excluding: transfer) : nil %>
 <% allow_multiple_destinations = local_assigns.key?(:allow_multiple_destinations) ? local_assigns[:allow_multiple_destinations] : !transfer.persisted? %>
 
-  <div class="entity-filter">
-    <label for="customer_filter" class="hint">Filtrar clientes (como en la tabla de clientes)</label>
-    <input id="customer_filter" type="text" placeholder="Nombre o código" />
-  </div>
-
-  <div class="entity-picker">
-    <label>Origen</label>
-    <div class="entity-picker__row">
-      <select id="from_type" class="select">
-        <option value="">Selecciona tipo</option>
-        <option value="Customer">Cliente</option>
-        <option value="Supplier">Proveedor</option>
-        <option value="User">Vendedor</option>
-      </select>
-      <%= select_tag "transfer[from_entity_ref]",
-                    grouped_options_for_select(grouped_options, from_selected),
-                    include_blank: "Selecciona origen",
-                    id: "from_entity_ref",
-                    class: "select entity-options" %>
+    <div class="entity-filter">
+      <label for="customer_filter" class="hint">Filtrar clientes (como en la tabla de clientes)</label>
+      <input id="customer_filter" type="text" placeholder="Nombre o código" />
     </div>
-    <p class="hint" id="from_balance_hint"></p>
-  </div>
 
-  <div class="origin-balance">
-    <p class="hint">
-      Saldo del origen:
-      <strong id="origin_balance_value" data-sale-available="<%= sale_available&.to_f %>">
-        <%= sale_available ? number_to_currency(sale_available, unit: "$") : "—" %>
-      </strong>
-      · Restante: <strong id="origin_remaining_value">—</strong>
-    </p>
-  </div>
-
-  <div class="destinations-block"
-       id="destinations_block"
-       data-sale-available="<%= sale_available&.to_f %>"
-       data-initial-destinations="<%= j(initial_destinations_json) %>"
-       data-allow-multiple="<%= allow_multiple_destinations %>">
-    <div class="destinations-block__header">
-      <label>Destinos</label>
-      <button type="button" id="add_destination" class="button button-secondary button-small">Agregar destino</button>
+    <div class="entity-picker">
+      <label>Origen</label>
+      <div class="entity-picker__row">
+        <select id="from_type" class="select">
+          <option value="">Selecciona tipo</option>
+          <option value="Customer">Cliente</option>
+          <option value="Supplier">Proveedor</option>
+          <option value="User">Vendedor</option>
+        </select>
+        <%= select_tag "transfer[from_entity_ref]",
+                      grouped_options_for_select(grouped_options, from_selected),
+                      include_blank: "Selecciona origen",
+                      id: "from_entity_ref",
+                      class: "select entity-options" %>
+      </div>
+      <p class="hint" id="from_balance_hint"></p>
     </div>
-    <p class="hint">Agrega uno o varios destinos y define cuánto enviar a cada uno. El saldo restante se actualiza en vivo.</p>
-    <div id="destination_list"></div>
-  </div>
 
-  <template id="destination_row_template">
-    <div class="destination-row" data-index="__INDEX__">
-      <div class="entity-picker">
-        <label>Destino</label>
-        <div class="entity-picker__row">
-          <select class="select destination-type" data-role="destination-type">
-            <option value="">Selecciona tipo</option>
-            <option value="Customer">Cliente</option>
-            <option value="Supplier">Proveedor</option>
-            <option value="User">Vendedor</option>
-          </select>
-          <select name="transfer[destination_entries][__INDEX__][to_entity_ref]"
-                  class="select entity-options"
-                  data-role="destination-entity">
-            <option value="">Selecciona destino</option>
-            <%= grouped_options_for_select(grouped_options) %>
-          </select>
+    <div class="origin-balance">
+      <p class="hint">
+        Saldo del origen:
+        <strong id="origin_balance_value" data-sale-available="<%= sale_available&.to_f %>">
+          <%= sale_available ? number_to_currency(sale_available, unit: "$") : "—" %>
+        </strong>
+        · Restante: <strong id="origin_remaining_value">—</strong>
+      </p>
+    </div>
+
+    <div class="destinations-block"
+         id="destinations_block"
+         data-sale-available="<%= sale_available&.to_f %>"
+         data-initial-destinations="<%= j(initial_destinations_json) %>"
+         data-allow-multiple="<%= allow_multiple_destinations %>">
+      <div class="destinations-block__header">
+        <label>Destinos</label>
+        <button type="button" id="add_destination" class="button button-secondary button-small">Agregar destino</button>
+      </div>
+      <p class="hint">Agrega uno o varios destinos y define cuánto enviar a cada uno. El saldo restante se actualiza en vivo.</p>
+      <div id="destination_list"></div>
+    </div>
+
+    <template id="destination_row_template">
+      <div class="destination-row" data-index="__INDEX__">
+        <div class="entity-picker">
+          <label>Destino</label>
+          <div class="entity-picker__row">
+            <select class="select destination-type" data-role="destination-type">
+              <option value="">Selecciona tipo</option>
+              <option value="Customer">Cliente</option>
+              <option value="Supplier">Proveedor</option>
+              <option value="User">Vendedor</option>
+            </select>
+            <select name="transfer[destination_entries][__INDEX__][to_entity_ref]"
+                    class="select entity-options"
+                    data-role="destination-entity">
+              <option value="">Selecciona destino</option>
+              <%= grouped_options_for_select(grouped_options) %>
+            </select>
+          </div>
+          <p class="hint" data-role="destination-balance"></p>
         </div>
-        <p class="hint" data-role="destination-balance"></p>
+        <div>
+          <label>Monto</label>
+          <input type="number"
+                 step="0.01"
+                 name="transfer[destination_entries][__INDEX__][amount]"
+                 data-role="destination-amount" />
+        </div>
+        <div class="destination-row__actions">
+          <button type="button" class="button button-ghost remove-destination">Quitar destino</button>
+        </div>
       </div>
-      <div>
-        <label>Monto</label>
-        <input type="number"
-               step="0.01"
-               name="transfer[destination_entries][__INDEX__][amount]"
-               data-role="destination-amount" />
-      </div>
-      <div class="destination-row__actions">
-        <button type="button" class="button button-ghost remove-destination">Quitar destino</button>
-      </div>
+    </template>
+
+    <% if sale.present? %>
+      <p class="hint">
+        Balance del cliente en esta venta: <strong><%= number_to_currency(sale.customer_balance.to_f, unit: "$") %></strong><br>
+        Disponible para SPEI en esta venta: <strong><%= number_to_currency(sale.available_transfer_amount(excluding: transfer), unit: "$") %></strong>
+      </p>
+    <% elsif transfer.customer.present? %>
+      <% available_total = local_assigns[:customer_balance] || transfer.customer.total_customer_balance %>
+      <p class="hint">
+        Total de cliente: <strong><%= number_to_currency(available_total, unit: "$") %></strong>
+      </p>
+    <% end %>
+
+    <div>
+      <%= form.label :note %>
+      <%= form.text_area :note %>
     </div>
-  </template>
 
-  <% if sale.present? %>
-    <p class="hint">
-      Balance del cliente en esta venta: <strong><%= number_to_currency(sale.customer_balance.to_f, unit: "$") %></strong><br>
-      Disponible para SPEI en esta venta: <strong><%= number_to_currency(sale.available_transfer_amount(excluding: transfer), unit: "$") %></strong>
-    </p>
-  <% elsif transfer.customer.present? %>
-    <% available_total = local_assigns[:customer_balance] || transfer.customer.total_customer_balance %>
-    <p class="hint">
-      Total de cliente: <strong><%= number_to_currency(available_total, unit: "$") %></strong>
-    </p>
+    <div class="transfer-actions">
+      <%= form.submit "Guardar", class: "button" %>
+      <%= link_to "Cancelar", transfer.persisted? ? transfer_path(transfer) : (sale ? sale_transfers_path(sale) : transfers_path), class: "button button-ghost" %>
+    </div>
   <% end %>
-
-  <div>
-    <%= form.label :note %>
-    <%= form.text_area :note %>
-  </div>
-
-  <div>
-    <%= form.submit %>
-  </div>
-<% end %>
+</div>
 
 <script>
   (() => {

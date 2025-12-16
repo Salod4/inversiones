@@ -21,12 +21,19 @@ class ClosingsController < ApplicationController
       memo[cc.customer_id] += cc.customer_balance.to_d
     end
 
-    group_defs = CustomerGroups.build(Customer.where(id: balances_by_customer.keys))
+    all_group_defs = CustomerGroups.build(Customer.all).index_by { |g| g[:name] }
+    group_defs = CustomerGroups.names.map do |name|
+      all_group_defs[name] || { name:, customers: [], count: 0 }
+    end
+
+    group_openings = OpeningBalance.customer_groups.group(Arel.sql("LOWER(group_name)")).sum(:amount)
+
     @customer_group_totals = group_defs.map do |g|
       ids = g[:customers].map(&:id)
+      opening = group_openings.fetch(g[:name].downcase, 0).to_d
       {
         name: g[:name],
-        balance: ids.sum { |cid| balances_by_customer[cid] }
+        balance: ids.sum { |cid| balances_by_customer[cid] } + opening
       }
     end
 

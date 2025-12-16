@@ -17,10 +17,17 @@ module CustomerGroups
     # Total depositado (grupo): suma de CustomerClosing#totals[:total_depositado] para los miembros.
     # Total a regresar: suma de customer_balance (saldo guardado en el cierre) o, si falta, totals[:total_cliente].
     def render
-      closings_in_group = customer_closings_in_group
-      raise GroupNotFound if closings_in_group.empty?
+      group = group_definition
+      raise GroupNotFound unless group
 
-      totals = aggregate_totals(closings_in_group)
+      closings_in_group = customer_closings_in_group(group)
+      opening_balance = OpeningBalance.total_for_group(@group_name)
+
+      if closings_in_group.empty? && opening_balance.zero?
+        raise GroupNotFound
+      end
+
+      totals = aggregate_totals(closings_in_group, opening_balance)
 
       Prawn::Document.new(page_size: "A4") do |pdf|
         pdf.text "Customer Group Closing", size: 18, style: :bold
@@ -38,18 +45,18 @@ module CustomerGroups
 
     private
 
-    def customer_closings_in_group
-      return [] unless @closing
+    def group_definition
+      ::CustomerGroups.find_by_name(@group_name, Customer.all)
+    end
 
-      customer_scope = Customer.where(id: @closing.customer_closings.select(:customer_id))
-      group = ::CustomerGroups.find_by_name(@group_name, customer_scope)
-      return [] unless group
+    def customer_closings_in_group(group)
+      return [] unless @closing && group
 
       ids = group[:customers].map(&:id)
       @closing.customer_closings.includes(:customer).select { |cc| ids.include?(cc.customer_id) }
     end
 
-    def aggregate_totals(customer_closings)
+    def aggregate_totals(customer_closings, opening_balance = 0)
       totals = customer_closings.each_with_object({ total_depositado: BigDecimal("0"), total_cliente: BigDecimal("0") }) do |cc, acc|
         cc_totals = cc&.totals || {}
         acc[:total_depositado] += decimal_value(cc_totals[:total_depositado])
@@ -58,6 +65,7 @@ module CustomerGroups
         total_cliente = cc_totals[:total_cliente] if total_cliente.nil?
         acc[:total_cliente] += decimal_value(total_cliente)
       end
+      totals[:total_cliente] += decimal_value(opening_balance)
       totals
     end
 

@@ -1,43 +1,71 @@
-<h1>Closing for <%= @closing.business_date %></h1>
+<div class="page-header">
+  <div>
+    <h1>Closing <%= @closing.business_date %></h1>
+    <p class="lead">Estado del cierre y resumen financiero del día.</p>
+  </div>
+  <div class="button-group">
+    <%= link_to "Edit", edit_closing_path(@closing), class: "button button-secondary" %>
+    <%= link_to "Back", closings_path, class: "button button-ghost" %>
+  </div>
+</div>
 
-<p><strong>Status:</strong> <%= @closing.status %></p>
-<p><strong>Closed At:</strong> <%= @closing.closed_at %></p>
-<p><strong>Total Customers:</strong> <%= @closing.total_customers %></p>
-<p><strong>Total Suppliers:</strong> <%= @closing.total_suppliers %></p>
-<p><strong>Difference:</strong> <%= @closing.difference %></p>
+<div class="closing-meta-grid">
+  <div class="closing-meta">
+    <span class="label">Status</span>
+    <span class="value">
+      <span class="status-pill <%= @closing.status == "closed" ? "status-closed" : "status-open" %>">
+        <%= @closing.status&.capitalize || "Pendiente" %>
+      </span>
+    </span>
+  </div>
+  <div class="closing-meta">
+    <span class="label">Closed At</span>
+    <span class="value"><%= @closing.closed_at || "-" %></span>
+  </div>
+  <div class="closing-meta">
+    <span class="label">Total Customers</span>
+    <span class="value"><%= number_to_currency(@closing.total_customers, unit: "$") %></span>
+  </div>
+  <div class="closing-meta">
+    <span class="label">Total Suppliers</span>
+    <span class="value"><%= number_to_currency(@closing.total_suppliers, unit: "$") %></span>
+  </div>
+  <% diff_class = @closing.difference.to_d.negative? ? "difference-negative" : "difference-positive" %>
+  <div class="closing-meta">
+    <span class="label">Difference</span>
+    <span class="value <%= diff_class %>"><%= number_to_currency(@closing.difference, unit: "$") %></span>
+  </div>
+</div>
 
 <section>
   <h2>Group Closings</h2>
 
-  <% if @customer_group_totals.any? %>
-    <table>
-      <thead>
-        <tr>
-          <th>Grupo</th>
-          <th>Customer Balance</th>
-          <th>Acciones</th>
+  <table>
+    <thead>
+      <tr>
+        <th>Grupo</th>
+        <th>Customer Balance</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @customer_group_totals.each do |row| %>
+        <% zero_balance = row[:balance].to_d.zero? %>
+        <tr class="<%= zero_balance ? "muted-row" : "" %>">
+          <td><%= row[:name] %></td>
+          <td class="<%= zero_balance ? "" : "difference-positive" %>"><%= number_to_currency(row[:balance], unit: "$") %></td>
+          <td>
+             <%= link_to "Ver grupo",
+                  group_closing_customer_closings_path(@closing, name: row[:name]),
+                  class: "button button-secondary" %>
+             <%= link_to "Archivo grupo",
+                  customer_group_pdf_closing_path(@closing, group_name: row[:name]),
+                  class: "button button-secondary" %>
+          </td>
         </tr>
-      </thead>
-      <tbody>
-        <% @customer_group_totals.each do |row| %>
-          <tr>
-            <td><%= row[:name] %></td>
-            <td><%= number_to_currency(row[:balance], unit: "$") %></td>
-            <td>
-               <%= link_to "Ver grupo",
-                    group_closing_customer_closings_path(@closing, name: row[:name]),
-                    class: "button button-secondary" %>
-               <%= link_to "Archivo grupo",
-                    customer_group_pdf_closing_path(@closing, group_name: row[:name]),
-                    class: "button button-secondary" %>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  <% else %>
-    <p>No group closings recorded.</p>
-  <% end %>
+      <% end %>
+    </tbody>
+  </table>
 </section>
 
 <section>

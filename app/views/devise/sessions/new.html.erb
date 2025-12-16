@@ -1,17 +1,42 @@
-<h1>Iniciar sesión</h1>
+<% content_for :title, "Iniciar sesión" %>
 
-<%= form_with url: session_path(:user), scope: :user, local: true do |f| %>
-  <div>
-    <%= f.label :email, "Email" %>
-    <%= f.email_field :email, autofocus: true, autocomplete: "email" %>
-  </div>
+<section class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-copy">
+      <span class="auth-pill">Jack V2</span>
+      <h1 class="auth-heading">Inicia sesión</h1>
+      <p class="auth-subhead">
+        Organiza tus ventas, cierres y transferencias desde un panel limpio y fácil de usar.
+      </p>
+      <ul class="auth-benefits">
+        <li>Seguimiento claro de ventas y suministros</li>
+        <li>Archivos y cierres en un solo lugar</li>
+        <li>Acceso seguro para tu equipo</li>
+      </ul>
+    </div>
 
-  <div>
-    <%= f.label :password, "Password" %>
-    <%= f.password_field :password, autocomplete: "current-password" %>
-  </div>
+    <%= form_with url: session_path(:user), scope: :user, class: "form auth-form", local: true do |f| %>
+      <p class="form-title">Sign in to your account</p>
+      <p class="form-subtitle">Usa tu correo corporativo y contraseña para continuar.</p>
 
-  <div>
-    <%= f.submit "Entrar", class: "button" %>
+      <div class="input-container">
+        <%= f.email_field :email, autofocus: true, autocomplete: "email", placeholder: "Enter email", required: true %>
+        <span class="input-accent"></span>
+      </div>
+
+      <div class="input-container">
+        <%= f.password_field :password, autocomplete: "current-password", placeholder: "Enter password", required: true %>
+        <span class="input-accent"></span>
+      </div>
+
+      <button type="submit" class="submit">
+        Entrar
+      </button>
+
+      <p class="signup-link">
+        ¿Olvidaste tu contraseña?
+        <%= link_to "Recupérala aquí", new_user_password_path %>
+      </p>
+    <% end %>
   </div>
-<% end %>
+</section>

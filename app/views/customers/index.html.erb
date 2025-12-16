@@ -1,91 +1,107 @@
 
-<h1>Clientes</h1>
+<div class="page-header">
+  <div>
+    <h1>Clientes</h1>
+    <p class="lead">Listado de clientes con filtros y relación con proveedores.</p>
+  </div>
+</div>
 
-<div class="filters">
-  <%= search_form_for @q, url: customers_path, method: :get do |f| %>
-    <div class="filter-row">
-      <div>
-        <%= f.label :name_cont, "Nombre contiene" %>
-        <%= f.search_field :name_cont, placeholder: "Ej. Acme" %>
-      </div>
+<div class="card">
+  <div class="filters">
+    <%= search_form_for @q, url: customers_path, method: :get do |f| %>
+      <div class="filter-row">
+        <div>
+          <%= f.label :name_cont, "Nombre contiene" %>
+          <%= f.search_field :name_cont, placeholder: "Ej. Acme" %>
+        </div>
 
-      <div>
-        <%= f.label :code_eq, "Código exacto" %>
-        <%= f.search_field :code_eq, placeholder: "Ej. C001" %>
-      </div>
+        <div>
+          <%= f.label :code_eq, "Código exacto" %>
+          <%= f.search_field :code_eq, placeholder: "Ej. C001" %>
+        </div>
 
-      <div>
-        <%= f.label :suppliers_id_eq, "Proveedor" %>
-        <%= f.select :suppliers_id_eq, options_for_select(@suppliers, params.dig(:q, :suppliers_id_eq)),
-                     include_blank: "Todos" %>
-      </div>
+        <div>
+          <%= f.label :suppliers_id_eq, "Proveedor" %>
+          <%= f.select :suppliers_id_eq, options_for_select(@suppliers, params.dig(:q, :suppliers_id_eq)),
+                       include_blank: "Todos" %>
+        </div>
 
-      <div>
-        <%= f.label :s, "Ordenar por" %>
-        <%= f.select :s,
-              options_for_select([
-                ["Cliente (A–Z)", "name asc"],
-                ["Cliente (Z–A)", "name desc"],
-                ["Proveedor (A–Z)", "suppliers_name asc"],
-                ["Proveedor (Z–A)", "suppliers_name desc"],
-                ["Creado reciente", "created_at desc"],
-                ["Creado antiguo", "created_at asc"]
-              ], params.dig(:q, :s)),
-              include_blank: "— Selecciona —" %>
-      </div>
+        <div>
+          <%= f.label :s, "Ordenar por" %>
+          <%= f.select :s,
+                options_for_select([
+                  ["Cliente (A–Z)", "name asc"],
+                  ["Cliente (Z–A)", "name desc"],
+                  ["Proveedor (A–Z)", "suppliers_name asc"],
+                  ["Proveedor (Z–A)", "suppliers_name desc"],
+                  ["Creado reciente", "created_at desc"],
+                  ["Creado antiguo", "created_at asc"]
+                ], params.dig(:q, :s)),
+                include_blank: "— Selecciona —" %>
+        </div>
 
-      <div style="align-self:end">
-        <%= f.submit "Filtrar", class: "button" %>
-        <%= link_to "Limpiar", customers_path, class: "button button--secondary" %>
+        <div style="align-self:end">
+          <%= f.submit "Filtrar", class: "button" %>
+          <%= link_to "Limpiar", customers_path, class: "button button--secondary" %>
+        </div>
       </div>
-    </div>
-  <% end %>
+    <% end %>
+  </div>
 </div>
 
 <% if @grouped_customers.any? %>
   <section class="card">
     <h2>Grupos</h2>
-    <ul class="list">
+    <div class="stats-grid">
       <% @grouped_customers.each do |group| %>
-        <li>
-          <strong><%= group[:name] %></strong>
-          (<%= pluralize(group[:count], "cliente") %>)
-          <%= link_to "Ver grupo", group_customers_path(name: group[:name]), class: "button button--small" %>
-        </li>
+        <div class="stat">
+          <div class="label"><%= group[:name] %></div>
+          <p class="value"><%= pluralize(group[:count], "cliente") %></p>
+          <div class="button-group">
+            <%= link_to "Ver grupo", group_customers_path(name: group[:name]), class: "button button-secondary" %>
+          </div>
+        </div>
       <% end %>
-    </ul>
+    </div>
     <p class="hint">Los grupos se ocultan de la tabla inferior para no duplicar clientes.</p>
   </section>
 <% end %>
 
-<table class="table">
-  <thead>
-    <tr>
-      <th><%= sort_link @q, :name, "Cliente" %></th>
-      <th>Código</th>
-      <th><%= sort_link @q, :suppliers_name, "Proveedor (alguno)" %></th>
-      <th>Creado</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @customers.each do |c| %>
-      <tr id="<%= dom_id(c) %>">
-        <td><%= link_to c.name, c %></td>
-        <td><%= c.code %></td>
-        <td>
-          <% if c.suppliers.loaded? || c.association(:suppliers).loaded? %>
-            <%= c.suppliers.map(&:name).sort.join(", ") %>
-          <% else %>
-            <%= c.suppliers.order(:name).limit(3).pluck(:name).join(", ") %>
-            <%# muestra hasta 3 para no alargar %>
-          <% end %>
-        </td>
-        <td><%= l(c.created_at, format: :short) %></td>
-        <td><%= link_to "Ver", c, class: "button" %></td>
+<div class="card">
+  <div class="table-subtitle">Listado de clientes</div>
+  <table class="table">
+    <thead>
+      <tr>
+        <th><%= sort_link @q, :name, "Cliente" %></th>
+        <th>Código</th>
+        <th><%= sort_link @q, :suppliers_name, "Proveedor (alguno)" %></th>
+        <th class="numeric">Creado</th>
+        <th>Acciones</th>
       </tr>
-    <% end %>
-  </tbody>
-</table>
+    </thead>
+    <tbody>
+      <% @customers.each do |c| %>
+        <tr id="<%= dom_id(c) %>">
+          <td><%= link_to c.name, c %></td>
+          <td><%= c.code %></td>
+          <td>
+            <% if c.suppliers.loaded? || c.association(:suppliers).loaded? %>
+              <%= c.suppliers.map(&:name).sort.join(", ") %>
+            <% else %>
+              <%= c.suppliers.order(:name).limit(3).pluck(:name).join(", ") %>
+            <% end %>
+          </td>
+          <td class="numeric"><%= l(c.created_at, format: :short) %></td>
+          <td>
+            <div class="actions-stack">
+              <%= link_to "Ver", c, class: "button button-secondary" %>
+              <%= link_to "Editar", edit_customer_path(c), class: "button button-ghost" %>
+            </div>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
 
 <%= pagination_nav(@pagy) %>

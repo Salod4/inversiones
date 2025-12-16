@@ -1,14 +1,23 @@
-<h1>Edit Transfer</h1>
-
-<% if @sale %>
-  <p class="hint">
-    Saldo de cliente en <strong><%= @sale.code %></strong> (considerando esta transferencia):
-    <%= number_to_currency(@sale.customer_balance.to_f, unit: "$") %>
-    · Disponible para SPEI:
-    <%= number_to_currency(@sale.available_transfer_amount(excluding: @transfer), unit: "$") %>
-  </p>
-<% end %>
+<div class="page-header">
+  <div>
+    <h1>Editando transfer <%= @transfer.code %></h1>
+    <p class="lead">Actualiza montos, origen/destino y notas.</p>
+    <% if @sale %>
+      <p class="hint">
+        Saldo de cliente en <strong><%= @sale.code %></strong> (considerando esta transferencia):
+        <%= number_to_currency(@sale.customer_balance.to_f, unit: "$") %>
+        · Disponible para SPEI:
+        <%= number_to_currency(@sale.available_transfer_amount(excluding: @transfer), unit: "$") %>
+      </p>
+    <% end %>
+  </div>
+  <div class="transfer-actions">
+    <% if @sale %>
+      <%= link_to "Volver a la venta", sale_transfers_path(@sale), class: "button button-ghost" %>
+    <% else %>
+      <%= link_to "Regresar", transfers_path, class: "button button-ghost" %>
+    <% end %>
+  </div>
+</div>
 
 <%= render "form", transfer: @transfer, sale: @sale %>
-
-<p><%= link_to "Back", transfer_path(@transfer), class: "button button-ghost" %></p>

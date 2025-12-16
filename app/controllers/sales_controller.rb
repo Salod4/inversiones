@@ -4,8 +4,14 @@ class SalesController < ApplicationController
   before_action :prepare_sales_users_for_form, only: [ :new, :edit ]
 
   def index
-    @pagy, @sales = pagy(Sale.includes(:customer, :supplier).order(date: :desc))
-    @closing_today_exists = Closing.closed_for?(Date.current)
+    @today = Date.current
+    @tomorrow = @today + 1.day
+
+    @pagy, @sales = pagy(Sale.includes(:customer, :supplier, :closing).order(date: :desc))
+
+    @closing_today_exists = closing_exists_for?(@today)
+    @closing_tomorrow_exists = closing_exists_for?(@tomorrow)
+    @next_closable_date = next_closable_date
   end
 
   def show
@@ -18,7 +24,7 @@ class SalesController < ApplicationController
     @sale = Sale.new
     @sale.customer_id = params[:customer_id] if params[:customer_id].present?
     @sale.supplier_id = params[:supplier_id] if params[:supplier_id].present?
-
+    @sale.date ||= Closing.open_business_date(Date.current)
 
 
     if @sale.customer_id.present? && @sale.supplier_id.present?
@@ -107,14 +113,51 @@ class SalesController < ApplicationController
       redirect_to @sale, alert: "No se seleccionó archivo."
     end
   end
-   def close_today
-    Closings::CloseDay.new(business_date: Date.current).call
-    redirect_to sales_path, notice: "Cierre de hoy realizado correctamente."
+  def close_today
+    business_date = parsed_business_date
+
+    unless allowed_closing_date?(business_date)
+      redirect_to sales_path, alert: "Solo puedes cerrar ventas de fechas desde hoy en adelante."
+      return
+    end
+
+    Closings::CloseDay.new(business_date: business_date).call
+    redirect_to sales_path, notice: "Cierre de #{formatted_date(business_date)} realizado correctamente."
   rescue ActiveRecord::RecordInvalid => e
     redirect_to sales_path, alert: "No se pudo cerrar: #{e.message}"
+  rescue ArgumentError, Date::Error
+    redirect_to sales_path, alert: "Fecha de cierre inválida."
   end
 
   private
+
+  def closing_exists_for?(date)
+    Closing.closed_for?(date)
+  end
+
+  def next_closable_date
+    date = Date.current
+    90.times do
+      return date unless closing_exists_for?(date)
+      date += 1.day
+    end
+    nil
+  end
+
+  def parsed_business_date
+    raw_date = params[:business_date].presence
+    return Date.current if raw_date.blank?
+
+    Date.parse(raw_date.to_s)
+  end
+
+  def allowed_closing_date?(date)
+    date.present? && date >= Date.current
+  end
+
+  def formatted_date(date)
+    date.strftime("%d/%m/%Y")
+  end
 
   def set_sale
     @sale = Sale.find(params[:id])

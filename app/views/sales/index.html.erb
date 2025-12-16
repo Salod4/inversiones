@@ -1,60 +1,103 @@
-<h1>Sales</h1>
+<div class="sales-page">
+  <div class="page-header">
+    <div>
+      <h1>Sales</h1>
+      <p class="lead">Gestiona ventas, cierres y movimientos de forma clara.</p>
+    </div>
+    <div class="sales-actions">
+      <%= link_to "New Sale", new_sale_path, class: "button" %>
+      <% if @next_closable_date.present? %>
+        <% label = @next_closable_date.strftime("%d/%m/%Y") %>
+        <%= button_to "Cerrar ventas del #{label}",
+                      close_today_sales_path(business_date: @next_closable_date.to_s),
+                      method: :post,
+                      data: { turbo: false, confirm: "¿Seguro que deseas cerrar las ventas del #{label}?" },
+                      class: "button button-secondary" %>
+      <% else %>
+        <span class="badge success">Cierres al día</span>
+      <% end %>
+    </div>
+  </div>
 
-<p><%= link_to "New Sale", new_sale_path, class: "button" %></p>
- <% if @closing_today_exists %>
-    <span class="px-3 py-1 rounded bg-green-100 text-green-700 text-sm">
-      Cierre de hoy ya realizado
-    </span>
-  <% else %>
-    <%= button_to "Cerrar ventas de hoy",
-                  close_today_sales_path,
-                  method: :post,
-                  data: { turbo: false, confirm: "¿Seguro que deseas cerrar las ventas de HOY?" },
-                  class: "px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700" %>
-  <% end %>
+  <% total_gross = @sales.sum { |s| s.gross_deposit.to_d } %>
+  <% total_ret_comp = @sales.sum { |s| s.ret_comp.to_d } %>
+  <% total_spei = @sales.sum { |s| s.total_transfer_applied.to_d } %>
+  <% open_count = @sales.count { |s| s.closing_id.nil? } %>
+  <% closed_count = @sales.count { |s| s.closing_id.present? } %>
 
-<table>
-  <thead>
-    <tr>
-      <th>Codigo</th>
-      <th>Fecha</th>
-      <th>Cliente</th>
-      <th>Proveedor</th>
-      <th>Deposito bruto</th>
-      <th>Commision proveedor</th>
-      <th>SPEIS aplicados</th>
-      <th>Ret. Cliente</th>
-      <th>Balance de Cliente</th>
-      <th>Ret. Comp</th>
-      <th>Status</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @sales.each do |sale| %>
-      <tr>
-        <td><%= sale.code %></td>
-        <td><%= sale.date %></td>
-        <td><%= sale.customer&.name %></td>
-        <td><%= sale.supplier&.name %></td>
-        <td><%= number_to_currency(sale.gross_deposit, unit: "$") %></td>
-        <td><%= number_to_currency(sale.provider_commission, unit: "$") %></td>
-        <td><%= number_to_currency(sale.total_transfer_applied, unit: "$") %></td>
-        <td><%= number_to_currency(sale.working_capital, unit: "$") %></td>
-        <td><%= number_to_currency(sale.customer_balance, unit: "$") %></td>
-        <td><%= number_to_currency(sale.ret_comp, unit: "$") %></td>
-        <td><%= sale.status %></td>
-        
-        <td>
-          <div class="button-group">
-            <%= link_to "Show", sale, class: "button button-secondary" %>
-            <%= link_to "Edit", edit_sale_path(sale), class: "button button-secondary" %>
-            <%= link_to "Destroy", sale, class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
-          </div>
-        </td>
-      </tr>
-    <% end %>
-  </tbody>
-</table>
+  <div class="sales-stats">
+    <div class="sales-stat">
+      <span class="label">Ventas abiertas</span>
+      <span class="value"><%= open_count %></span>
+    </div>
+    <div class="sales-stat">
+      <span class="label">Ventas cerradas</span>
+      <span class="value"><%= closed_count %></span>
+    </div>
+    <div class="sales-stat">
+      <span class="label">Total depositado</span>
+      <span class="value"><%= number_to_currency(total_gross, unit: "$") %></span>
+    </div>
+    <div class="sales-stat">
+      <span class="label">Ret. Comp total</span>
+      <span class="value"><%= number_to_currency(total_ret_comp, unit: "$") %></span>
+    </div>
+    <div class="sales-stat">
+      <span class="label">SPEI aplicados</span>
+      <span class="value"><%= number_to_currency(total_spei, unit: "$") %></span>
+    </div>
+  </div>
 
-<%= pagination_nav(@pagy) %>
+  <div class="card sales-table">
+    <div class="table-subtitle">Listado de ventas</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Codigo</th>
+          <th>Fecha</th>
+          <th>Cliente</th>
+          <th>Proveedor</th>
+          <th class="numeric">Deposito bruto</th>
+          <th class="numeric">Commision proveedor</th>
+          <th class="numeric">SPEIS aplicados</th>
+          <th class="numeric">Ret. Cliente</th>
+          <th class="numeric">Balance de Cliente</th>
+          <th class="numeric">Ret. Comp</th>
+          <th>Fecha de cierre</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if @sales.any? %>
+          <% @sales.each do |sale| %>
+            <tr>
+              <td><%= sale.code %></td>
+              <td><%= sale.date %></td>
+              <td><%= sale.customer&.name %></td>
+              <td><%= sale.supplier&.name %></td>
+              <td class="numeric"><%= number_to_currency(sale.gross_deposit, unit: "$") %></td>
+              <td class="numeric"><%= number_to_currency(sale.provider_commission, unit: "$") %></td>
+              <td class="numeric"><%= number_to_currency(sale.total_transfer_applied, unit: "$") %></td>
+              <td class="numeric"><%= number_to_currency(sale.working_capital, unit: "$") %></td>
+              <td class="numeric"><%= number_to_currency(sale.customer_balance, unit: "$") %></td>
+              <td class="numeric"><%= number_to_currency(sale.ret_comp, unit: "$") %></td>
+              <td><%= sale.closing&.business_date&.strftime("%d/%m/%Y") || "Pendiente" %></td>
+              <td class="actions-cell">
+                <div class="actions-stack">
+                  <%= link_to "Ver", sale, class: "button button-secondary" %>
+                  <%= link_to "Editar", edit_sale_path(sale), class: "button button-ghost" %>
+                  <%= link_to "Eliminar", sale, class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td colspan="13">No hay ventas registradas.</td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <%= pagination_nav(@pagy, item_name: "ventas") %>
+  </div>
+</div>

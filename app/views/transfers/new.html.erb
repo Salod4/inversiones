@@ -1,18 +1,21 @@
-<h1><%= @sale ? "New Transfer for Sale #{@sale.code}" : "New Transfer" %></h1>
-
-<% if @sale %>
-  <p class="hint">
-    Saldo disponible en <strong><%= @sale.code %></strong>:
-    <%= number_to_currency(@sale.available_transfer_amount, unit: "$") %>
-  </p>
-<% end %>
+<div class="page-header">
+  <div>
+    <h1><%= @sale ? "Nuevo transfer para #{@sale.code}" : "Nuevo transfer" %></h1>
+    <p class="lead">Registra un movimiento SPEI o efectivo entre entidades.</p>
+    <% if @sale %>
+      <p class="hint">
+        Saldo disponible en <strong><%= @sale.code %></strong>:
+        <%= number_to_currency(@sale.available_transfer_amount, unit: "$") %>
+      </p>
+    <% end %>
+  </div>
+  <div class="transfer-actions">
+    <% if @sale %>
+      <%= link_to "Regresar a la venta", sale_transfers_path(@sale), class: "button button-ghost" %>
+    <% else %>
+      <%= link_to "Regresar", transfers_path, class: "button button-ghost" %>
+    <% end %>
+  </div>
+</div>
 
 <%= render "form", transfer: @transfer, sale: @sale %>
-
-<p>
-  <% if @sale %>
-    <%= link_to "Back", sale_transfers_path(@sale), class: "button button-ghost" %>
-  <% else %>
-    <%= link_to "Back", transfers_path, class: "button button-ghost" %>
-  <% end %>
-</p>
