@@ -1,31 +1,36 @@
-<%= form_with(model: customer) do |form| %>
-  <% if customer.errors.any? %>
-    <div class="errors">
-      <h2><%= pluralize(customer.errors.count, "error") %> prevented this customer from being saved:</h2>
-      <ul>
-        <% customer.errors.full_messages.each do |message| %>
-          <li><%= message %></li>
-        <% end %>
-      </ul>
+<div class="card">
+  <%= form_with(model: customer) do |form| %>
+    <% if customer.errors.any? %>
+      <div class="errors">
+        <h2><%= pluralize(customer.errors.count, "error") %> prevented this customer from being saved:</h2>
+        <ul>
+          <% customer.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="form-grid">
+      <div class="field">
+        <%= form.label :code, "Código" %>
+        <%= form.text_field :code %>
+      </div>
+
+      <div class="field">
+        <%= form.label :name, "Nombre" %>
+        <%= form.text_field :name %>
+      </div>
+
+      <div class="field">
+        <%= form.label :default_customer_fee_pct, "% fee por defecto" %>
+        <%= form.number_field :default_customer_fee_pct, step: :any, min: 0 %>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <%= form.submit "Guardar", class: "button" %>
+      <%= link_to "Cancelar", customer.persisted? ? customer_path(customer) : customers_path, class: "button button-ghost" %>
     </div>
   <% end %>
-
-  <div>
-    <%= form.label :code %>
-    <%= form.text_field :code %>
-  </div>
-
-  <div>
-    <%= form.label :name %>
-    <%= form.text_field :name %>
-  </div>
-
-  <div>
-    <%= form.label :default_customer_fee_pct %>
-    <%= form.number_field :default_customer_fee_pct, step: 0.01 %>
-  </div>
-
-  <div>
-    <%= form.submit %>
-  </div>
-<% end %>
+</div>

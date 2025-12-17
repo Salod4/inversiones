@@ -50,34 +50,36 @@
 
 <section class="card">
   <h2>Clientes del grupo</h2>
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Cliente</th>
-        <th>Código</th>
-        <th>Total depositado</th>
-        <th>Total después de %s</th>
-        <th>Transferido</th>
-        <th>Transfers recibidos</th>
-        <th>Saldo disponible</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @display_customers.each do |c| %>
-        <tr id="<%= dom_id(c) %>">
-          <td><%= c.name %></td>
-          <td><%= c.code %></td>
-          <td><%= number_to_currency(@per_customer_deposit[c.id].to_f, unit: "$") %></td>
-          <td><%= number_to_currency(@per_customer_after_pcts[c.id].to_f, unit: "$") %></td>
-          <td><%= number_to_currency(@per_customer_transfers[c.id].to_f, unit: "$") %></td>
-          <td><%= number_to_currency(@per_customer_direct_received[c.id].to_f, unit: "$") %></td>
-          <td><%= number_to_currency(@per_customer_balances[c.id].to_f, unit: "$") %></td>
-          <td><%= link_to "Agregar transfer", new_customer_transfer_path(c), class: "button button--small" %></td>
+  <div class="responsive-table">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Código</th>
+          <th>Total depositado</th>
+          <th>Total después de %s</th>
+          <th>Transferido</th>
+          <th>Transfers recibidos</th>
+          <th>Saldo disponible</th>
+          <th></th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        <% @display_customers.each do |c| %>
+          <tr id="<%= dom_id(c) %>">
+          <td><%= link_to c.name, c %></td>
+          <td><%= link_to c.code, c %></td>
+            <td><%= number_to_currency(@per_customer_deposit[c.id].to_f, unit: "$") %></td>
+            <td><%= number_to_currency(@per_customer_after_pcts[c.id].to_f, unit: "$") %></td>
+            <td><%= number_to_currency(@per_customer_transfers[c.id].to_f, unit: "$") %></td>
+            <td><%= number_to_currency(@per_customer_direct_received[c.id].to_f, unit: "$") %></td>
+            <td><%= number_to_currency(@per_customer_balances[c.id].to_f, unit: "$") %></td>
+            <td><%= link_to "Agregar transfer", new_customer_transfer_path(c), class: "button button--small" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
 </section>
 
 <section class="card">
@@ -118,36 +120,38 @@
 <section class="card">
   <h2>Ventas recientes del grupo</h2>
   <% if @sales.any? %>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Cliente</th>
-          <th>Proveedor</th>
-          <th>Bruto (gross_deposit)</th>
-          <th>Comisión prov.</th>
-          <th>Fee cliente</th>
-          <th>Saldo cliente</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @sales.each do |s| %>
-          <tr id="<%= dom_id(s) %>">
-            <td><%= l(s.date) %></td>
-            <td><%= s.customer&.name %></td>
-            <td><%= s.supplier&.name %></td>
-            <td><%= number_to_currency(s.gross_deposit || 0, unit: "$") %></td>
-            <td><%= number_to_currency(s.provider_commission || 0, unit: "$") %></td>
-            <td><%= number_to_currency(s.customer_fee || 0, unit: "$") %></td>
-            <td><%= number_to_currency(s.customer_balance || 0, unit: "$") %></td>
-            <td><%= s.status %></td>
-            <td><%= link_to "Ver venta", s %></td>
+    <div class="responsive-table">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>Proveedor</th>
+            <th>Bruto (gross_deposit)</th>
+            <th>Comisión prov.</th>
+            <th>Fee cliente</th>
+            <th>Saldo cliente</th>
+            <th>Status</th>
+            <th></th>
           </tr>
-        <% end %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          <% @sales.each do |s| %>
+            <tr id="<%= dom_id(s) %>">
+              <td><%= l(s.date) %></td>
+              <td><%= s.customer&.name %></td>
+              <td><%= s.supplier&.name %></td>
+              <td><%= number_to_currency(s.gross_deposit || 0, unit: "$") %></td>
+              <td><%= number_to_currency(s.provider_commission || 0, unit: "$") %></td>
+              <td><%= number_to_currency(s.customer_fee || 0, unit: "$") %></td>
+              <td><%= number_to_currency(s.customer_balance || 0, unit: "$") %></td>
+              <td><%= s.status %></td>
+              <td><%= link_to "Ver venta", s %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
   <% else %>
     <p>No hay ventas recientes para este grupo.</p>
   <% end %>

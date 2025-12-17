@@ -22,30 +22,32 @@
 
 <section class="card">
   <h2>Detalle de comisiones por venta</h2>
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Vendedor</th>
-        <th>Venta</th>
-        <th>Proveedor</th>
-        <th>Fecha</th>
-        <th class="numeric">Comisión %</th>
-        <th class="numeric">Comisión $</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @sales_users.each do |su| %>
+  <div class="responsive-table">
+    <table class="table">
+      <thead>
         <tr>
-          <td><%= su.user&.name || su.user&.email || "Vendedor" %></td>
-          <td><%= su.sale&.code %></td>
-          <td><%= su.sale&.supplier&.name %></td>
-          <td><%= su.sale&.date %></td>
-          <td class="numeric"><%= number_to_percentage(su.effective_commission_pct.to_f * 100, precision: 2) %></td>
-          <td class="numeric"><%= number_to_currency(su.commission_amount.to_f, unit: "$") %></td>
+          <th>Vendedor</th>
+          <th>Venta</th>
+          <th>Proveedor</th>
+          <th>Fecha</th>
+          <th class="numeric">Comisión %</th>
+          <th class="numeric">Comisión $</th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        <% @sales_users.each do |su| %>
+          <tr>
+            <td><%= su.user&.name || su.user&.email || "Vendedor" %></td>
+            <td><%= su.sale&.code %></td>
+            <td><%= su.sale&.supplier&.name %></td>
+            <td><%= su.sale&.date %></td>
+            <td class="numeric"><%= number_to_percentage(su.effective_commission_pct.to_f * 100, precision: 2) %></td>
+            <td class="numeric"><%= number_to_currency(su.commission_amount.to_f, unit: "$") %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
 
   <%= pagination_nav(@pagy) %>
 </section>

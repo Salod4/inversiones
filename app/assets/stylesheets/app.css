@@ -152,6 +152,111 @@ main.container {
   flex-wrap: wrap;
 }
 
+.site-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.nav-toggle,
+.nav-close {
+  display: none;
+  border: 1px solid var(--border-strong);
+  background: #fff;
+  color: var(--text);
+  border-radius: 10px;
+  padding: 0.35rem 0.5rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-light);
+}
+
+.mobile-nav {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  max-width: 80%;
+  height: 100vh;
+  background: #fff;
+  border-right: 1px solid var(--border);
+  box-shadow: 12px 0 28px rgba(15, 23, 42, 0.12);
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+  z-index: 70;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.mobile-nav.is-open {
+  transform: translateX(0);
+}
+
+.mobile-nav__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.mobile-nav__title {
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+}
+
+.mobile-nav__links {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.mobile-nav__link {
+  display: block;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.mobile-nav__link:hover {
+  background: #eef2ff;
+  border-color: #cfd9ff;
+  color: var(--blue-strong);
+}
+
+.mobile-nav__link--danger {
+  color: #fff;
+  border-color: var(--red);
+  background: var(--red);
+  font-weight: 800;
+}
+
+.mobile-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 60;
+}
+
+.mobile-backdrop.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.nav-open {
+  overflow: hidden;
+}
+
 .card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -382,6 +487,11 @@ input[type="file"] {
   margin-bottom: 0.35rem;
 }
 
+.responsive-table {
+  width: 100%;
+  overflow-x: auto;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -540,9 +650,22 @@ textarea::placeholder {
 
   .site-nav {
     width: 100%;
+    display: none;
   }
 
   main.container {
     padding-top: 104px;
+  }
+
+  .nav-toggle,
+  .nav-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-nav,
+  .mobile-backdrop {
+    display: block;
   }
 }

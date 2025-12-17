@@ -125,6 +125,16 @@
   font-size: 0.85rem;
 }
 
+.actions-desktop {
+  display: table-cell;
+}
+
+@media (max-width: 768px) {
+  .actions-desktop {
+    display: none;
+  }
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;

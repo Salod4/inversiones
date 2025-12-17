@@ -1,5 +1,12 @@
-<h1>Edit Customer</h1>
+<div class="page-header">
+  <div>
+    <h1>Editar cliente</h1>
+    <p class="lead">Actualiza código, nombre o fee por defecto.</p>
+  </div>
+  <div class="button-group">
+    <%= link_to "Ver cliente", customer_path(@customer), class: "button button-secondary" %>
+    <%= link_to "Regresar", customers_path, class: "button button-ghost" %>
+  </div>
+</div>
 
 <%= render "form", customer: @customer %>
-
-<p><%= link_to "Back", customer_path(@customer), class: "button button-ghost" %></p>

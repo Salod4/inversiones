@@ -1,6 +1,14 @@
-<h1><%= @supplier.name %></h1>
-<p>Código: <strong><%= @supplier.code %></strong></p>
-<p>Análisis base: <strong><%= number_to_percentage(@supplier.default_analysis_pct.to_f * 100, precision: 2) %></strong></p>
+<div class="page-header">
+  <div>
+    <h1><%= @supplier.name %></h1>
+    <p class="lead">Código: <strong><%= @supplier.code %></strong> · Análisis base: <strong><%= number_to_percentage(@supplier.default_analysis_pct.to_f * 100, precision: 2) %></strong></p>
+  </div>
+  <div class="button-group">
+    <%= link_to "Editar", edit_supplier_path(@supplier), class: "button button-secondary" %>
+    <%= link_to "Eliminar", supplier_path(@supplier), class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "¿Eliminar proveedor?" } %>
+    <%= link_to "Regresar", suppliers_path, class: "button button-ghost" %>
+  </div>
+</div>
 
 <section class="card supplier-summary">
   <div class="supplier-summary__stat">
@@ -120,8 +128,3 @@
     <p>Este proveedor aún no tiene transfers registrados.</p>
   <% end %>
 </section>
-
-<div class="button-group">
-  <%= link_to "Edit", edit_supplier_path(@supplier), class: "button" %>
-  <%= link_to "Back", suppliers_path, class: "button button-ghost" %>
-</div>

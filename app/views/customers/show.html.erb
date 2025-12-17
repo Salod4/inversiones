@@ -64,36 +64,38 @@
 <section class="card">
   <h2>Ventas recientes</h2>
   <% if @sales.any? %>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Código venta</th>
-          <th>Proveedor</th>
-          <th>Bruto (gross_deposit)</th>
-          <th>Comisión prov.</th>
-          <th>Fee cliente</th>
-          <th>Saldo cliente</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @sales.each do |s| %>
-          <tr id="<%= dom_id(s) %>">
-            <td><%= l(s.date) %></td>
-            <td><%= s.code %></td>
-            <td><%= s.supplier&.name %></td>
-            <td><%= number_to_currency(s.gross_deposit || 0, unit: "$") %></td>
-            <td><%= number_to_currency(s.provider_commission || 0, unit: "$") %></td>
-            <td><%= number_to_currency(s.customer_fee || 0, unit: "$") %></td>
-            <td><%= number_to_currency(s.customer_balance || 0, unit: "$") %></td>
-            <td><%= s.status %></td>
-            <td><%= link_to "Ver venta", s %></td>
+    <div class="responsive-table">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Código venta</th>
+            <th>Proveedor</th>
+            <th>Bruto (gross_deposit)</th>
+            <th>Comisión prov.</th>
+            <th>Fee cliente</th>
+            <th>Saldo cliente</th>
+            <th>Status</th>
+            <th></th>
           </tr>
-        <% end %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          <% @sales.each do |s| %>
+            <tr id="<%= dom_id(s) %>">
+              <td><%= l(s.date) %></td>
+              <td><%= s.code %></td>
+              <td><%= s.supplier&.name %></td>
+              <td><%= number_to_currency(s.gross_deposit || 0, unit: "$") %></td>
+              <td><%= number_to_currency(s.provider_commission || 0, unit: "$") %></td>
+              <td><%= number_to_currency(s.customer_fee || 0, unit: "$") %></td>
+              <td><%= number_to_currency(s.customer_balance || 0, unit: "$") %></td>
+              <td><%= s.status %></td>
+              <td><%= link_to "Ver venta", s %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
   <% else %>
     <p>No hay ventas recientes.</p>
   <% end %>

@@ -49,5 +49,5 @@ Rails.application.routes.draw do
   resource :kickoff, only: [ :show, :create ]
   get "kickoff/template/:type", to: "kickoffs#template", as: :kickoff_template
 
-  root "closings#index"
+  root "dashboard#show"
 end

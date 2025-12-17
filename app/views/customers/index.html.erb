@@ -4,6 +4,9 @@
     <h1>Clientes</h1>
     <p class="lead">Listado de clientes con filtros y relación con proveedores.</p>
   </div>
+  <div class="button-group">
+    <%= link_to "Nuevo cliente", new_customer_path, class: "button" %>
+  </div>
 </div>
 
 <div class="card">
@@ -67,41 +70,34 @@
   </section>
 <% end %>
 
-<div class="card">
+<div class="card customers-list">
   <div class="table-subtitle">Listado de clientes</div>
-  <table class="table">
-    <thead>
-      <tr>
-        <th><%= sort_link @q, :name, "Cliente" %></th>
-        <th>Código</th>
-        <th><%= sort_link @q, :suppliers_name, "Proveedor (alguno)" %></th>
-        <th class="numeric">Creado</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @customers.each do |c| %>
-        <tr id="<%= dom_id(c) %>">
+  <div class="responsive-table">
+    <table class="table">
+      <thead>
+        <tr>
+          <th><%= sort_link @q, :name, "Cliente" %></th>
+          <th>Código</th>
+          <th class="actions-desktop">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @customers.each do |c| %>
+          <tr id="<%= dom_id(c) %>">
           <td><%= link_to c.name, c %></td>
           <td><%= c.code %></td>
-          <td>
-            <% if c.suppliers.loaded? || c.association(:suppliers).loaded? %>
-              <%= c.suppliers.map(&:name).sort.join(", ") %>
-            <% else %>
-              <%= c.suppliers.order(:name).limit(3).pluck(:name).join(", ") %>
-            <% end %>
-          </td>
-          <td class="numeric"><%= l(c.created_at, format: :short) %></td>
-          <td>
+          <td class="actions-desktop">
             <div class="actions-stack">
               <%= link_to "Ver", c, class: "button button-secondary" %>
               <%= link_to "Editar", edit_customer_path(c), class: "button button-ghost" %>
+              <%= link_to "Eliminar", c, class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "¿Eliminar cliente?" } %>
             </div>
           </td>
         </tr>
       <% end %>
     </tbody>
-  </table>
+    </table>
+  </div>
 </div>
 
 <%= pagination_nav(@pagy) %>

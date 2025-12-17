@@ -26,7 +26,10 @@
     <% if user_signed_in? %>
       <header class="site-header">
         <div class="site-header__inner">
-          <%= link_to "Jack V2", root_path, class: "site-brand" %>
+          <div class="site-header__brand">
+            <%= button_tag "☰", type: "button", class: "nav-toggle", aria: { label: "Abrir menú" }, data: { nav_toggle: true } %>
+            <%= link_to "Jack V2", root_path, class: "site-brand" %>
+          </div>
           <nav class="site-nav">
             <%= link_to "Inicio", dashboard_path, class: "button button-nav button-ghost" %>
             <%= link_to "Ventas", sales_path, class: "button button-nav" %>
@@ -36,10 +39,29 @@
             <%= link_to "Cierres", closings_path, class: "button button-nav" %>
             <%= link_to "Transfers", transfers_path, class: "button button-nav" %>
             <%= link_to "Kickoff", kickoff_path, class: "button button-nav button-ghost" %>
-            <%= link_to "Cerrar sesión", destroy_user_session_path, data: { turbo_method: :delete }, class: "button button-nav button-ghost" %>
+            <%= link_to "Cerrar sesión", destroy_user_session_path, data: { turbo_method: :delete }, class: "button button-danger" %>
           </nav>
         </div>
       </header>
+
+      <div class="mobile-backdrop" data-nav-backdrop></div>
+      <aside class="mobile-nav" data-nav-drawer>
+        <div class="mobile-nav__header">
+          <span class="mobile-nav__title">Jack V2</span>
+          <button type="button" class="nav-close" aria-label="Cerrar menú" data-nav-close>&times;</button>
+        </div>
+        <div class="mobile-nav__links">
+          <%= link_to "Inicio", dashboard_path, class: "mobile-nav__link" %>
+          <%= link_to "Ventas", sales_path, class: "mobile-nav__link" %>
+          <%= link_to "Proveedores", suppliers_path, class: "mobile-nav__link" %>
+          <%= link_to "Clientes", customers_path, class: "mobile-nav__link" %>
+          <%= link_to "Vendedores", sales_users_path, class: "mobile-nav__link" %>
+          <%= link_to "Cierres", closings_path, class: "mobile-nav__link" %>
+          <%= link_to "Transfers", transfers_path, class: "mobile-nav__link" %>
+          <%= link_to "Kickoff", kickoff_path, class: "mobile-nav__link" %>
+          <%= link_to "Cerrar sesión", destroy_user_session_path, data: { turbo_method: :delete }, class: "mobile-nav__link mobile-nav__link--danger" %>
+        </div>
+      </aside>
     <% end %>
 
     <main class="container mx-auto px-5 flex">
@@ -48,5 +70,34 @@
       <% end %>
       <%= yield %>
     </main>
+
+    <script>
+      (() => {
+        const toggle = document.querySelector("[data-nav-toggle]");
+        const closeBtn = document.querySelector("[data-nav-close]");
+        const drawer = document.querySelector("[data-nav-drawer]");
+        const backdrop = document.querySelector("[data-nav-backdrop]");
+        const body = document.body;
+
+        function openNav() {
+          drawer?.classList.add("is-open");
+          backdrop?.classList.add("is-visible");
+          body.classList.add("nav-open");
+        }
+
+        function closeNav() {
+          drawer?.classList.remove("is-open");
+          backdrop?.classList.remove("is-visible");
+          body.classList.remove("nav-open");
+        }
+
+        toggle?.addEventListener("click", openNav);
+        closeBtn?.addEventListener("click", closeNav);
+        backdrop?.addEventListener("click", closeNav);
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") closeNav();
+        });
+      })();
+    </script>
   </body>
 </html>

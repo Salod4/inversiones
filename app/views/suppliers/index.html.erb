@@ -1,32 +1,43 @@
-<h1>Suppliers</h1>
+<div class="page-header">
+  <div>
+    <h1>Proveedores</h1>
+    <p class="lead">Listado de proveedores.</p>
+  </div>
+  <div class="button-group">
+    <%= link_to "Nuevo proveedor", new_supplier_path, class: "button" %>
+  </div>
+</div>
 
-<p><%= link_to "New Supplier", new_supplier_path, class: "button" %></p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Code</th>
-      <th>Name</th>
-      <th>Default Analysis %</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @suppliers.each do |supplier| %>
-      <tr>
-        <td><%= supplier.code %></td>
-        <td><%= supplier.name %></td>
-        <td><%= supplier.default_analysis_pct %></td>
-        <td>
-          <div class="button-group">
-            <%= link_to "Show", supplier, class: "button button-secondary" %>
-            <%= link_to "Edit", edit_supplier_path(supplier), class: "button button-secondary" %>
-            <%= link_to "Destroy", supplier, class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
-          </div>
-        </td>
-      </tr>
-    <% end %>
-  </tbody>
-</table>
+<div class="card">
+  <div class="table-subtitle">Listado de proveedores</div>
+  <div class="responsive-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>% Análisis por defecto</th>
+          <th class="actions-desktop">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @suppliers.each do |supplier| %>
+          <tr>
+            <td><%= supplier.code %></td>
+            <td><%= link_to supplier.name, supplier %></td>
+            <td><%= supplier.default_analysis_pct %></td>
+            <td class="actions-desktop">
+              <div class="actions-stack">
+                <%= link_to "Ver", supplier, class: "button button-secondary" %>
+                <%= link_to "Editar", edit_supplier_path(supplier), class: "button button-ghost" %>
+                <%= link_to "Eliminar", supplier, class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
 
 <%= pagination_nav(@pagy) %>

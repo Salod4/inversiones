@@ -8,7 +8,7 @@ class Customer < ApplicationRecord
   validates :code, presence: true, uniqueness: true
   validates :name, presence: true
   validates :default_customer_fee_pct,
-            numericality: { greater_than_or_equal_to: 0, less_than: 1 },
+            numericality: { greater_than_or_equal_to: 0 },
             allow_nil: true
 
   def total_working_capital
