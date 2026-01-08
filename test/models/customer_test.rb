@@ -14,10 +14,10 @@ class CustomerTest < ActiveSupport::TestCase
     assert_includes duplicate.errors[:code], "has already been taken"
   end
 
-  test "rejects customer fee pct outside range" do
-    customer = Customer.new(code: "CUST2", name: "Customer Two", default_customer_fee_pct: 1.1)
+  test "rejects customer fee pct below zero" do
+    customer = Customer.new(code: "CUST2", name: "Customer Two", default_customer_fee_pct: -0.1)
     assert_not customer.valid?
-    assert_includes customer.errors[:default_customer_fee_pct], "must be less than 1"
+    assert_includes customer.errors[:default_customer_fee_pct], "must be greater than or equal to 0"
   end
 
   test "has associations" do

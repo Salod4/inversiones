@@ -25,7 +25,7 @@ function initSalePrefill() {
         <label>${su.user_name || "Vendedor"} (${su.commission_pct})</label>
         <input
           type="number"
-          step="0.0001"
+          step="any"
           name="sale[sales_users_attributes][][commission_pct_override]"
           placeholder="${su.commission_pct}"
         >

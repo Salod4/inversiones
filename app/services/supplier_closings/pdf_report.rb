@@ -16,18 +16,16 @@ module SupplierClosings
     end
 
     # Renders a PDF for a single SupplierClosing with the key monetary figures.
-    # Total asignado = amount_owed_to_supplier column.
-    # Retcomp = supplier_credit column (credit/retenciones al proveedor).
-    # Saldo pendiente = mismo valor mostrado en la vista (SupplierClosing#totals[:saldo_pendiente]).
+    # Incluye desglose de salidas (transfers sin venta) con movimiento, fecha y monto.
     def render
       Prawn::Document.new(page_size: "A4") do |pdf|
         build_header(pdf)
         pdf.move_down 14
-        pdf.table(summary_rows, width: pdf.bounds.width) do
-          cells.padding = 8
-          cells.borders = [ :bottom ]
-          column(0).font_style = :bold
-        end
+        build_summary(pdf)
+        pdf.move_down 14
+        build_transfers(pdf)
+        pdf.move_down 14
+        build_sales(pdf)
       end.render
     end
 
@@ -40,18 +38,25 @@ module SupplierClosings
       pdf.text "Fecha del closing: #{closing_date}"
     end
 
-    def summary_rows
+    def build_summary(pdf)
       total_asignado = decimal_value(@supplier_closing&.amount_owed_to_supplier)
       retcomp = decimal_value(@supplier_closing&.supplier_credit)
       # Saldo pendiente debe reflejar el mismo valor mostrado en la vista:
       # ret_comp_total - transferido (calculado en SupplierClosing#totals).
       pending_balance = decimal_value(@supplier_closing&.totals&.fetch(:saldo_pendiente, 0))
 
-      [
-        [ "Total asignado", currency(total_asignado) ],
-        [ "Retcomp", currency(retcomp) ],
-        [ "Saldo pendiente", currency(pending_balance) ]
-      ]
+      pdf.table(
+        [
+          [ "Total asignado", currency(total_asignado) ],
+          [ "Retcomp", currency(retcomp) ],
+          [ "Saldo pendiente", currency(pending_balance) ]
+        ],
+        width: pdf.bounds.width
+      ) do
+        cells.padding = 8
+        cells.borders = [ :bottom ]
+        column(0).font_style = :bold
+      end
     end
 
     def currency(value)
@@ -71,6 +76,79 @@ module SupplierClosings
 
     def closing_date
       @supplier_closing&.closing&.business_date || "-"
+    end
+
+    def build_transfers(pdf)
+      transfers = @supplier_closing.transfers_without_sale_for_closing
+      pdf.text "Desglose de salidas", style: :bold
+      if transfers.empty?
+        pdf.move_down 6
+        pdf.text "Sin movimientos."
+        return
+      end
+
+      rows = transfers.map do |t|
+        [
+          movement_label(t),
+          format_date(t.occurred_at),
+          currency(t.amount)
+        ]
+      end
+
+      pdf.move_down 6
+      pdf.table(
+        [ [ "Movimiento", "Fecha", "Cantidad" ] ] + rows,
+        width: pdf.bounds.width,
+        header: true
+      ) do
+        row(0).font_style = :bold
+        cells.padding = 6
+        self.row_colors = [ "F8FAFC", "FFFFFF" ]
+      end
+    end
+
+    def movement_label(transfer)
+      from = transfer.entity_label(:from)
+      to = transfer.entity_label(:to)
+      parts = [ from.presence, to.presence ].compact
+      return parts.first if parts.size <= 1
+      "#{parts[0]} a #{parts[1]}"
+    end
+
+    def build_sales(pdf)
+      sales = @supplier_closing.sales_for_closing
+      pdf.text "Ventas asignadas al proveedor", style: :bold
+      if sales.empty?
+        pdf.move_down 6
+        pdf.text "Sin ventas en este cierre."
+        return
+      end
+
+      rows = sales.map do |s|
+        [
+          s.code,
+          format_date(s.date),
+          currency(s.gross_deposit.to_d - s.provider_commission.to_d)
+        ]
+      end
+
+      pdf.move_down 6
+      pdf.table(
+        [ [ "Movimiento", "Fecha", "Retorno completo" ] ] + rows,
+        width: pdf.bounds.width,
+        header: true
+      ) do
+        row(0).font_style = :bold
+        cells.padding = 6
+        self.row_colors = [ "F8FAFC", "FFFFFF" ]
+      end
+    end
+
+    def format_date(date)
+      return "-" unless date
+      I18n.l(date)
+    rescue
+      date.to_s
     end
   end
 end

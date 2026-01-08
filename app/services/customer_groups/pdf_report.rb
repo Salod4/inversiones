@@ -40,6 +40,8 @@ module CustomerGroups
           cells.borders = [ :bottom ]
           column(0).font_style = :bold
         end
+        pdf.move_down 14
+        build_customers_table(pdf, closings_in_group)
       end.render
     end
 
@@ -90,6 +92,39 @@ module CustomerGroups
         [ "Total depositado (grupo)", currency(totals[:total_depositado]) ],
         [ "Total a regresar", currency(totals[:total_cliente]) ]
       ]
+    end
+
+    def build_customers_table(pdf, customer_closings)
+      pdf.text "Desglose por subcliente", style: :bold
+      if customer_closings.empty?
+        pdf.move_down 6
+        pdf.text "Sin subclientes en este cierre."
+        return
+      end
+
+      rows = customer_closings.map do |cc|
+        customer = cc.customer
+        label = customer ? [ customer.code, customer.name ].compact.join(" - ") : "Cliente ##{cc.customer_id}"
+        totals = cc.totals
+        deposit = currency(decimal_value(totals[:total_depositado]))
+        spei = currency(decimal_value(totals[:transferencias]))
+        received = currency(decimal_value(totals[:transferencias_recibidas]))
+        total_cliente = cc.customer_balance
+        total_cliente = totals[:total_cliente] if total_cliente.nil?
+        total_cliente = currency(decimal_value(total_cliente))
+        [ label, deposit, spei, received, total_cliente ]
+      end
+
+      pdf.move_down 6
+      pdf.table(
+        [ [ "Subcliente", "Depositado", "SPEI", "Transfers recibidos", "Total cliente" ] ] + rows,
+        width: pdf.bounds.width,
+        header: true
+      ) do
+        row(0).font_style = :bold
+        cells.padding = 6
+        self.row_colors = [ "F8FAFC", "FFFFFF" ]
+      end
     end
   end
 end

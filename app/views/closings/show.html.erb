@@ -35,7 +35,46 @@
     <span class="label">Difference</span>
     <span class="value <%= diff_class %>"><%= number_to_currency(@closing.difference, unit: "$") %></span>
   </div>
+  <div class="closing-meta">
+    <span class="label">Prestamos (restan a clientes)</span>
+    <span class="value difference-negative"><%= number_to_currency(@loan_totals[:outstanding], unit: "$") %></span>
+  </div>
+  <div class="closing-meta">
+    <span class="label">Clientes neto (ajustado)</span>
+    <span class="value"><%= number_to_currency(@net_customer_total, unit: "$") %></span>
+  </div>
 </div>
+
+<section>
+  <h2>Prestamos (externos)</h2>
+  <p class="lead">Se descuentan del total que se debe a clientes.</p>
+  <% if @loans.any? %>
+    <table>
+      <thead>
+        <tr>
+          <th>Persona</th>
+          <th>Prestado</th>
+          <th>Pagado</th>
+          <th>Saldo</th>
+          <th>Último pago</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @loans.each do |loan| %>
+          <tr>
+            <td><%= loan.name %></td>
+            <td><%= number_to_currency(loan.amount, unit: "$") %></td>
+            <td><%= number_to_currency(loan.total_paid, unit: "$") %></td>
+            <td class="<%= loan.balance.negative? ? "difference-negative" : "" %>"><%= number_to_currency(loan.balance, unit: "$") %></td>
+            <td><%= loan.last_payment_at ? l(loan.last_payment_at, format: :short) : "-" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No hay prestamos registrados.</p>
+  <% end %>
+</section>
 
 <section>
   <h2>Group Closings</h2>
@@ -145,6 +184,51 @@
 </section>
 
 <section>
+  <h2>Desglose de caja</h2>
+  <% if @cash_box_transfers.any? %>
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Código</th>
+          <th>Tipo</th>
+          <th>Origen</th>
+          <th>Destino</th>
+          <th>Método</th>
+          <th>Monto</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @cash_box_transfers.each do |transfer| %>
+          <% is_in = transfer.to_entity_type == Transfer::DESTINATION_CASH_BOX %>
+          <% is_out = transfer.from_entity_type == Transfer::DESTINATION_CASH_BOX %>
+          <% movement_type = if is_in
+                               "Entrada"
+                             elsif is_out
+                               "Salida"
+                             elsif transfer.payment_method == "efectivo"
+                               "Efectivo"
+                             else
+                               "Caja"
+                             end %>
+          <tr id="<%= dom_id(transfer, :cash_box) %>">
+            <td><%= l(transfer.occurred_at, format: :short) %></td>
+            <td><%= transfer.code %></td>
+            <td><%= movement_type %></td>
+            <td><%= transfer.entity_label(:from) %></td>
+            <td><%= transfer.entity_label(:to) %></td>
+            <td><%= transfer.payment_method == "efectivo" ? "Efectivo" : "Depósito" %></td>
+            <td><%= number_to_currency(transfer.amount, unit: "$") %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No hubo movimientos de caja en este día.</p>
+  <% end %>
+</section>
+
+<section>
   <h2>Transfers del día</h2>
   <% if @closing_transfers.any? %>
     <table>
@@ -154,7 +238,9 @@
           <th>Código</th>
           <th>Origen</th>
           <th>Destino</th>
+          <th>Método</th>
           <th>Monto</th>
+          <th>Caja</th>
           <th>Venta</th>
         </tr>
       </thead>
@@ -163,9 +249,11 @@
           <tr id="<%= dom_id(transfer) %>">
             <td><%= l(transfer.occurred_at, format: :short) %></td>
             <td><%= transfer.code %></td>
-            <td><%= [transfer.from_entity_type, transfer.from_entity_id].join(" ") %></td>
-            <td><%= [transfer.to_entity_type, transfer.to_entity_id].join(" ") %></td>
+            <td><%= transfer.entity_label(:from) %></td>
+            <td><%= transfer.entity_label(:to) %></td>
+            <td><%= transfer.payment_method == "efectivo" ? "Efectivo" : "Depósito" %></td>
             <td><%= number_to_currency(transfer.amount, unit: "$") %></td>
+            <td><%= number_to_currency(transfer.cash_box_amount.to_f, unit: "$") %></td>
             <td><%= link_to transfer.sale&.code, transfer.sale if transfer.sale.present? %></td>
           </tr>
         <% end %>

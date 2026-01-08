@@ -5,7 +5,7 @@
                 sale ? sale_transfers_path(sale) : transfers_path
               end %>
 
-<div class="transfer-form-card">
+<div class="transfer-form-card" data-transfer-form="true" data-cash-box-balance="<%= @cash_box_balance.to_f %>">
   <%= form_with(model: transfer, url: form_url) do |form| %>
     <% if transfer.errors.any? %>
       <div class="errors">
@@ -30,34 +30,56 @@
           <%= form.datetime_field :occurred_at %>
         </div>
       <% else %>
-        <div class="field">
-          <%= form.label :payment_method, "Tipo de transferencia" %>
-          <%= form.select :payment_method,
-                          options_for_select([["Depósito", "deposito"], ["Efectivo", "efectivo"]], transfer.payment_method || "deposito"),
-                          {},
-                          class: "select" %>
-          <p class="hint">Depósito usa el código SPEI actual; Efectivo genera código EFE-ORIG-DEST-fecha.</p>
-        </div>
-        <div class="field">
-          <p class="hint" style="margin-top: 1.8rem;">El código SPEI y la fecha se generarán automáticamente al guardar.</p>
-        </div>
-      <% end %>
+      <div class="field">
+        <%= form.label :payment_method, "Tipo de transferencia" %>
+        <%= form.select :payment_method,
+                        options_for_select([["Depósito", "deposito"], ["Efectivo", "efectivo"]], transfer.payment_method || "deposito"),
+                        {},
+                        class: "select" %>
+        <p class="hint">Depósito usa el código SPEI actual; Efectivo genera código EFE-ORIG-DEST-fecha.</p>
+      </div>
+      <div class="field">
+        <%= form.label :to_cash_box, "Enviar a caja" %>
+        <%= form.check_box :to_cash_box, { data: { cash_box_toggle: true } }, "true", "false" %>
+        <p class="hint">Si se marca, el monto irá a caja (efectivo interno) y se descontará del saldo del origen.</p>
+      </div>
+      <div class="field">
+        <p class="hint" style="margin-top: 1.8rem;">El código SPEI y la fecha se generarán automáticamente al guardar.</p>
+      </div>
+    <% end %>
     </div>
 
     <% if local_assigns[:include_sale_field] && sale.present? %>
       <%= form.hidden_field :sale_id, value: sale&.id %>
     <% end %>
+    <%= form.hidden_field :cash_box_amount, value: (transfer.cash_box_amount || 0), data: { cash_box_input: true } %>
 
 <%
   grouped_options = {}
   customer_groups = (defined?(@customer_groups) && @customer_groups.any?) ? @customer_groups : []
   if customer_groups.any?
-    grouped_options["Grupos"] = customer_groups.map do |group|
-      [
+    grouped_options["Grupos"] = customer_groups.flat_map do |group|
+      group_option = [
         "Grupo #{group[:name]} (#{group[:count]})",
         "CustomerGroup:#{group[:name]}",
-        { "data-entity-type": "CustomerGroup", "data-group": group[:name] }
+        {
+          "data-entity-type": "CustomerGroup",
+          "data-group": group[:name],
+          "data-balance": group[:balance].to_f
+        }
       ]
+      customer_options = group[:customers].map do |c|
+        [
+          "#{c.name} (#{group[:name]})",
+          "Customer:#{c.id}",
+          {
+            "data-entity-type": "Customer",
+            "data-balance": c.available_transfer_total(excluding: transfer).to_f,
+            "data-group": group[:name]
+          }
+        ]
+      end
+      [ group_option ] + customer_options
     end
   end
 
@@ -118,14 +140,25 @@
           <option value="Customer">Cliente</option>
           <option value="Supplier">Proveedor</option>
           <option value="User">Vendedor</option>
+          <option value="CashBox">Caja (interno)</option>
+          <option value="Other">Otro</option>
         </select>
-        <%= select_tag "transfer[from_entity_ref]",
-                      grouped_options_for_select(grouped_options, from_selected),
-                      include_blank: "Selecciona origen",
-                      id: "from_entity_ref",
-                      class: "select entity-options" %>
+        <select id="from_entity_ref" name="transfer[from_entity_ref]" class="select entity-options">
+          <option value="">Selecciona origen</option>
+          <option value="Other" <%= "selected" if from_selected == "Other" %>>Otro</option>
+          <%= grouped_options_for_select(grouped_options, from_selected) %>
+        </select>
       </div>
       <p class="hint" id="from_balance_hint"></p>
+    </div>
+    <div class="field" data-from-other-field hidden>
+      <label>Entregó (otro)</label>
+      <input type="text"
+             name="transfer[from_other_name]"
+             value="<%= transfer.from_other_name.to_s %>"
+             data-from-other-input
+             placeholder="Nombre de la persona" />
+      <p class="hint">Solo información; no crea un registro nuevo.</p>
     </div>
 
     <div class="origin-balance">
@@ -156,16 +189,21 @@
         <div class="entity-picker">
           <label>Destino</label>
           <div class="entity-picker__row">
-            <select class="select destination-type" data-role="destination-type">
-              <option value="">Selecciona tipo</option>
-              <option value="Customer">Cliente</option>
-              <option value="Supplier">Proveedor</option>
-              <option value="User">Vendedor</option>
-            </select>
-            <select name="transfer[destination_entries][__INDEX__][to_entity_ref]"
-                    class="select entity-options"
-                    data-role="destination-entity">
-              <option value="">Selecciona destino</option>
+          <select class="select destination-type" data-role="destination-type">
+            <option value="">Selecciona tipo</option>
+            <option value="Customer">Cliente</option>
+            <option value="Supplier">Proveedor</option>
+            <option value="User">Vendedor</option>
+            <option value="CashBox">Caja (interno)</option>
+          </select>
+          <select name="transfer[destination_entries][__INDEX__][to_entity_ref]"
+                  class="select entity-options"
+                  data-role="destination-entity">
+            <option value="">Selecciona destino</option>
+              <option value="CashBox:internal"
+                      data-entity-type="CashBox"
+                      data-balance="<%= @cash_box_balance.to_f %>"
+                      data-group="Caja">Caja (interno)</option>
               <%= grouped_options_for_select(grouped_options) %>
             </select>
           </div>
@@ -174,7 +212,7 @@
         <div>
           <label>Monto</label>
           <input type="number"
-                 step="0.01"
+                 step="any"
                  name="transfer[destination_entries][__INDEX__][amount]"
                  data-role="destination-amount" />
         </div>
@@ -212,28 +250,51 @@
   (() => {
     let destinationBlock;
     let fromSelect;
+    let cashBoxBalance = "";
 
     function formatCurrency(value) {
       if (value === null || Number.isNaN(value)) return "—";
       return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(value));
     }
 
-    function setupEntitySelector({ typeSelect, entitySelect, balanceHint, customerFilter, selectedValue, onChange }) {
+    function setupEntitySelector({ typeSelect, entitySelect, balanceHint, customerFilter, selectedValue, onChange, allowOther }) {
       if (!typeSelect || !entitySelect) return;
+      const allowOtherType = allowOther === true;
 
       const baseOptions = Array.from(entitySelect.options)
         .filter((opt) => opt.value)
         .map((opt) => {
           const rawValue = opt.value || "";
           const valueType = rawValue.split(":")[0] || "";
+          const balanceAttr = opt.dataset.balance;
+          const balanceLabel = balanceAttr && balanceAttr.length > 0 ? ` (${formatCurrency(balanceAttr)})` : "";
           return {
             value: rawValue,
-            text: opt.textContent || "",
+            text: (opt.textContent || "") + balanceLabel,
             entityType: opt.dataset.entityType || valueType,
             balance: opt.dataset.balance,
             group: opt.dataset.group || ""
           };
         });
+      const cashBalanceLabel = cashBoxBalance && `${cashBoxBalance}`.length > 0 ? ` (${formatCurrency(cashBoxBalance)})` : "";
+      if (!baseOptions.some((opt) => opt.value === "CashBox:internal")) {
+        baseOptions.push({
+          value: "CashBox:internal",
+          text: `Caja (interno)${cashBalanceLabel}`,
+          entityType: "CashBox",
+          balance: cashBoxBalance,
+          group: "Caja"
+        });
+      }
+      if (allowOtherType && !baseOptions.some((opt) => opt.value === "Other")) {
+        baseOptions.push({
+          value: "Other",
+          text: "Otro",
+          entityType: "Other",
+          balance: "",
+          group: ""
+        });
+      }
       let currentSelected = selectedValue || entitySelect.dataset.selected || entitySelect.value || "";
       const preselected = currentSelected
         ? baseOptions.find((opt) => opt.value === currentSelected)
@@ -277,7 +338,14 @@
         entitySelect.appendChild(placeholder);
 
         const matches = baseOptions.filter((opt) => {
-          const matchesType = !type || opt.entityType === type || (type === "Customer" && opt.entityType === "CustomerGroup");
+          if (opt.entityType === "Other") {
+            return type === "Other";
+          }
+          const matchesType =
+            !type ||
+            opt.entityType === type ||
+            (type === "Customer" && opt.entityType === "CustomerGroup") ||
+            (type === "CashBox" && opt.entityType === "CashBox");
           if (!matchesType) return false;
           if (!term) return true;
           if (type && type !== "Customer") return true; // filtro solo aplicado para clientes
@@ -341,11 +409,45 @@
       const base = computeBaseBalance();
       const balanceEl = document.getElementById("origin_balance_value");
       const remainingEl = document.getElementById("origin_remaining_value");
-      const amountInputs = document.querySelectorAll("[data-role='destination-amount']");
-      const total = Array.from(amountInputs).reduce((sum, input) => {
+      const amountInputs = Array.from(document.querySelectorAll("[data-role='destination-amount']"));
+      const cashBoxInput = document.querySelector("[data-cash-box-input]");
+      const toCashBox = document.querySelector("[data-cash-box-toggle]");
+      const destinationSelects = Array.from(document.querySelectorAll("[data-role='destination-entity']"));
+      const destinationTypes = Array.from(document.querySelectorAll("[data-role='destination-type']"));
+      const addBtn = document.getElementById("add_destination");
+
+      let totalDestinations = amountInputs.reduce((sum, input) => {
         const val = Number(input.value || 0);
         return Number.isNaN(val) ? sum : sum + val;
       }, 0);
+
+      if (toCashBox?.checked) {
+        // For cash box, force single destination and set its type/ref to caja
+        if (amountInputs.length > 1) {
+          const firstAmount = amountInputs[0];
+          amountInputs.slice(1).forEach((node) => node.closest(".destination-row")?.remove());
+          amountInputs.length = 1;
+          totalDestinations = Number(firstAmount.value || 0);
+        }
+        const firstDest = destinationSelects[0];
+        const firstType = destinationTypes[0];
+        if (firstType) {
+          firstType.value = "CashBox";
+          firstType.disabled = true;
+          firstType.dispatchEvent(new Event("change"));
+        }
+        if (firstDest) firstDest.value = "CashBox:internal";
+        destinationTypes.slice(1).forEach((sel) => (sel.disabled = true));
+        if (addBtn) addBtn.disabled = true;
+        if (cashBoxInput) cashBoxInput.value = totalDestinations;
+      } else {
+        destinationTypes.forEach((sel) => (sel.disabled = false));
+        if (addBtn) addBtn.disabled = false;
+        if (cashBoxInput) cashBoxInput.value = 0;
+      }
+
+      const cashBoxAmount = Number(cashBoxInput?.value || 0);
+      const total = toCashBox?.checked ? cashBoxAmount : totalDestinations + cashBoxAmount;
 
       if (balanceEl) balanceEl.textContent = base === null ? "—" : formatCurrency(base);
       if (remainingEl) {
@@ -353,6 +455,31 @@
         remainingEl.textContent = remaining === null ? "—" : formatCurrency(remaining);
         remainingEl.classList.toggle("negative", remaining !== null && remaining < 0);
       }
+
+      // Update each destination hint with saldo/restante
+      const rows = Array.from(document.querySelectorAll(".destination-row"));
+      rows.forEach((row) => {
+        const balanceHint = row.querySelector("[data-role='destination-balance']");
+        const entitySelect = row.querySelector("[data-role='destination-entity']");
+        const amountInput = row.querySelector("[data-role='destination-amount']");
+        updateDestinationHint(balanceHint, entitySelect, amountInput);
+      });
+    }
+
+    function updateDestinationHint(balanceHint, entitySelect, amountInput) {
+      if (!balanceHint || !entitySelect) return;
+      const selected = entitySelect.selectedOptions[0];
+      const rawBalance = selected?.dataset.balance;
+      if (!rawBalance || Number.isNaN(Number(rawBalance))) {
+        balanceHint.textContent = "";
+        balanceHint.classList.remove("negative");
+        return;
+      }
+      const balance = Number(rawBalance);
+      const amount = Number(amountInput?.value || 0);
+      const remaining = balance - (Number.isNaN(amount) ? 0 : amount);
+      balanceHint.textContent = `Saldo: ${formatCurrency(balance)} · Restante: ${formatCurrency(remaining)}`;
+      balanceHint.classList.toggle("negative", remaining < 0);
     }
 
     function initDestinations(customerFilter) {
@@ -405,11 +532,21 @@
           balanceHint,
           customerFilter,
           selectedValue: entitySelect.dataset.selected,
-          onChange: updateRemainingBalance
+          onChange: () => {
+            updateRemainingBalance();
+            updateDestinationHint(balanceHint, entitySelect, amountInput);
+          },
+          allowOther: false
         });
 
-        amountInput.addEventListener("input", updateRemainingBalance);
-        entitySelect.addEventListener("change", updateRemainingBalance);
+        amountInput.addEventListener("input", () => {
+          updateRemainingBalance();
+          updateDestinationHint(balanceHint, entitySelect, amountInput);
+        });
+        entitySelect.addEventListener("change", () => {
+          updateRemainingBalance();
+          updateDestinationHint(balanceHint, entitySelect, amountInput);
+        });
         removeBtn?.addEventListener("click", () => {
           if (list.children.length <= 1) return;
           row.remove();
@@ -421,6 +558,7 @@
         nextIndex += 1;
         toggleRemoveButtons();
         updateRemainingBalance();
+        updateDestinationHint(balanceHint, entitySelect, amountInput);
       }
 
       function toggleRemoveButtons() {
@@ -436,13 +574,21 @@
     }
 
     function initTransferForm() {
-      if (window.__transferFormInitialized) return;
-      window.__transferFormInitialized = true;
+      const wrapper = document.querySelector("[data-transfer-form]");
+      if (!wrapper || wrapper.dataset.inited === "true") return;
+      wrapper.dataset.inited = "true";
+      cashBoxBalance = wrapper.dataset.cashBoxBalance || "";
+
       const customerFilter = document.getElementById("customer_filter");
       const fromType = document.getElementById("from_type");
       fromSelect = document.getElementById("from_entity_ref");
       const fromHint = document.getElementById("from_balance_hint");
       destinationBlock = document.getElementById("destinations_block");
+      const cashToggle = document.querySelector("[data-cash-box-toggle]");
+      const cashInput = document.querySelector("[data-cash-box-input]");
+      const fromOtherField = document.querySelector("[data-from-other-field]");
+      const fromOtherInput = document.querySelector("[data-from-other-input]");
+      const paymentSelect = document.querySelector("select[name='transfer[payment_method]']");
 
       setupEntitySelector({
         typeSelect: fromType,
@@ -450,14 +596,44 @@
         balanceHint: fromHint,
         customerFilter,
         selectedValue: fromSelect?.dataset.selected,
-        onChange: updateRemainingBalance
+        onChange: updateRemainingBalance,
+        allowOther: true
       });
 
       initDestinations(customerFilter);
+      cashToggle?.addEventListener("change", updateRemainingBalance);
+      cashInput?.addEventListener("input", updateRemainingBalance);
+      const updateFromOtherField = () => {
+        if (!fromOtherField || !fromOtherInput) return;
+        const cashOk = cashToggle ? cashToggle.checked : true;
+        const methodOk = paymentSelect ? paymentSelect.value === "efectivo" : true;
+        const allowOther = cashOk && methodOk;
+        const otherOption = fromType ? Array.from(fromType.options).find((opt) => opt.value === "Other") : null;
+        if (otherOption) otherOption.disabled = !allowOther;
+        if (!allowOther && fromType?.value === "Other") {
+          fromType.value = "";
+          if (fromSelect) fromSelect.value = "";
+        }
+        const isOther = fromType?.value === "Other";
+        const shouldShow = isOther && allowOther;
+        fromOtherField.hidden = !shouldShow;
+        if (shouldShow) {
+          fromOtherInput.setAttribute("required", "required");
+          if (fromSelect) fromSelect.value = "Other";
+        } else {
+          fromOtherInput.removeAttribute("required");
+          fromOtherInput.value = "";
+        }
+      };
+      fromType?.addEventListener("change", updateFromOtherField);
+      fromSelect?.addEventListener("change", updateFromOtherField);
+      cashToggle?.addEventListener("change", updateFromOtherField);
+      paymentSelect?.addEventListener("change", updateFromOtherField);
       updateRemainingBalance();
+      updateFromOtherField();
     }
 
-    document.addEventListener("turbo:load", initTransferForm, { once: true });
-    document.addEventListener("DOMContentLoaded", initTransferForm, { once: true });
+    document.addEventListener("turbo:load", initTransferForm);
+    document.addEventListener("DOMContentLoaded", initTransferForm);
   })();
 </script>

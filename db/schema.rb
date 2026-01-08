@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_08_021000) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_15_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -98,6 +98,26 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_08_021000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["code"], name: "index_customers_on_code", unique: true
+  end
+
+  create_table "loan_payments", force: :cascade do |t|
+    t.bigint "loan_id", null: false
+    t.decimal "amount", precision: 15, scale: 2, null: false
+    t.datetime "paid_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["loan_id"], name: "index_loan_payments_on_loan_id"
+    t.index ["paid_at"], name: "index_loan_payments_on_paid_at"
+  end
+
+  create_table "loans", force: :cascade do |t|
+    t.string "name", null: false
+    t.decimal "amount", precision: 15, scale: 2, null: false
+    t.decimal "total_paid", precision: 15, scale: 2, default: "0.0", null: false
+    t.datetime "last_payment_at"
+    t.text "note"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "opening_balances", force: :cascade do |t|
@@ -195,6 +215,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_08_021000) do
     t.string "payment_method", default: "deposito", null: false
     t.string "from_group"
     t.string "to_group"
+    t.decimal "cash_box_amount", precision: 15, scale: 2, default: "0.0", null: false
+    t.string "from_other_name"
     t.index ["code"], name: "index_transfers_on_code", unique: true
     t.index ["customer_id"], name: "index_transfers_on_customer_id"
     t.index ["from_entity_type", "from_entity_id"], name: "index_transfers_on_from_entity"
@@ -202,6 +224,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_08_021000) do
     t.index ["supplier_id"], name: "index_transfers_on_supplier_id"
     t.index ["to_entity_type", "to_entity_id"], name: "index_transfers_on_to_entity"
     t.check_constraint "amount >= 0::numeric", name: "transfers_amount_nonnegative"
+    t.check_constraint "cash_box_amount >= 0::numeric", name: "transfers_cash_box_nonnegative"
   end
 
   create_table "users", force: :cascade do |t|
@@ -225,6 +248,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_08_021000) do
   add_foreign_key "customer_closings", "customers"
   add_foreign_key "customer_suppliers", "customers"
   add_foreign_key "customer_suppliers", "suppliers"
+  add_foreign_key "loan_payments", "loans"
   add_foreign_key "sales", "closings"
   add_foreign_key "sales", "customers"
   add_foreign_key "sales", "suppliers"

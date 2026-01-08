@@ -1,0 +1,73 @@
+<div class="page-header">
+  <div>
+    <h1>Prestamos</h1>
+    <p class="lead">Saldos prestados a personas externas; se descuentan del total de clientes.</p>
+  </div>
+  <div class="button-group">
+    <%= link_to "Nuevo prestamo", new_loan_path, class: "button" %>
+  </div>
+</div>
+
+<div class="card loans-stats">
+  <div class="stat-item">
+    <span class="label">Prestado</span>
+    <span class="value"><%= number_to_currency(@loan_totals[:amount], unit: "$") %></span>
+  </div>
+  <div class="stat-item">
+    <span class="label">Pagado</span>
+    <span class="value"><%= number_to_currency(@loan_totals[:paid], unit: "$") %></span>
+  </div>
+  <div class="stat-item">
+    <span class="label">Saldo pendiente</span>
+    <span class="value"><%= number_to_currency(@loan_totals[:outstanding], unit: "$") %></span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-subtitle">Listado de deudores</div>
+  <div class="responsive-table">
+    <table class="loans-table">
+      <thead>
+        <tr>
+          <th>Persona</th>
+          <th>Prestado</th>
+          <th>Pagado</th>
+          <th>Saldo</th>
+          <th>Ultimo pago</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @loans.each do |loan| %>
+          <tr>
+            <td data-label="Persona"><%= loan.name %></td>
+            <td data-label="Prestado"><%= number_to_currency(loan.amount, unit: "$") %></td>
+            <td data-label="Pagado"><%= number_to_currency(loan.total_paid, unit: "$") %></td>
+            <td data-label="Saldo" class="<%= loan.balance.negative? ? "negative" : "" %>"><%= number_to_currency(loan.balance, unit: "$") %></td>
+            <td data-label="Ultimo pago"><%= loan.last_payment_at ? l(loan.last_payment_at, format: :short) : "-" %></td>
+            <td data-label="Acciones" class="actions-cell">
+              <div class="actions-stack">
+                <%= link_to "Ver", loan_path(loan), class: "button button-secondary button-small" %>
+                <%= link_to "Editar", edit_loan_path(loan), class: "button button-ghost button-small" %>
+                <%= link_to "Eliminar", loan_path(loan),
+                            data: { turbo_method: :delete, turbo_confirm: "Eliminar prestamo?" },
+                            class: "button button-danger button-small" %>
+              </div>
+              <div class="inline-payment">
+                <%= form_with(model: [loan, LoanPayment.new], url: loan_loan_payments_path(loan), class: "inline-payment__form") do |f| %>
+                  <%= f.number_field :amount, step: :any, placeholder: "Pago", class: "inline-payment__amount" %>
+                  <%= f.submit "Pagar", class: "button button-secondary button-small" %>
+                <% end %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+        <% if @loans.empty? %>
+          <tr class="loans-empty">
+            <td colspan="6">No hay prestamos registrados.</td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

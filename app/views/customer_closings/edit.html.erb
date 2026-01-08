@@ -19,12 +19,12 @@
 
   <div>
     <%= f.label :customer_balance, "Saldo del cliente" %>
-    <%= f.number_field :customer_balance, step: 0.01 %>
+    <%= f.number_field :customer_balance, step: :any %>
   </div>
 
   <div>
     <%= f.label :receivables, "Por cobrar (receivables)" %>
-    <%= f.number_field :receivables, step: 0.01 %>
+    <%= f.number_field :receivables, step: :any %>
   </div>
 
   <div class="button-group">

@@ -29,17 +29,17 @@
 
       <div class="field">
         <%= f.label :gross_deposit, "Deposito del cliente" %>
-        <%= f.number_field :gross_deposit, step: 1 %>
+        <%= f.number_field :gross_deposit, step: :any %>
       </div>
 
       <div class="field">
         <%= f.label :provider_pct_override, "% Que nos cobra el proveedor" %>
-        <%= f.number_field :provider_pct_override, step: 0.0001, id: "sale_provider_pct_override" %>
+        <%= f.number_field :provider_pct_override, step: :any, id: "sale_provider_pct_override" %>
       </div>
 
       <div class="field">
         <%= f.label :customer_fee_pct_override, "% Al que le vendemos al cliente" %>
-        <%= f.number_field :customer_fee_pct_override, step: 0.0001, id: "sale_customer_fee_pct_override" %>
+        <%= f.number_field :customer_fee_pct_override, step: :any, id: "sale_customer_fee_pct_override" %>
       </div>
     </div>
 
@@ -95,7 +95,7 @@
           <label><%= display_name %> (<%= su.commission_pct %>)</label>
           <%= su_fields.hidden_field :id %>
           <%= su_fields.hidden_field :user_id %>
-          <%= su_fields.number_field :commission_pct_override, step: 0.0001, placeholder: su.commission_pct %>
+          <%= su_fields.number_field :commission_pct_override, step: :any, placeholder: su.commission_pct %>
         </div>
       <% end %>
     </div>

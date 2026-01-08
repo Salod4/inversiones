@@ -19,6 +19,12 @@ class SupplierClosing < ApplicationRecord
             .order(:occurred_at, :code)
   end
 
+  def transfers_without_sale_for_closing
+    Transfer.where(supplier_id: supplier_id, sale_id: nil)
+            .where(occurred_at: closing.business_date.all_day)
+            .order(:occurred_at, :code)
+  end
+
   def totals
     s = sales_for_closing
     t = transfers_for_closing

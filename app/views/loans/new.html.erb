@@ -1,0 +1,13 @@
+<div class="page-header">
+  <div>
+    <h1>Nuevo prestamo</h1>
+    <p class="lead">Registra un nuevo saldo prestado a una persona externa.</p>
+  </div>
+  <div class="button-group">
+    <%= link_to "Regresar", loans_path, class: "button button-ghost" %>
+  </div>
+</div>
+
+<div class="card">
+  <%= render "form", loan: @loan %>
+</div>

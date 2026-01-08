@@ -42,12 +42,22 @@ module TransferParamHelpers
   def apply_ref_to_transfer(transfer, prefix, ref)
     return if ref.blank?
     type, token = ref.to_s.split(":", 2)
-    return unless Transfer::ALLOWED_ENTITY_TYPES.include?(type)
+    return unless Transfer::ALLOWED_ENTITY_TYPES.include?(type) || type == Transfer::DESTINATION_CASH_BOX
 
     if type == "CustomerGroup"
       transfer.send("#{prefix}_entity_type=", "CustomerGroup")
       transfer.send("#{prefix}_entity_id=", nil)
       transfer.send("#{prefix}_group=", token)
+      return
+    elsif type == "Other"
+      transfer.send("#{prefix}_entity_type=", "Other")
+      transfer.send("#{prefix}_entity_id=", nil)
+      transfer.send("#{prefix}_group=", nil)
+      return
+    elsif type == Transfer::DESTINATION_CASH_BOX
+      transfer.send("#{prefix}_entity_type=", Transfer::DESTINATION_CASH_BOX)
+      transfer.send("#{prefix}_entity_id=", nil)
+      transfer.send("#{prefix}_group=", nil)
       return
     end
 
@@ -62,6 +72,7 @@ module TransferParamHelpers
     when "Customer" then Customer.find_by(id: id)
     when "Supplier" then Supplier.find_by(id: id)
     when "User" then User.find_by(id: id)
+    when Transfer::DESTINATION_CASH_BOX then nil
     end
   end
 
@@ -70,6 +81,8 @@ module TransferParamHelpers
     if type == "CustomerGroup"
       group = transfer.send("#{side}_group")
       return "CustomerGroup:#{group}" if group.present?
+    elsif type == "Other"
+      return "Other"
     elsif type.present? && transfer.send("#{side}_entity_id").present?
       return "#{type}:#{transfer.send("#{side}_entity_id")}"
     end
@@ -105,7 +118,8 @@ module TransferParamHelpers
       return [ [], template ]
     end
 
-    total_amount = destination_entries.sum { |d| d[:amount].to_d }
+    cash_box_amount = BigDecimal(base_attrs[:cash_box_amount].to_s.presence || "0")
+    total_amount = destination_entries.sum { |d| d[:amount].to_d } + cash_box_amount
     available = available_balance_for_batch(template, sale)
     if available && total_amount > available
       template.errors.add(:base, "El monto total (#{total_amount.to_s("F")}) supera el saldo disponible de #{available.to_s("F")}")

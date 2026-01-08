@@ -20,26 +20,24 @@
     </div>
   </div>
 
-  <% total_amount = @transfers.sum { |t| t.amount.to_d } %>
-  <% total_depositos = @transfers.count { |t| t.payment_method == "deposito" } %>
-  <% total_efectivo = @transfers.count { |t| t.payment_method == "efectivo" } %>
-
   <div class="transfers-stats">
     <div class="transfer-stat">
       <span class="label">Total transfers</span>
-      <span class="value"><%= @transfers.count %></span>
+      <span class="value"><%= @transfer_stats[:count] %></span>
     </div>
     <div class="transfer-stat">
       <span class="label">Monto total</span>
-      <span class="value"><%= number_to_currency(total_amount, unit: "$") %></span>
+      <span class="value"><%= number_to_currency(@transfer_stats[:total_outgoing], unit: "$") %></span>
     </div>
     <div class="transfer-stat">
       <span class="label">Depósitos</span>
-      <span class="value"><%= total_depositos %></span>
+      <span class="value"><%= number_to_currency(@transfer_stats[:deposit_amount], unit: "$") %></span>
+      <small class="muted"><%= @transfer_stats[:deposit_count] %> movimientos</small>
     </div>
     <div class="transfer-stat">
       <span class="label">Efectivo</span>
-      <span class="value"><%= total_efectivo %></span>
+      <span class="value"><%= number_to_currency(@transfer_stats[:efectivo_amount], unit: "$") %></span>
+      <small class="muted"><%= @transfer_stats[:efectivo_count] %> movimientos</small>
     </div>
   </div>
 
@@ -55,6 +53,7 @@
           <th>Sale</th>
           <th>Método</th>
           <th>Monto</th>
+          <th>Caja</th>
           <th class="actions-cell">Acciones</th>
         </tr>
       </thead>
@@ -71,6 +70,7 @@
               <td><%= transfer.sale&.code || "—" %></td>
               <td><span class="<%= pill_class %>"><%= pill_label %></span></td>
               <td><%= number_to_currency(transfer.amount, unit: "$") %></td>
+              <td><%= number_to_currency(transfer.cash_box_amount.to_f, unit: "$") %></td>
               <td class="actions-cell">
                 <div class="actions-stack">
                   <%= link_to "Ver", transfer_path(transfer), class: "button button-secondary" %>

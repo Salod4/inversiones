@@ -19,12 +19,12 @@
 
   <div>
     <%= f.label :supplier_credit, "Depositado a proveedor" %>
-    <%= f.number_field :supplier_credit, step: 0.01 %>
+    <%= f.number_field :supplier_credit, step: :any %>
   </div>
 
   <div>
     <%= f.label :amount_owed_to_supplier, "Total de proveedor" %>
-    <%= f.number_field :amount_owed_to_supplier, step: 0.01 %>
+    <%= f.number_field :amount_owed_to_supplier, step: :any %>
   </div>
 
   <div class="button-group">

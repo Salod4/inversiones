@@ -74,7 +74,6 @@
         <tr>
           <th>Código</th>
           <th>Fecha</th>
-          <th>Proveedor</th>
           <th>Depósito bruto</th>
           <th>Base neta</th>
           <th>Comisión prov.</th>
@@ -90,7 +89,6 @@
           <tr>
             <td><%= link_to sale.code, sale_path(sale) %></td>
             <td><%= sale.date %></td>
-            <td><%= [sale.supplier&.code, sale.supplier&.name].compact.join(" - ") %></td>
             <td><%= number_to_currency(sale.gross_deposit) %></td>
             <td><%= number_to_currency(sale.net_base) %></td>
             <td><%= number_to_currency(sale.provider_commission) %></td>

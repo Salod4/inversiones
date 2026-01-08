@@ -38,6 +38,7 @@
             <%= link_to "Vendedores", sales_users_path, class: "button button-nav" %>
             <%= link_to "Cierres", closings_path, class: "button button-nav" %>
             <%= link_to "Transfers", transfers_path, class: "button button-nav" %>
+            <%= link_to "Prestamos", loans_path, class: "button button-nav" %>
             <%= link_to "Kickoff", kickoff_path, class: "button button-nav button-ghost" %>
             <%= link_to "Cerrar sesión", destroy_user_session_path, data: { turbo_method: :delete }, class: "button button-danger" %>
           </nav>
@@ -58,6 +59,7 @@
           <%= link_to "Vendedores", sales_users_path, class: "mobile-nav__link" %>
           <%= link_to "Cierres", closings_path, class: "mobile-nav__link" %>
           <%= link_to "Transfers", transfers_path, class: "mobile-nav__link" %>
+          <%= link_to "Prestamos", loans_path, class: "mobile-nav__link" %>
           <%= link_to "Kickoff", kickoff_path, class: "mobile-nav__link" %>
           <%= link_to "Cerrar sesión", destroy_user_session_path, data: { turbo_method: :delete }, class: "mobile-nav__link mobile-nav__link--danger" %>
         </div>

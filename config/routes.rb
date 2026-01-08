@@ -24,6 +24,9 @@ Rails.application.routes.draw do
 
   resources :sales_users, only: [ :index ]
   resources :transfers, only: [ :new, :create, :show, :edit, :update, :destroy, :index ]
+  resources :loans do
+    resources :loan_payments, only: [ :create, :destroy ]
+  end
 
   resources :closings do
     member do
@@ -44,10 +47,10 @@ Rails.application.routes.draw do
     end
   end
 
-  resource :dashboard, only: [ :show ]
+  resource :dashboard, only: [ :show ], controller: :dashboards
 
   resource :kickoff, only: [ :show, :create ]
   get "kickoff/template/:type", to: "kickoffs#template", as: :kickoff_template
 
-  root "dashboard#show"
+  root "dashboards#show"
 end

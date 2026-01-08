@@ -1,0 +1,80 @@
+<div class="page-header">
+  <div>
+    <h1><%= @loan.name %></h1>
+    <p class="lead">Detalles del prestamo y pagos.</p>
+  </div>
+  <div class="button-group">
+    <%= link_to "Editar", edit_loan_path(@loan), class: "button button-secondary" %>
+    <%= link_to "Regresar", loans_path, class: "button button-ghost" %>
+  </div>
+</div>
+
+<div class="card loan-summary">
+  <div>
+    <div class="label">Prestado</div>
+    <div class="value"><%= number_to_currency(@loan.amount, unit: "$") %></div>
+  </div>
+  <div>
+    <div class="label">Pagado</div>
+    <div class="value"><%= number_to_currency(@loan.total_paid, unit: "$") %></div>
+  </div>
+  <div>
+    <div class="label">Saldo</div>
+    <div class="value <%= @loan.balance.negative? ? "negative" : "" %>"><%= number_to_currency(@loan.balance, unit: "$") %></div>
+  </div>
+  <div>
+    <div class="label">Ultimo pago</div>
+    <div class="value"><%= @loan.last_payment_at ? l(@loan.last_payment_at, format: :short) : "-" %></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Registrar pago</h3>
+  <%= form_with(model: [@loan, @payment], url: loan_loan_payments_path(@loan)) do |f| %>
+    <div class="form-grid">
+      <div class="field">
+        <%= f.label :amount, "Monto" %>
+        <%= f.number_field :amount, step: :any %>
+      </div>
+      <div class="field">
+        <%= f.label :paid_at, "Fecha de pago" %>
+        <%= f.datetime_field :paid_at %>
+      </div>
+    </div>
+    <div class="form-actions">
+      <%= f.submit "Guardar pago", class: "button" %>
+    </div>
+  <% end %>
+</div>
+
+<div class="card">
+  <div class="table-subtitle">Pagos</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Monto</th>
+        <th>Fecha</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @payments.each do |payment| %>
+        <tr>
+          <td><%= number_to_currency(payment.amount, unit: "$") %></td>
+          <td><%= payment.paid_at ? l(payment.paid_at, format: :short) : "-" %></td>
+          <td class="actions-cell">
+            <%= link_to "Eliminar",
+                        loan_loan_payment_path(@loan, payment),
+                        data: { turbo_method: :delete, turbo_confirm: "Eliminar pago?" },
+                        class: "button button-danger button-small" %>
+          </td>
+        </tr>
+      <% end %>
+      <% if @payments.empty? %>
+        <tr>
+          <td colspan="3">Sin pagos registrados.</td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

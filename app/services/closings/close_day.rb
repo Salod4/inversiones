@@ -69,17 +69,22 @@ module Closings
       closing.update!(
         total_customers: total_customers,
         total_suppliers: total_suppliers,
-        difference: (total_customers.to_d - total_suppliers.to_d)
+        difference: (total_suppliers.to_d - total_customers.to_d)
       )
     end
 
     def build_snapshot
       sales_scope = Sale.where("date <= ?", business_date).includes(:transfers)
+      end_of_day = business_date.end_of_day
 
       # Clientes: suma de working_capital menos transfers hasta la fecha
       customers = Hash.new { |h, k| h[k] = { balance: 0.to_d, receivables: 0.to_d } }
       sales_scope.find_each do |sale|
-        transfers_sum = sale.transfers.where("occurred_at <= ?", business_date.end_of_day).sum(:amount).to_d
+        transfers_sum = 0.to_d
+        sale.transfers.each do |transfer|
+          next unless transfer.occurred_at && transfer.occurred_at <= end_of_day
+          transfers_sum += transfer_outgoing_amount(transfer)
+        end
         balance = sale.working_capital.to_d - transfers_sum
         cust = customers[sale.customer_id]
         cust[:balance] += balance
@@ -91,10 +96,10 @@ module Closings
       end
 
       # Transfers sin venta: restan saldo al cliente receptor (pago de deuda)
-      extra_transfers = Transfer.where(sale_id: nil).where("occurred_at <= ?", business_date.end_of_day)
+      extra_transfers = Transfer.where(sale_id: nil).where("occurred_at <= ?", end_of_day)
       extra_transfers.find_each do |t|
         if t.to_entity_type == "Customer" && t.customer_id.present?
-          customers[t.customer_id][:balance] -= t.amount.to_d
+          customers[t.customer_id][:balance] -= transfer_outgoing_amount(t)
         end
       end
 
@@ -109,10 +114,12 @@ module Closings
         suppliers[ob.reference_id][:ret_comp] += ob.amount.to_d
       end
 
-      supplier_transfers = Transfer
-                             .where("occurred_at <= ?", business_date.end_of_day)
-                             .group(:supplier_id)
-                             .sum(:amount)
+      supplier_transfers = Hash.new(0.to_d)
+      Transfer.where("occurred_at <= ?", end_of_day)
+              .where.not(supplier_id: nil)
+              .find_each do |transfer|
+        supplier_transfers[transfer.supplier_id] += transfer_outgoing_amount(transfer)
+      end
       supplier_transfers.each do |supplier_id, amount|
         suppliers[supplier_id][:transferred] += amount.to_d
       end
@@ -121,6 +128,16 @@ module Closings
         customers: customers,
         suppliers: suppliers
       }
+    end
+
+    def transfer_outgoing_amount(transfer)
+      amount = transfer.amount.to_d
+      cash_amount = transfer.cash_box_amount.to_d
+      if transfer.to_entity_type == Transfer::DESTINATION_CASH_BOX
+        cash_amount.positive? ? cash_amount : amount
+      else
+        amount + cash_amount
+      end
     end
   end
 end

@@ -27,17 +27,17 @@
 
   <div>
     <%= form.label :total_customers %>
-    <%= form.number_field :total_customers, step: 1 %>
+    <%= form.number_field :total_customers, step: :any %>
   </div>
 
   <div>
     <%= form.label :total_suppliers %>
-    <%= form.number_field :total_suppliers, step: 1 %>
+    <%= form.number_field :total_suppliers, step: :any %>
   </div>
 
   <div>
     <%= form.label :difference %>
-    <%= form.number_field :difference, step: 0.01 %>
+    <%= form.number_field :difference, step: :any %>
   </div>
 
   <div>

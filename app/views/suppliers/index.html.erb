@@ -8,6 +8,13 @@
   </div>
 </div>
 
+<div class="stats-grid">
+  <div class="stat">
+    <div class="label">Saldo total</div>
+    <p class="value"><%= number_to_currency(@suppliers_total_pending || 0, unit: "$") %></p>
+  </div>
+</div>
+
 <div class="card">
   <div class="table-subtitle">Listado de proveedores</div>
   <div class="responsive-table">

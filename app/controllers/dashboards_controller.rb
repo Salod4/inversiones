@@ -20,6 +20,15 @@ class DashboardsController < ApplicationController
       OpeningBalance.customer_groups.sum(:amount).to_d
 
     @supplier_pending = Supplier.all.sum(&:available_transfer_total)
+    @cash_box_total = Transfer.cash_box_balance
+
+    loans = Loan.order(created_at: :desc).includes(:loan_payments)
+    @loan_totals = {
+      amount: loans.sum(:amount),
+      paid: loans.sum(:total_paid),
+      outstanding: loans.sum(&:balance)
+    }
+    @loans = loans
 
     @seller_names = {}
     User.where(id: @seller_commissions_by_user.keys).find_each do |u|

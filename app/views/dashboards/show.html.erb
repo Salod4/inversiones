@@ -28,7 +28,45 @@
       <p class="label">Proveedores</p>
       <p class="value"><%= number_to_currency(@supplier_pending, unit: "$") %></p>
     </div>
+    <div class="stat">
+      <p class="label">Caja</p>
+      <p class="value"><%= number_to_currency(@cash_box_total, unit: "$") %></p>
+    </div>
+    <div class="stat">
+      <p class="label">Prestamos pendientes</p>
+      <p class="value"><%= number_to_currency(@loan_totals[:outstanding], unit: "$") %></p>
+    </div>
   </div>
+</section>
+
+<section class="card">
+  <h2>Deudores</h2>
+  <% if @loans.any? %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Persona</th>
+          <th>Prestado</th>
+          <th>Pagado</th>
+          <th>Saldo</th>
+          <th>Ultimo pago</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @loans.each do |loan| %>
+          <tr>
+            <td><%= loan.name %></td>
+            <td><%= number_to_currency(loan.amount, unit: "$") %></td>
+            <td><%= number_to_currency(loan.total_paid, unit: "$") %></td>
+            <td class="<%= loan.balance.negative? ? "negative" : "" %>"><%= number_to_currency(loan.balance, unit: "$") %></td>
+            <td><%= loan.last_payment_at ? l(loan.last_payment_at, format: :short) : "-" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No hay prestamos registrados.</p>
+  <% end %>
 </section>
 
 <section class="card">

@@ -15,7 +15,14 @@ class ClosingsController < ApplicationController
 
     @customer_closings = CustomerClosing.where(closing_id: @closing.id).includes(:customer).order("customers.name")
     @supplier_closings = SupplierClosing.where(closing_id: @closing.id).includes(:supplier).order("suppliers.name")
-    @closing_transfers = Transfer.where(occurred_at: @closing.business_date.beginning_of_day..@closing.business_date.end_of_day).includes(:sale, :supplier, :customer)
+    @closing_transfers = Transfer.where(occurred_at: @closing.business_date.beginning_of_day..@closing.business_date.end_of_day)
+                                 .includes(:sale, :supplier, :customer)
+    cash_box = Transfer::DESTINATION_CASH_BOX
+    @cash_box_transfers = @closing_transfers
+                            .where(from_entity_type: cash_box)
+                            .or(@closing_transfers.where(to_entity_type: cash_box))
+                            .or(@closing_transfers.where(payment_method: "efectivo"))
+                            .or(@closing_transfers.where("cash_box_amount > 0"))
 
     balances_by_customer = @customer_closings.each_with_object(Hash.new(0.to_d)) do |cc, memo|
       memo[cc.customer_id] += cc.customer_balance.to_d
@@ -59,6 +66,16 @@ class ClosingsController < ApplicationController
       working_capital: @sales.sum(:working_capital),
       customer_balance: @customer_closings.sum(:customer_balance)
     }
+
+    loans = Loan.all
+    @loans = loans
+    @loan_totals = {
+      amount: loans.sum(:amount),
+      paid: loans.sum(:total_paid),
+      outstanding: loans.sum(&:balance),
+      last_payment_at: loans.maximum(:last_payment_at)
+    }
+    @net_customer_total = @closing.total_customers.to_d - @loan_totals[:outstanding].to_d
   end
 
   def new

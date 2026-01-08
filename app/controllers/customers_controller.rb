@@ -39,7 +39,9 @@ class CustomersController < ApplicationController
 
     @group_total_deposit = base_sales_scope.sum(:gross_deposit).to_d
     @group_total_after_pcts = sales_scope.sum { |s| s.net_after_provider_and_sellers.to_d }
-    @group_total_transferred = sales_scope.sum { |s| s.total_transfer_applied.to_d }
+    @group_total_transferred = sales_scope.sum do |s|
+      s.transfers.where(to_entity_type: "Supplier").sum(:amount).to_d
+    end
     @group_opening_balance = OpeningBalance.total_for_group(@group[:name])
     direct_received = Transfer.where(
       customer_id: filtered_customer_ids,
@@ -49,10 +51,23 @@ class CustomersController < ApplicationController
 
     direct_to_customers = direct_received.values.sum.to_d
     direct_to_group = Transfer.where(
-      to_entity_type: "CustomerGroup"
+      to_entity_type: "CustomerGroup",
+      sale_id: nil
     ).where("lower(to_group) = ?", @group[:name].downcase).sum(:amount).to_d
 
-    @group_total_received = direct_to_customers + direct_to_group
+    sale_transfers_to_customers = Transfer
+      .where(sale_id: base_sales_scope.select(:id))
+      .where(to_entity_type: "Customer", to_entity_id: filtered_customer_ids)
+      .sum(:amount)
+      .to_d
+    sale_transfers_to_group = Transfer
+      .where(sale_id: base_sales_scope.select(:id))
+      .where(to_entity_type: "CustomerGroup")
+      .where("lower(to_group) = ?", @group[:name].downcase)
+      .sum(:amount)
+      .to_d
+
+    @group_total_received = direct_to_customers + direct_to_group + sale_transfers_to_customers + sale_transfers_to_group
     @group_available_balance = @group_total_after_pcts + @group_opening_balance - @group_total_transferred - @group_total_received
 
     @per_customer_deposit = Hash.new(0)
@@ -76,7 +91,7 @@ class CustomersController < ApplicationController
 
     @sales = sales_scope.order(date: :desc).limit(50)
 
-    @group_transfers = transfers_for_group(@group[:name])
+    @group_transfers = transfers_for_group(@group[:name], filtered_customer_ids)
     @group_transfer_labels = @group_transfers.index_with do |t|
       {
         from: entity_label_for(t, :from),
@@ -153,13 +168,13 @@ class CustomersController < ApplicationController
     params.require(:customer).permit(:code, :name, :default_customer_fee_pct)
   end
 
-  def transfers_for_group(group_name)
+  def transfers_for_group(group_name, customer_ids)
     return Transfer.none if group_name.blank?
     target = group_name.to_s.downcase
     Transfer
       .where(
-        "(to_entity_type = ? AND lower(to_group) = ?) OR (from_entity_type = ? AND lower(from_group) = ?)",
-        "CustomerGroup", target, "CustomerGroup", target
+        "(to_entity_type = ? AND lower(to_group) = ?) OR (from_entity_type = ? AND lower(from_group) = ?) OR customer_id IN (?)",
+        "CustomerGroup", target, "CustomerGroup", target, customer_ids.presence || []
       )
       .order(occurred_at: :desc)
   end

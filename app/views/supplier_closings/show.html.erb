@@ -72,16 +72,9 @@
     <table>
       <thead>
         <tr>
-          <th>Código</th>
+          <th>Movimiento</th>
           <th>Fecha</th>
-          <th>Cliente</th>
-          <th>Depósito bruto</th>
-          <th>Base neta</th>
-          <th>Comisión prov.</th>
-          <th>SPEI aplicados</th>
-          <th>Capital de trabajo</th>
-          <th>Saldo cliente</th>
-          <th>Status</th>
+          <th>Retorno completo</th>
         </tr>
       </thead>
       <tbody>
@@ -89,14 +82,7 @@
           <tr>
             <td><%= link_to sale.code, sale_path(sale) %></td>
             <td><%= sale.date %></td>
-            <td><%= [sale.customer&.code, sale.customer&.name].compact.join(" - ") %></td>
-            <td><%= number_to_currency(sale.gross_deposit) %></td>
-            <td><%= number_to_currency(sale.net_base) %></td>
-            <td><%= number_to_currency(sale.provider_commission) %></td>
-            <td><%= number_to_currency(sale.total_transfer_applied) %></td>
-            <td><%= number_to_currency(sale.working_capital) %></td>
-            <td><%= number_to_currency(sale.customer_balance) %></td>
-            <td><%= sale.status %></td>
+            <td><%= number_to_currency(sale.gross_deposit.to_d - sale.provider_commission.to_d) %></td>
           </tr>
         <% end %>
       </tbody>
@@ -112,29 +98,20 @@
     <table>
       <thead>
         <tr>
-          <th>Código</th>
-          <th>Fecha y hora</th>
-          <th>Venta</th>
-          <th>Cliente</th>
-          <th>Monto</th>
-          <th>Método</th>
-          <th>De</th>
-          <th>Hacia</th>
-          <th>Nota</th>
+          <th>Movimiento</th>
+          <th>Fecha</th>
+          <th>Cantidad</th>
         </tr>
       </thead>
       <tbody>
         <% @transfers.each do |transfer| %>
+          <% from = transfer.entity_label(:from) %>
+          <% to = transfer.entity_label(:to) %>
+          <% movement = [from.presence, to.presence].compact %>
           <tr>
-            <td><%= transfer.code %></td>
+            <td><%= movement.size <= 1 ? movement.first.to_s : "#{movement[0]} a #{movement[1]}" %></td>
             <td><%= transfer.occurred_at %></td>
-            <td><%= transfer.sale&.code %></td>
-            <td><%= [transfer.customer&.code, transfer.customer&.name].compact.join(" - ") %></td>
             <td><%= number_to_currency(transfer.amount) %></td>
-            <td><%= transfer.payment_method %></td>
-            <td><%= "#{transfer.from_entity_type} ##{transfer.from_entity_id}" %></td>
-            <td><%= "#{transfer.to_entity_type} ##{transfer.to_entity_id}" %></td>
-            <td><%= transfer.note %></td>
           </tr>
         <% end %>
       </tbody>

@@ -181,7 +181,7 @@ class SalesController < ApplicationController
     ids = suppliers.map(&:id)
     return {} if ids.empty?
     sales_sum = Sale.where(supplier_id: ids).group(:supplier_id).sum(Arel.sql("COALESCE(gross_deposit,0) - COALESCE(provider_commission,0)"))
-    transfer_sum = Transfer.where(supplier_id: ids).group(:supplier_id).sum(:amount)
+    transfer_sum = Transfer.outgoing_sum_by_supplier(ids)
     ids.index_with do |sid|
       gross = BigDecimal(sales_sum[sid] || 0)
       transferred = BigDecimal(transfer_sum[sid] || 0)

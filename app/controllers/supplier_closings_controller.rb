@@ -9,7 +9,7 @@ class SupplierClosingsController < ApplicationController
 
   def show
     @sales     = @supplier_closing.sales_for_closing
-    @transfers = @supplier_closing.transfers_for_closing
+    @transfers = @supplier_closing.transfers_without_sale_for_closing
     @totals    = @supplier_closing.totals
   end
 

@@ -1,5 +1,24 @@
 class Transfer < ApplicationRecord
-  ALLOWED_ENTITY_TYPES = %w[Customer Supplier User CustomerGroup].freeze
+  ALLOWED_ENTITY_TYPES = %w[Customer Supplier User CustomerGroup Other].freeze
+  DESTINATION_CASH_BOX = "CashBox"
+  attr_accessor :to_cash_box
+
+  def self.cash_box_balance
+    incoming_to_cash_box = where(to_entity_type: DESTINATION_CASH_BOX).sum(:amount).to_d
+    incoming_extra = where.not(to_entity_type: DESTINATION_CASH_BOX).sum(:cash_box_amount).to_d
+    outgoing_from_cash_box = where(from_entity_type: DESTINATION_CASH_BOX).sum(:amount).to_d
+
+    incoming_to_cash_box + incoming_extra - outgoing_from_cash_box
+  end
+
+  def self.outgoing_sum_by_supplier(ids)
+    return {} if ids.empty?
+    sums = Hash.new(0.to_d)
+    where(supplier_id: ids).find_each do |transfer|
+      sums[transfer.supplier_id] += transfer.total_outgoing
+    end
+    sums
+  end
 
   belongs_to :customer, optional: true
   belongs_to :sale, optional: true
@@ -10,12 +29,15 @@ class Transfer < ApplicationRecord
 
   validates :amount, numericality: { greater_than: 0 }
   validates :from_entity_type, :to_entity_type, presence: true
-  validates :from_entity_id, presence: true, unless: -> { from_entity_type == "CustomerGroup" }
-  validates :to_entity_id, presence: true, unless: -> { to_entity_type == "CustomerGroup" }
+  validates :from_entity_id, presence: true, unless: -> { [ "CustomerGroup", DESTINATION_CASH_BOX, "Other" ].include?(from_entity_type) }
+  validates :to_entity_id, presence: true, unless: -> { [ "CustomerGroup", DESTINATION_CASH_BOX ].include?(to_entity_type) }
   validates :from_group, presence: true, if: -> { from_entity_type == "CustomerGroup" }
   validates :to_group, presence: true, if: -> { to_entity_type == "CustomerGroup" }
-  validates :from_entity_type, :to_entity_type, inclusion: { in: ALLOWED_ENTITY_TYPES }
+  validates :from_entity_type, inclusion: { in: ALLOWED_ENTITY_TYPES + [ DESTINATION_CASH_BOX ] }
+  validates :to_entity_type, inclusion: { in: ALLOWED_ENTITY_TYPES + [ DESTINATION_CASH_BOX ] }
+  validates :from_other_name, presence: true, if: -> { from_entity_type == "Other" }
   validates :payment_method, inclusion: { in: %w[deposito efectivo] }
+  validates :cash_box_amount, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validate :amount_does_not_exceed_sale_balance
   validate :customer_matches_sale
   validate :supplier_matches_sale
@@ -32,6 +54,13 @@ class Transfer < ApplicationRecord
     return "" if type.blank?
 
     case type
+    when "Other"
+      if side == :from
+        return from_other_name.present? ? "Otro: #{from_other_name}" : "Otro"
+      end
+      return "Otro"
+    when DESTINATION_CASH_BOX
+      "Caja"
     when "CustomerGroup"
       "Grupo #{send("#{side}_group")}"
     when "Customer", "Supplier", "User"
@@ -46,15 +75,16 @@ class Transfer < ApplicationRecord
 
   def safe_entity(side)
     type = send("#{side}_entity_type")
-    return nil if type == "CustomerGroup"
+    return nil if type == "CustomerGroup" || type == DESTINATION_CASH_BOX || type == "Other"
     send("#{side}_entity")
   end
 
   def amount_does_not_exceed_sale_balance
     return if sale.blank? || amount.blank?
 
+    total_out = total_outgoing
     available = sale.available_transfer_amount(excluding: self)
-    return if amount <= available
+    return if total_out <= available
 
     errors.add(:amount, "supera el saldo disponible de #{available.to_s("F")}")
   end
@@ -75,6 +105,11 @@ class Transfer < ApplicationRecord
 
   def entities_are_distinct
     return unless from_entity_type.present? && to_entity_type.present?
+    allowed_same_supplier = from_entity_type == "Supplier" &&
+                            to_entity_type == "Supplier" &&
+                            from_entity_id.present? &&
+                            from_entity_id == to_entity_id
+    return if allowed_same_supplier
     return unless from_entity_type == to_entity_type
 
     if from_entity_type == "CustomerGroup"
@@ -104,6 +139,11 @@ class Transfer < ApplicationRecord
     when "CustomerGroup"
       valid = group.present? && CustomerGroups.names.any? { |name| name.casecmp?(group.to_s) }
       errors.add(group_field, "no es un grupo válido") unless valid
+    when "Other"
+      return
+    when DESTINATION_CASH_BOX
+      # Caja no requiere id; se permite como destino especial
+      return
     else
       errors.add(id_field, "tipo inválido")
     end
@@ -119,6 +159,7 @@ class Transfer < ApplicationRecord
     self.customer ||= sale&.customer
     self.supplier ||= sale&.supplier
     self.payment_method ||= "deposito"
+    self.cash_box_amount = 0 if cash_box_amount.nil?
     self.occurred_at ||= begin
       business_date = Closing.open_business_date(Time.zone.today)
       now = Time.zone.now
@@ -156,6 +197,12 @@ class Transfer < ApplicationRecord
   end
 
   def assign_code
+    if to_entity_type == DESTINATION_CASH_BOX
+      base_code = "CAJA-#{Time.zone.today.strftime("%-d%b").upcase}"
+      self.code = unique_code(base_code)
+      return
+    end
+
     supplier_code = supplier&.code || sale&.supplier&.code || "SUP"
     sale_code = sale&.code || sale_id
     stamp = Time.zone.today.strftime("%-d%b").upcase
@@ -168,6 +215,15 @@ class Transfer < ApplicationRecord
     end
     self.code = unique_code(base_code)
   end
+
+  def total_outgoing
+    if to_entity_type == DESTINATION_CASH_BOX
+      (cash_box_amount.presence || amount).to_d
+    else
+      amount.to_d + cash_box_amount.to_d
+    end
+  end
+  public :total_outgoing
 
   def unique_code(base)
     candidate = base

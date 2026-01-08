@@ -17,18 +17,18 @@
 
   <div>
     <%= form.label :commission_pct %>
-    <%= form.number_field :commission_pct, step: 0.01 %>
+    <%= form.number_field :commission_pct, step: :any %>
   </div>
 
   <div>
     <%= form.label :commission_pct_override, "Commission % override" %>
-    <%= form.number_field :commission_pct_override, step: 0.0001 %>
+    <%= form.number_field :commission_pct_override, step: :any %>
     <small>Deja en blanco para usar el split por default.</small>
   </div>
 
   <div>
     <%= form.label :commission_amount %>
-    <%= form.number_field :commission_amount, step: 0.01 %>
+    <%= form.number_field :commission_amount, step: :any %>
   </div>
 
   <div>

@@ -3,12 +3,13 @@ class SuppliersController < ApplicationController
 
   def index
     @pagy, @suppliers = pagy(Supplier.order(:name))
+    @suppliers_total_pending = Supplier.all.sum(&:available_transfer_total).to_d
   end
 
   def show
     @supplier_total_deposit = @supplier.sales.sum(:gross_deposit).to_d
     @supplier_total_ret_comp = @supplier.sales.sum("COALESCE(gross_deposit,0) - COALESCE(provider_commission,0)").to_d
-    @supplier_total_transferred = @supplier.transfers.sum(:amount).to_d
+    @supplier_total_transferred = @supplier.transfers.sum(&:total_outgoing).to_d
     @supplier_opening_balance = OpeningBalance.total_for_supplier(@supplier.id)
     @supplier_available_balance = @supplier_total_ret_comp + @supplier_opening_balance - @supplier_total_transferred
 

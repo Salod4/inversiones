@@ -1,0 +1,70 @@
+<%= form_with(model: loan) do |form| %>
+  <% if loan.errors.any? %>
+    <div class="errors">
+      <h2><%= pluralize(loan.errors.count, "error") %> impiden guardar el prestamo:</h2>
+      <ul>
+        <% loan.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-grid">
+    <div class="field">
+      <%= form.label :name, "Persona" %>
+      <%= form.text_field :name %>
+    </div>
+    <div class="field">
+      <%= form.label :amount, "Monto prestado" %>
+      <%= form.number_field :amount, step: :any %>
+      <p class="hint" data-loan-available data-available="<%= @available_to_lend.to_f %>">
+        Saldo disponible para prestar: <strong id="loan_available_value"><%= number_to_currency(@available_to_lend, unit: "$") %></strong>
+        · Restante: <strong id="loan_remaining_value"><%= number_to_currency(@available_to_lend, unit: "$") %></strong>
+      </p>
+    </div>
+    <div class="field full-width">
+      <%= form.label :note, "Notas" %>
+      <%= form.text_area :note %>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit "Guardar", class: "button" %>
+    <%= link_to "Cancelar", loans_path, class: "button button-ghost" %>
+  </div>
+<% end %>
+
+<script>
+  (() => {
+    function formatCurrency(value) {
+      if (value === null || Number.isNaN(value)) return "$0.00";
+      return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(value));
+    }
+
+    function initLoanAvailable() {
+      const hint = document.querySelector("[data-loan-available]");
+      if (!hint) return;
+      const available = Number(hint.dataset.available || 0);
+      const availableEl = document.getElementById("loan_available_value");
+      const remainingEl = document.getElementById("loan_remaining_value");
+      const amountInput = hint.closest(".field")?.querySelector("input[name='loan[amount]']");
+
+      function update() {
+        const amount = Number(amountInput?.value || 0);
+        const remaining = available - (Number.isNaN(amount) ? 0 : amount);
+        if (availableEl) availableEl.textContent = formatCurrency(available);
+        if (remainingEl) {
+          remainingEl.textContent = formatCurrency(remaining);
+          remainingEl.classList.toggle("negative", remaining < 0);
+        }
+      }
+
+      amountInput?.addEventListener("input", update);
+      update();
+    }
+
+    document.addEventListener("turbo:load", initLoanAvailable);
+    document.addEventListener("DOMContentLoaded", initLoanAvailable);
+  })();
+</script>

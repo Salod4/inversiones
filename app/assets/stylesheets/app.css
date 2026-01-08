@@ -492,6 +492,89 @@ input[type="file"] {
   overflow-x: auto;
 }
 
+@media (max-width: 720px) {
+  .loans-table {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .loans-table thead {
+    display: none;
+  }
+
+  .loans-table,
+  .loans-table tbody,
+  .loans-table tr,
+  .loans-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .loans-table tr {
+    margin-bottom: 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-light);
+    overflow: hidden;
+    background: var(--card);
+  }
+
+  .loans-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .loans-table td::before {
+    content: attr(data-label);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    font-weight: 700;
+  }
+
+  .loans-table td:last-child {
+    border-bottom: none;
+  }
+
+  .loans-table .actions-cell {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .loans-table .actions-cell::before {
+    margin-bottom: 0.35rem;
+  }
+
+  .loans-table .actions-stack {
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  }
+
+  .loans-table .inline-payment__form {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.4rem;
+  }
+
+  .loans-table .inline-payment__amount {
+    width: 100%;
+  }
+
+  .loans-table .loans-empty td {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .loans-table .loans-empty td::before {
+    display: none;
+  }
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

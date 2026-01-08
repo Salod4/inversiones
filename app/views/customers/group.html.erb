@@ -16,38 +16,6 @@
   <% end %>
 </div>
 
-<section class="card customer-summary">
-  <div class="customer-summary__stat">
-    <p class="label">Total depositado</p>
-    <p class="stat"><%= number_to_currency(@group_total_deposit || 0, unit: "$") %></p>
-  </div>
-
-  <div class="customer-summary__stat">
-    <p class="label">Total después de %s</p>
-    <p class="stat"><%= number_to_currency(@group_total_after_pcts || 0, unit: "$") %></p>
-  </div>
-
-  <div class="customer-summary__stat">
-    <p class="label">Saldo inicial (grupo)</p>
-    <p class="stat"><%= number_to_currency(@group_opening_balance || 0, unit: "$") %></p>
-  </div>
-
-  <div class="customer-summary__stat">
-    <p class="label">Transferido a proveedores</p>
-    <p class="stat"><%= number_to_currency(@group_total_transferred || 0, unit: "$") %></p>
-  </div>
-
-  <div class="customer-summary__stat">
-    <p class="label">Transfers recibidos </p>
-    <p class="stat"><%= number_to_currency(@group_total_received || 0, unit: "$") %></p>
-  </div>
-
-  <div class="customer-summary__stat">
-    <p class="label">Total cliente</p>
-    <p class="stat"><%= number_to_currency(@group_available_balance || 0, unit: "$") %></p>
-  </div>
-</section>
-
 <section class="card">
   <h2>Clientes del grupo</h2>
   <div class="responsive-table">
@@ -57,7 +25,6 @@
           <th>Cliente</th>
           <th>Código</th>
           <th>Total depositado</th>
-          <th>Total después de %s</th>
           <th>Transferido</th>
           <th>Transfers recibidos</th>
           <th>Saldo disponible</th>
@@ -70,7 +37,6 @@
           <td><%= link_to c.name, c %></td>
           <td><%= link_to c.code, c %></td>
             <td><%= number_to_currency(@per_customer_deposit[c.id].to_f, unit: "$") %></td>
-            <td><%= number_to_currency(@per_customer_after_pcts[c.id].to_f, unit: "$") %></td>
             <td><%= number_to_currency(@per_customer_transfers[c.id].to_f, unit: "$") %></td>
             <td><%= number_to_currency(@per_customer_direct_received[c.id].to_f, unit: "$") %></td>
             <td><%= number_to_currency(@per_customer_balances[c.id].to_f, unit: "$") %></td>
@@ -128,8 +94,6 @@
             <th>Cliente</th>
             <th>Proveedor</th>
             <th>Bruto (gross_deposit)</th>
-            <th>Comisión prov.</th>
-            <th>Fee cliente</th>
             <th>Saldo cliente</th>
             <th>Status</th>
             <th></th>
@@ -142,8 +106,6 @@
               <td><%= s.customer&.name %></td>
               <td><%= s.supplier&.name %></td>
               <td><%= number_to_currency(s.gross_deposit || 0, unit: "$") %></td>
-              <td><%= number_to_currency(s.provider_commission || 0, unit: "$") %></td>
-              <td><%= number_to_currency(s.customer_fee || 0, unit: "$") %></td>
               <td><%= number_to_currency(s.customer_balance || 0, unit: "$") %></td>
               <td><%= s.status %></td>
               <td><%= link_to "Ver venta", s %></td>

@@ -105,10 +105,10 @@ class Sale < ApplicationRecord
   end
 
   def refresh_transfer_totals!
-    transfer_sum = transfers.sum(:amount) || 0
-    new_customer_balance = (decimal(working_capital) - transfer_sum).round(2)
+    total_out = transfers.to_a.sum { |t| t.total_outgoing }
+    new_customer_balance = (decimal(working_capital) - total_out).round(2)
     update_columns(
-      total_transfer_applied: transfer_sum,
+      total_transfer_applied: total_out,
       customer_balance: new_customer_balance,
       updated_at: Time.current
     )

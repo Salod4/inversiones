@@ -17,7 +17,7 @@ class Supplier < ApplicationRecord
   def available_transfer_total
     ret_comp_total = sales.sum(Arel.sql("COALESCE(gross_deposit,0) - COALESCE(provider_commission,0)")).to_d
     ret_comp_total += OpeningBalance.total_for_supplier(id)
-    transferred = transfers.sum(:amount).to_d
+    transferred = transfers.sum(&:total_outgoing).to_d
     ret_comp_total - transferred
   end
 

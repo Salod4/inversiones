@@ -46,6 +46,10 @@
     <span class="value"><%= number_to_currency(@transfer.amount, unit: "$") %></span>
   </div>
   <div class="transfer-detail">
+    <span class="label">Caja</span>
+    <span class="value"><%= number_to_currency(@transfer.cash_box_amount.to_f, unit: "$") %></span>
+  </div>
+  <div class="transfer-detail">
     <span class="label">Nota</span>
     <span class="value"><%= @transfer.note.presence || "—" %></span>
   </div>
