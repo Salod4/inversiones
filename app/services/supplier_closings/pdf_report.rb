@@ -89,15 +89,16 @@ module SupplierClosings
 
       rows = transfers.map do |t|
         [
-          movement_label(t),
+          t.code,
           format_date(t.occurred_at),
+          t.note.to_s,
           currency(t.amount)
         ]
       end
 
       pdf.move_down 6
       pdf.table(
-        [ [ "Movimiento", "Fecha", "Cantidad" ] ] + rows,
+        [ [ "Movimiento", "Fecha", "Nota", "Cantidad" ] ] + rows,
         width: pdf.bounds.width,
         header: true
       ) do
@@ -116,7 +117,7 @@ module SupplierClosings
     end
 
     def build_sales(pdf)
-      sales = @supplier_closing.sales_for_closing
+      sales = @supplier_closing.sales_for_closing.includes(:transfers)
       pdf.text "Ventas asignadas al proveedor", style: :bold
       if sales.empty?
         pdf.move_down 6
@@ -128,13 +129,14 @@ module SupplierClosings
         [
           s.code,
           format_date(s.date),
+          transfer_notes_for_sale(s),
           currency(s.gross_deposit.to_d - s.provider_commission.to_d)
         ]
       end
 
       pdf.move_down 6
       pdf.table(
-        [ [ "Movimiento", "Fecha", "Retorno completo" ] ] + rows,
+        [ [ "Movimiento", "Fecha", "Notas transfer", "Retorno completo" ] ] + rows,
         width: pdf.bounds.width,
         header: true
       ) do
@@ -149,6 +151,11 @@ module SupplierClosings
       I18n.l(date)
     rescue
       date.to_s
+    end
+
+    def transfer_notes_for_sale(sale)
+      notes = sale.transfers.map { |t| t.note.to_s.strip }.reject(&:empty?)
+      notes.any? ? notes.join(" | ") : "—"
     end
   end
 end

@@ -96,7 +96,7 @@ module CustomerClosings
     end
 
     def build_sales_table(pdf)
-      sales = @customer_closing.sales_for_closing
+      sales = @customer_closing.sales_for_closing.includes(:transfers)
       pdf.text "Movimientos de ventas", style: :bold
       if sales.empty?
         pdf.move_down 6
@@ -108,6 +108,7 @@ module CustomerClosings
         [
           sale.code,
           format_date(sale.date),
+          transfer_notes_for_sale(sale),
           currency(sale.total_transfer_applied),
           currency(sale.customer_balance)
         ]
@@ -115,7 +116,7 @@ module CustomerClosings
 
       pdf.move_down 6
       pdf.table(
-        [ [ "Código", "Fecha", "SPEI", "Saldo cliente" ] ] + rows,
+        [ [ "Código", "Fecha", "Notas transfer", "SPEI", "Saldo cliente" ] ] + rows,
         width: pdf.bounds.width,
         header: true
       ) do
@@ -138,14 +139,14 @@ module CustomerClosings
         [
           t.code,
           format_date(t.occurred_at),
-          t.entity_label(:from),
+          t.note.to_s,
           currency(t.amount)
         ]
       end
 
       pdf.move_down 6
       pdf.table(
-        [ [ "Código", "Fecha", "Origen", "Monto" ] ] + rows,
+        [ [ "Código", "Fecha", "Nota", "Monto" ] ] + rows,
         width: pdf.bounds.width,
         header: true
       ) do
@@ -160,6 +161,11 @@ module CustomerClosings
       I18n.l(date.to_date)
     rescue
       date.to_s
+    end
+
+    def transfer_notes_for_sale(sale)
+      notes = sale.transfers.map { |t| t.note.to_s.strip }.reject(&:empty?)
+      notes.any? ? notes.join(" | ") : "—"
     end
   end
 end
