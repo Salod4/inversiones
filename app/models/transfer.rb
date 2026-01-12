@@ -58,7 +58,7 @@ class Transfer < ApplicationRecord
       if side == :from
         return from_other_name.present? ? "Otro: #{from_other_name}" : "Otro"
       end
-      return "Otro"
+      "Otro"
     when DESTINATION_CASH_BOX
       "Caja"
     when "CustomerGroup"
@@ -140,10 +140,10 @@ class Transfer < ApplicationRecord
       valid = group.present? && CustomerGroups.names.any? { |name| name.casecmp?(group.to_s) }
       errors.add(group_field, "no es un grupo válido") unless valid
     when "Other"
-      return
+      nil
     when DESTINATION_CASH_BOX
       # Caja no requiere id; se permite como destino especial
-      return
+      nil
     else
       errors.add(id_field, "tipo inválido")
     end

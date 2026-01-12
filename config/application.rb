@@ -34,7 +34,7 @@ module JackV2
     # in config/environments, which are processed later.
     #
     config.time_zone = "Central Time (Mexico City)"
-    config.time_zone = "America/Mexico_City" 
+    config.time_zone = "America/Mexico_City"
     config.active_record.default_timezone = :local
     # config.eager_load_paths << Rails.root.join("extras")
 
