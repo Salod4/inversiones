@@ -136,6 +136,9 @@
                 <%= link_to "Archivo",
                             pdf_closing_customer_closing_path(@closing, cc),
                             class: "button button-secondary" %>
+                <%= link_to "Archivo semanal",
+                            weekly_pdf_closing_customer_closing_path(@closing, cc),
+                            class: "button button-secondary" %>
               <% end %>
             </td>
           </tr>
@@ -172,6 +175,9 @@
               <%= link_to "Edit", edit_closing_supplier_closing_path(@closing, supplier_closing), class: "button button-ghost" %>
               <%= link_to "Archivo",
                           pdf_closing_supplier_closing_path(@closing, supplier_closing),
+                          class: "button button-secondary" %>
+              <%= link_to "Archivo semanal",
+                          weekly_pdf_closing_supplier_closing_path(@closing, supplier_closing),
                           class: "button button-secondary" %>
             </td>
           </tr>

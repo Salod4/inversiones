@@ -38,11 +38,13 @@ Rails.application.routes.draw do
       end
       member do
         get :pdf
+        get :weekly_pdf
       end
     end
     resources :supplier_closings do
       member do
         get :pdf
+        get :weekly_pdf
       end
     end
   end

@@ -1,6 +1,6 @@
 class SupplierClosingsController < ApplicationController
   before_action :set_closing
-  before_action :set_supplier_closing, only: [ :show, :edit, :update, :destroy, :pdf ]
+  before_action :set_supplier_closing, only: [ :show, :edit, :update, :destroy, :pdf, :weekly_pdf ]
   before_action :set_suppliers, only: [ :new, :create, :edit, :update ]
 
   def index
@@ -51,6 +51,20 @@ class SupplierClosingsController < ApplicationController
               disposition: "attachment"
   end
 
+  def weekly_pdf
+    end_date = @closing.business_date
+    start_date = end_date - 6.days
+    pdf_data = SupplierClosings::WeeklyPdfReport
+      .new(@supplier_closing, start_date: start_date, end_date: end_date)
+      .render
+    filename = "supplier_weekly_#{@closing.id}_#{supplier_code}_#{start_date.strftime("%Y%m%d")}_#{end_date.strftime("%Y%m%d")}.pdf"
+
+    send_data pdf_data,
+              filename: filename,
+              type: "application/pdf",
+              disposition: "attachment"
+  end
+
   private
 
   def set_closing
@@ -66,8 +80,11 @@ class SupplierClosingsController < ApplicationController
   end
 
   def pdf_filename
-    supplier_code = @supplier_closing.supplier&.code.presence || @supplier_closing.supplier_id
     "supplier_closing_#{@closing.id}_#{supplier_code}.pdf"
+  end
+
+  def supplier_code
+    @supplier_closing.supplier&.code.presence || @supplier_closing.supplier_id
   end
 
   def supplier_closing_params

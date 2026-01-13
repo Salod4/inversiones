@@ -1,6 +1,6 @@
 class CustomerClosingsController < ApplicationController
   before_action :set_closing
-  before_action :set_customer_closing, only: [ :show, :edit, :update, :destroy, :pdf ]
+  before_action :set_customer_closing, only: [ :show, :edit, :update, :destroy, :pdf, :weekly_pdf ]
   before_action :set_customers, only: [ :new, :create, :edit, :update ]
 
   def index
@@ -53,6 +53,20 @@ class CustomerClosingsController < ApplicationController
   def pdf
     pdf_data = CustomerClosings::PdfReport.new(@customer_closing).render
     filename = "customer_closing_#{@closing.id}_#{@customer_closing.customer_id}.pdf"
+
+    send_data pdf_data,
+              filename: filename,
+              type: "application/pdf",
+              disposition: "attachment"
+  end
+
+  def weekly_pdf
+    end_date = @closing.business_date
+    start_date = end_date - 6.days
+    pdf_data = CustomerClosings::WeeklyPdfReport
+      .new(@customer_closing, start_date: start_date, end_date: end_date)
+      .render
+    filename = "customer_weekly_#{@closing.id}_#{@customer_closing.customer_id}_#{start_date.strftime("%Y%m%d")}_#{end_date.strftime("%Y%m%d")}.pdf"
 
     send_data pdf_data,
               filename: filename,
