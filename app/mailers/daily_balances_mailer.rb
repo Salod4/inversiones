@@ -20,7 +20,7 @@ class DailyBalancesMailer < ApplicationMailer
   private
 
   def recipient_emails
-    raw = ENV.fetch("DAILY_BALANCES_EMAIL", "")
+    raw = ENV.fetch("DAILY_BALANCES_EMAIL", "juanjos.finance@gmail.com")
     raw.split(/[,\s;]/).reject(&:blank?)
   end
 

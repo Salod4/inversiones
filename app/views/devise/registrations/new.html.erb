@@ -1,0 +1,68 @@
+<% content_for :title, "Crear cuenta" %>
+
+<section class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-copy">
+      <span class="auth-pill">Jack V2</span>
+      <h1 class="auth-heading">Solicita acceso</h1>
+      <p class="auth-subhead">
+        El dueño recibe un código para autorizar tu registro. Pídeselo y complétalo aquí.
+      </p>
+      <ul class="auth-benefits">
+        <li>Control centralizado de accesos</li>
+        <li>Registro seguro con autorización</li>
+        <li>Activación rápida una vez validado</li>
+      </ul>
+    </div>
+
+    <%= form_with model: resource, url: registration_path(resource_name), class: "form auth-form", local: true do |f| %>
+      <p class="form-title">Crear cuenta</p>
+      <p class="form-subtitle">Primero solicita el código, luego termina el registro.</p>
+
+      <% if resource.errors.any? %>
+        <div class="errors">
+          <h2><%= pluralize(resource.errors.count, "error") %> impiden el registro:</h2>
+          <ul>
+            <% resource.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="input-container">
+        <%= f.text_field :name, placeholder: "Nombre completo", autocomplete: "name" %>
+        <span class="input-accent"></span>
+      </div>
+
+      <div class="input-container">
+        <%= f.email_field :email, autofocus: true, autocomplete: "email", placeholder: "Correo", required: true %>
+        <span class="input-accent"></span>
+      </div>
+
+      <div class="input-container">
+        <%= f.password_field :password, autocomplete: "new-password", placeholder: "Contraseña", required: true %>
+        <span class="input-accent"></span>
+      </div>
+
+      <div class="input-container">
+        <%= f.password_field :password_confirmation, autocomplete: "new-password", placeholder: "Confirmar contraseña", required: true %>
+        <span class="input-accent"></span>
+      </div>
+
+      <div class="input-container">
+        <%= f.text_field :signup_code, placeholder: "Código del dueño", autocomplete: "one-time-code" %>
+        <span class="input-accent"></span>
+      </div>
+
+      <button type="submit" class="submit">
+        Solicitar / Registrar
+      </button>
+
+      <p class="signup-link">
+        ¿Ya tienes cuenta?
+        <%= link_to "Inicia sesión", new_user_session_path %>
+      </p>
+    <% end %>
+  </div>
+</section>
