@@ -1,6 +1,44 @@
 <h1>Grupo <%= @group[:name] %></h1>
 <p><%= pluralize(number_with_delimiter(@display_customers.size), "cliente") %> incluidos<% if @group_search_query.present? %> (filtro: "<%= @group_search_query %>")<% end %>:</p>
 
+<section class="card customer-summary">
+  <div class="customer-summary__stat">
+    <p class="label">Total depositado</p>
+    <p class="stat"><%= number_to_currency(@group_total_deposit || 0, unit: "$") %></p>
+    <p class="hint">Suma de los depósitos brutos.</p>
+  </div>
+
+  <div class="customer-summary__stat">
+    <p class="label">Total después de %s</p>
+    <p class="stat"><%= number_to_currency(@group_total_after_pcts || 0, unit: "$") %></p>
+    <p class="hint">Depósito menos comisión de proveedor y vendedores.</p>
+  </div>
+
+  <div class="customer-summary__stat">
+    <p class="label">Saldo inicial</p>
+    <p class="stat"><%= number_to_currency(@group_opening_balance || 0, unit: "$") %></p>
+    <p class="hint">Saldo de arranque cargado por kickoff.</p>
+  </div>
+
+  <div class="customer-summary__stat">
+    <p class="label">Transferencias</p>
+    <p class="stat"><%= number_to_currency(@group_total_transferred || 0, unit: "$") %></p>
+    <p class="hint">Total enviado mediante SPEI.</p>
+  </div>
+
+  <div class="customer-summary__stat">
+    <p class="label">Transfers recibidos (sin venta)</p>
+    <p class="stat"><%= number_to_currency(@group_total_received || 0, unit: "$") %></p>
+    <p class="hint">Pagos directos al cliente que reducen su saldo.</p>
+  </div>
+
+  <div class="customer-summary__stat">
+    <p class="label">Total cliente</p>
+    <p class="stat"><%= number_to_currency(@group_available_balance || 0, unit: "$") %></p>
+    <p class="hint">Total después de %s menos las transferencias.</p>
+  </div>
+</section>
+
 <div class="filters">
   <%= form_with url: group_customers_path(name: @group[:name]), method: :get, local: true do %>
     <div class="filter-row">
@@ -32,7 +70,7 @@
         </tr>
       </thead>
       <tbody>
-        <% @display_customers.each do |c| %>
+        <% @group_customers.each do |c| %>
           <tr id="<%= dom_id(c) %>">
           <td><%= link_to c.name, c %></td>
           <td><%= link_to c.code, c %></td>
@@ -46,6 +84,7 @@
       </tbody>
     </table>
   </div>
+  <%= pagination_nav(@pagy) %>
 </section>
 
 <section class="card">

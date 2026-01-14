@@ -136,6 +136,8 @@ class CustomersController < ApplicationController
         to: entity_label_for(t, :to)
       }
     end
+
+    @pagy, @group_customers = pagy_array(@display_customers)
   end
 
   def show
