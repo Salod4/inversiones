@@ -21,9 +21,10 @@ class Customer < ApplicationRecord
 
   def available_transfer_total(excluding: nil)
     total_balance = total_customer_balance
-    extra_transfers = transfers.where(sale_id: nil)
-    extra_transfers = extra_transfers.where.not(id: excluding.id) if excluding&.persisted?
-    total_balance - extra_transfers.sum(:amount).to_d
+    outgoing = Transfer.customer_outgoing_total(id, excluding: excluding)
+    incoming_from_customers = Transfer.customer_incoming_from_customers_total(id, excluding: excluding)
+    incoming_from_others = Transfer.customer_incoming_from_others_total(id, excluding: excluding)
+    total_balance - outgoing - incoming_from_others + incoming_from_customers
   end
 
   def self.ransackable_attributes(_auth = nil)

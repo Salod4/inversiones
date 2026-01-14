@@ -1,0 +1,75 @@
+<h1>Reporte diario de saldos</h1>
+<p>Fecha: <strong><%= l(@as_of.to_date) %></strong></p>
+
+<h2>Clientes</h2>
+<% if @customers.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th>Cliente</th>
+        <th>Código</th>
+        <th>Saldo</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @customers.each do |row| %>
+        <tr>
+          <td><%= row[:name] %></td>
+          <td><%= row[:code] %></td>
+          <td><%= number_to_currency(row[:balance], unit: "$") %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <p>Total clientes: <strong><%= number_to_currency(@customer_total, unit: "$") %></strong></p>
+<% else %>
+  <p>No hay clientes registrados.</p>
+<% end %>
+
+<h2>Proveedores</h2>
+<% if @suppliers.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th>Proveedor</th>
+        <th>Código</th>
+        <th>Saldo</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @suppliers.each do |row| %>
+        <tr>
+          <td><%= row[:name] %></td>
+          <td><%= row[:code] %></td>
+          <td><%= number_to_currency(row[:balance], unit: "$") %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <p>Total proveedores: <strong><%= number_to_currency(@supplier_total, unit: "$") %></strong></p>
+<% else %>
+  <p>No hay proveedores registrados.</p>
+<% end %>
+
+<h2>Deudores</h2>
+<% if @loans.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th>Persona</th>
+        <th>Saldo</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @loans.each do |row| %>
+        <tr>
+          <td><%= row[:name] %></td>
+          <td><%= number_to_currency(row[:balance], unit: "$") %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <p>Total deudores: <strong><%= number_to_currency(@loan_total, unit: "$") %></strong></p>
+<% else %>
+  <p>No hay deudores pendientes.</p>
+<% end %>

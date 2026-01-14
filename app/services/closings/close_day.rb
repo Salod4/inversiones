@@ -95,11 +95,19 @@ module Closings
         customers[ob.reference_id][:balance] += ob.amount.to_d
       end
 
-      # Transfers sin venta: restan saldo al cliente receptor (pago de deuda)
+      # Transfers sin venta: restan al origen cliente; al destino cliente suman si vienen de cliente, restan si vienen de otro tipo.
       extra_transfers = Transfer.where(sale_id: nil).where("occurred_at <= ?", end_of_day)
       extra_transfers.find_each do |t|
-        if t.to_entity_type == "Customer" && t.customer_id.present?
-          customers[t.customer_id][:balance] -= transfer_outgoing_amount(t)
+        if t.from_entity_type == "Customer" && t.from_entity_id.present?
+          customers[t.from_entity_id][:balance] -= transfer_outgoing_amount(t)
+        end
+
+        next unless t.to_entity_type == "Customer" && t.to_entity_id.present?
+
+        if t.from_entity_type == "Customer"
+          customers[t.to_entity_id][:balance] += t.amount.to_d
+        else
+          customers[t.to_entity_id][:balance] -= t.amount.to_d
         end
       end
 

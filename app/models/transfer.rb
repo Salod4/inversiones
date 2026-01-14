@@ -20,6 +20,33 @@ class Transfer < ApplicationRecord
     sums
   end
 
+  def self.customer_outgoing_total(customer_id, range: nil, excluding: nil)
+    scope = where(sale_id: nil, from_entity_type: "Customer", from_entity_id: customer_id)
+    scope = scope.where(occurred_at: range) if range
+    scope = scope.where.not(id: excluding.id) if excluding&.persisted?
+    scope.to_a.sum { |transfer| transfer.total_outgoing }
+  end
+
+  def self.customer_incoming_from_customers_total(customer_id, range: nil, excluding: nil)
+    scope = where(
+      sale_id: nil,
+      to_entity_type: "Customer",
+      to_entity_id: customer_id,
+      from_entity_type: "Customer"
+    )
+    scope = scope.where(occurred_at: range) if range
+    scope = scope.where.not(id: excluding.id) if excluding&.persisted?
+    scope.sum(:amount).to_d
+  end
+
+  def self.customer_incoming_from_others_total(customer_id, range: nil, excluding: nil)
+    scope = where(sale_id: nil, to_entity_type: "Customer", to_entity_id: customer_id)
+    scope = scope.where.not(from_entity_type: "Customer")
+    scope = scope.where(occurred_at: range) if range
+    scope = scope.where.not(id: excluding.id) if excluding&.persisted?
+    scope.sum(:amount).to_d
+  end
+
   belongs_to :customer, optional: true
   belongs_to :sale, optional: true
   belongs_to :supplier, optional: true

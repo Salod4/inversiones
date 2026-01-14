@@ -206,7 +206,6 @@ class SalesController < ApplicationController
       :net_base,
       :provider_pct_override,
       :customer_fee_pct_override,
-      :status,
       attachments: [],
       sales_users_attributes: [
         :id,

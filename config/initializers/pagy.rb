@@ -1,4 +1,5 @@
 require "pagy/extras/i18n"
+require "pagy/extras/array"
 
 Pagy::I18n.load(locale: "es")
 

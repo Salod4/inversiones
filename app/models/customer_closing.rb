@@ -12,8 +12,9 @@ class CustomerClosing < ApplicationRecord
   end
 
   def transfers_without_sale_for_closing
-    Transfer.where(customer_id: customer_id, sale_id: nil)
+    Transfer.where(sale_id: nil)
             .where(to_entity_type: "Customer", to_entity_id: customer_id)
+            .where.not(from_entity_type: "Customer")
             .where(occurred_at: closing.business_date.all_day)
   end
 
@@ -24,8 +25,10 @@ class CustomerClosing < ApplicationRecord
     seller_commission_total   = SalesUser.where(sale_id: s.ids).sum(:commission_amount)
     total_after_pcts          = gross_total - provider_commission_total - seller_commission_total
     transfer_applied_total    = s.sum(:total_transfer_applied)
-    transfers_received_total  = transfers_without_sale_for_closing.sum(:amount)
-    total_cliente             = total_after_pcts - transfer_applied_total - transfers_received_total
+    direct_transfers = direct_transfers_summary
+    transfers_received_total  = direct_transfers[:incoming_from_others]
+    total_cliente             = total_after_pcts - transfer_applied_total - transfers_received_total -
+                                direct_transfers[:outgoing] + direct_transfers[:incoming_from_customers]
 
     {
       total_depositado: gross_total,
@@ -33,6 +36,15 @@ class CustomerClosing < ApplicationRecord
       transferencias: transfer_applied_total,
       transferencias_recibidas: transfers_received_total,
       total_cliente: total_cliente
+    }
+  end
+
+  def direct_transfers_summary
+    range = closing.business_date.all_day
+    {
+      outgoing: Transfer.customer_outgoing_total(customer_id, range: range),
+      incoming_from_customers: Transfer.customer_incoming_from_customers_total(customer_id, range: range),
+      incoming_from_others: Transfer.customer_incoming_from_others_total(customer_id, range: range)
     }
   end
 end

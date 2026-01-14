@@ -54,9 +54,7 @@ DUMA_SPLITS_BY_SUPPLIER = {
 }.freeze
 
 SUPPLIER_ALIASES = {
-  "KLING" => "KJS",
-  "JJS135" => "KJS",
-  "JJS175" => "KJS"
+  "KLING" => "KJS"
 }.freeze
 
 CUSTOMERS_BY_SUPPLIER = {
@@ -433,7 +431,23 @@ CUSTOMERS_BY_SUPPLIER = {
     "KIKE",
     "DUMA",
     "MACA"
-  ] + DUMA_SUBCUSTOMERS
+  ] + DUMA_SUBCUSTOMERS,
+  "JJS135" => [
+    "ARQUI",
+    "NADJAR",
+    "JAR",
+    "MS/MOY KEIFI",
+    "ADMAS",
+    "NICO"
+  ],
+  "JJS175" => [
+    "ARQUI",
+    "NADJAR",
+    "JAR",
+    "MS/MOY KEIFI",
+    "ADMAS",
+    "NICO"
+  ]
   # TODO: agrega más proveedores aquí
 }.freeze
 
@@ -1945,6 +1959,70 @@ COMMISSION_SPLITS = {
     "__default__" => {
       fondo: 0.003,
       jack: 0.0087,
+      sam: 0.0003
+    }
+  },
+  "JJS135" => {
+    "ADMAS" => {
+      fondo: 0.0,
+      jack: 0.0112,
+      sam: 0.0003
+    },
+    "ARQUI" => {
+      fondo: 0.0,
+      jack: 0.0062,
+      sam: 0.0003
+    },
+    "JAR" => {
+      fondo: 0.0,
+      jack: 0.0162,
+      sam: 0.0003
+    },
+    "MS/MOY KEIFI" => {
+      fondo: 0.0,
+      jack: 0.0037,
+      sam: 0.0003
+    },
+    "NADJAR" => {
+      fondo: 0.0,
+      jack: 0.0112,
+      sam: 0.0003
+    },
+    "NICO" => {
+      fondo: 0.0,
+      jack: 0.0062,
+      sam: 0.0003
+    }
+  },
+  "JJS175" => {
+    "ADMAS" => {
+      fondo: 0.0,
+      jack: 0.0072,
+      sam: 0.0003
+    },
+    "ARQUI" => {
+      fondo: 0.0,
+      jack: 0.0022,
+      sam: 0.0003
+    },
+    "JAR" => {
+      fondo: 0.0,
+      jack: 0.0122,
+      sam: 0.0003
+    },
+    "MS/MOY KEIFI" => {
+      fondo: 0.0,
+      jack: 0.0,
+      sam: 0.0
+    },
+    "NADJAR" => {
+      fondo: 0.0,
+      jack: 0.0072,
+      sam: 0.0003
+    },
+    "NICO" => {
+      fondo: 0.0,
+      jack: 0.0022,
       sam: 0.0003
     }
   },

@@ -2,8 +2,12 @@ class SuppliersController < ApplicationController
   before_action :set_supplier, only: [ :show, :edit, :update, :destroy ]
 
   def index
-    @pagy, @suppliers = pagy(Supplier.order(:name))
-    @suppliers_total_pending = Supplier.all.sum(&:available_transfer_total).to_d
+    suppliers = Supplier.all.to_a
+    balances = suppliers.index_with { |supplier| supplier.available_transfer_total }
+    sorted_suppliers = suppliers.sort_by { |supplier| -balances[supplier].to_d }
+    @supplier_balances = balances.transform_keys(&:id)
+    @suppliers_total_pending = balances.values.sum.to_d
+    @pagy, @suppliers = pagy_array(sorted_suppliers)
   end
 
   def show

@@ -1,0 +1,32 @@
+Reporte diario de saldos
+Fecha: <%= l(@as_of.to_date) %>
+
+Clientes
+<% if @customers.any? %>
+<% @customers.each do |row| %>
+- <%= row[:name] %> (<%= row[:code] %>): <%= number_to_currency(row[:balance], unit: "$") %>
+<% end %>
+Total clientes: <%= number_to_currency(@customer_total, unit: "$") %>
+<% else %>
+No hay clientes registrados.
+<% end %>
+
+Proveedores
+<% if @suppliers.any? %>
+<% @suppliers.each do |row| %>
+- <%= row[:name] %> (<%= row[:code] %>): <%= number_to_currency(row[:balance], unit: "$") %>
+<% end %>
+Total proveedores: <%= number_to_currency(@supplier_total, unit: "$") %>
+<% else %>
+No hay proveedores registrados.
+<% end %>
+
+Deudores
+<% if @loans.any? %>
+<% @loans.each do |row| %>
+- <%= row[:name] %>: <%= number_to_currency(row[:balance], unit: "$") %>
+<% end %>
+Total deudores: <%= number_to_currency(@loan_total, unit: "$") %>
+<% else %>
+No hay deudores pendientes.
+<% end %>

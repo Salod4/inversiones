@@ -3,6 +3,15 @@ class ClosingsController < ApplicationController
 
   def index
     @pagy, @closings = pagy(Closing.order(business_date: :desc))
+    closing_ids = @closings.map(&:id)
+    @commission_totals = if closing_ids.any?
+      SalesUser.joins(:sale)
+               .where(sales: { closing_id: closing_ids })
+               .group("sales.closing_id")
+               .sum(:commission_amount)
+    else
+      {}
+    end
   end
 
   def show
@@ -67,7 +76,7 @@ class ClosingsController < ApplicationController
       customer_balance: @customer_closings.sum(:customer_balance)
     }
 
-    loans = Loan.all
+    loans = Loan.where("COALESCE(loans.amount,0) > COALESCE(loans.total_paid,0)")
     @loans = loans
     @loan_totals = {
       amount: loans.sum(:amount),

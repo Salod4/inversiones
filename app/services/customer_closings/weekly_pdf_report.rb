@@ -64,8 +64,9 @@ module CustomerClosings
     end
 
     def transfers_without_sale
-      Transfer.where(customer_id: @customer_closing.customer_id, sale_id: nil)
+      Transfer.where(sale_id: nil)
               .where(to_entity_type: "Customer", to_entity_id: @customer_closing.customer_id)
+              .where.not(from_entity_type: "Customer")
               .where(occurred_at: range)
               .order(:occurred_at, :code)
     end
@@ -95,15 +96,25 @@ module CustomerClosings
     end
 
     def transfers_received_total
-      outgoing_sum(transfers_without_sale.to_a)
+      direct_transfers_summary[:incoming_from_others]
     end
 
     def total_cliente
+      direct_transfers = direct_transfers_summary
       gross_total = sales.sum(:gross_deposit)
       provider_commission_total = sales.sum(:provider_commission)
       seller_commission_total = SalesUser.where(sale_id: sales_ids).sum(:commission_amount)
       total_after_pcts = gross_total - provider_commission_total - seller_commission_total
-      total_after_pcts - transfers_applied_total - transfers_received_total
+      total_after_pcts - transfers_applied_total - transfers_received_total -
+        direct_transfers[:outgoing] + direct_transfers[:incoming_from_customers]
+    end
+
+    def direct_transfers_summary
+      @direct_transfers_summary ||= {
+        outgoing: Transfer.customer_outgoing_total(@customer_closing.customer_id, range: range),
+        incoming_from_customers: Transfer.customer_incoming_from_customers_total(@customer_closing.customer_id, range: range),
+        incoming_from_others: Transfer.customer_incoming_from_others_total(@customer_closing.customer_id, range: range)
+      }
     end
 
     def build_summary(pdf)

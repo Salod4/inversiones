@@ -22,7 +22,9 @@ class DashboardsController < ApplicationController
     @supplier_pending = Supplier.all.sum(&:available_transfer_total)
     @cash_box_total = Transfer.cash_box_balance
 
-    loans = Loan.order(created_at: :desc).includes(:loan_payments)
+    loans = Loan.where("COALESCE(loans.amount,0) > COALESCE(loans.total_paid,0)")
+                .order(created_at: :desc)
+                .includes(:loan_payments)
     @loan_totals = {
       amount: loans.sum(:amount),
       paid: loans.sum(:total_paid),

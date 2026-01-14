@@ -67,11 +67,7 @@ module Customers
       base_sales_scope = @customer.sales
       sales_scope = base_sales_scope.includes(:supplier, :sales_users, :transfers)
 
-      total_after_pcts = sales_scope.sum { |s| s.net_after_provider_and_sellers.to_d }
-      total_transferred = sales_scope.sum { |s| s.total_transfer_applied.to_d }
-      opening = OpeningBalance.total_for_customer(@customer.id)
-
-      @customer_available_balance = total_after_pcts + opening - total_transferred
+      @customer_available_balance = @customer.available_transfer_total
       @sale_available_balance = @sale&.available_transfer_amount(excluding: @transfer)
     end
 

@@ -477,7 +477,17 @@
       }
       const balance = Number(rawBalance);
       const amount = Number(amountInput?.value || 0);
-      const remaining = balance - (Number.isNaN(amount) ? 0 : amount);
+      const fromSelected = fromSelect?.selectedOptions?.[0];
+      const fromType = fromSelected?.dataset.entityType || (fromSelected?.value || "").split(":")[0];
+      const destType = selected?.dataset.entityType || (selected?.value || "").split(":")[0];
+      const amt = Number.isNaN(amount) ? 0 : amount;
+      let remaining = balance - amt;
+      if (destType === "CashBox") {
+        remaining = balance + amt;
+      } else if ((destType === "Customer" || destType === "CustomerGroup") &&
+                 (fromType === "Customer" || fromType === "CustomerGroup")) {
+        remaining = balance + amt;
+      }
       balanceHint.textContent = `Saldo: ${formatCurrency(balance)} · Restante: ${formatCurrency(remaining)}`;
       balanceHint.classList.toggle("negative", remaining < 0);
     }

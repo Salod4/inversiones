@@ -9,45 +9,31 @@
   </div>
 </div>
 
-<div class="card">
-  <div class="filters">
-    <%= search_form_for @q, url: customers_path, method: :get do |f| %>
-      <div class="filter-row">
-        <div>
-          <%= f.label :name_cont, "Nombre contiene" %>
-          <%= f.search_field :name_cont, placeholder: "Ej. Acme" %>
-        </div>
+<div class="card customer-filters">
+  <div class="stack stack--row-md stack--between">
+    <nav class="cluster" aria-label="Filtrar clientes por saldo">
+      <% filters = {
+           "positive" => "Con saldo",
+           "zero" => "En cero",
+           "all" => "Todos"
+         } %>
+      <% filters.each do |key, label| %>
+        <% active = (@balance_filter == key) %>
+        <%= link_to label,
+                    customers_path(request.query_parameters.merge(balance: key, page: nil)),
+                    class: "filter-pill #{active ? 'is-active' : ''}",
+                    aria: { current: active ? "page" : nil } %>
+      <% end %>
+    </nav>
 
-        <div>
-          <%= f.label :code_eq, "Código exacto" %>
-          <%= f.search_field :code_eq, placeholder: "Ej. C001" %>
-        </div>
-
-        <div>
-          <%= f.label :suppliers_id_eq, "Proveedor" %>
-          <%= f.select :suppliers_id_eq, options_for_select(@suppliers, params.dig(:q, :suppliers_id_eq)),
-                       include_blank: "Todos" %>
-        </div>
-
-        <div>
-          <%= f.label :s, "Ordenar por" %>
-          <%= f.select :s,
-                options_for_select([
-                  ["Cliente (A–Z)", "name asc"],
-                  ["Cliente (Z–A)", "name desc"],
-                  ["Proveedor (A–Z)", "suppliers_name asc"],
-                  ["Proveedor (Z–A)", "suppliers_name desc"],
-                  ["Creado reciente", "created_at desc"],
-                  ["Creado antiguo", "created_at asc"]
-                ], params.dig(:q, :s)),
-                include_blank: "— Selecciona —" %>
-        </div>
-
-        <div style="align-self:end">
-          <%= f.submit "Filtrar", class: "button" %>
-          <%= link_to "Limpiar", customers_path, class: "button button--secondary" %>
-        </div>
-      </div>
+    <%= search_form_for @q, url: customers_path, method: :get, class: "cluster customer-search" do |f| %>
+      <%= hidden_field_tag :balance, @balance_filter %>
+      <%= f.search_field :name_or_code_cont,
+                          value: params.dig(:q, :name_or_code_cont),
+                          placeholder: "Buscar cliente o código...",
+                          class: "input input-search" %>
+      <%= f.submit "Buscar", class: "button hide-desktop" %>
+      <%= link_to "Limpiar", customers_path, class: "button button--secondary" %>
     <% end %>
   </div>
 </div>
@@ -78,6 +64,7 @@
         <tr>
           <th><%= sort_link @q, :name, "Cliente" %></th>
           <th>Código</th>
+          <th>Saldo final</th>
           <th class="actions-desktop">Acciones</th>
         </tr>
       </thead>
@@ -86,6 +73,7 @@
           <tr id="<%= dom_id(c) %>">
           <td><%= link_to c.name, c %></td>
           <td><%= c.code %></td>
+          <td><%= number_to_currency(@customer_balances[c.id] || 0, unit: "$") %></td>
           <td class="actions-desktop">
             <div class="actions-stack">
               <%= link_to "Ver", c, class: "button button-secondary" %>

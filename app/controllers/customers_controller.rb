@@ -6,13 +6,26 @@ class CustomersController < ApplicationController
           .left_joins(:suppliers)         # permite filtrar/ordenar por proveedor
           .distinct
           .ransack(params[:q])
+    @balance_filter = params[:balance].presence || "all"
 
     filtered_scope = @q.result.includes(:suppliers).order("customers.name ASC")
     @grouped_customers = CustomerGroups.build(filtered_scope)
     grouped_ids = @grouped_customers.flat_map { |g| g[:customers].map(&:id) }
 
     customers_scope = filtered_scope.where.not(customers: { id: grouped_ids })
-    @pagy, @customers = pagy(customers_scope)
+    customers = customers_scope.to_a
+    balances = customers.index_with { |customer| customer.available_transfer_total }
+    customers = case @balance_filter
+                when "positive"
+                  customers.select { |customer| balances[customer].to_d.positive? }
+                when "zero"
+                  customers.select { |customer| balances[customer].to_d.zero? }
+                else
+                  customers
+                end
+    sorted_customers = customers.sort_by { |customer| -balances[customer].to_d }
+    @customer_balances = balances.transform_keys(&:id)
+    @pagy, @customers = pagy_array(sorted_customers)
 
     # Para el <select> de filtros
     @suppliers = Supplier.order(:name).pluck(:name, :id)
@@ -43,13 +56,25 @@ class CustomersController < ApplicationController
       s.transfers.where(to_entity_type: "Supplier").sum(:amount).to_d
     end
     @group_opening_balance = OpeningBalance.total_for_group(@group[:name])
-    direct_received = Transfer.where(
-      customer_id: filtered_customer_ids,
-      sale_id: nil,
-      to_entity_type: "Customer"
-    ).group(:customer_id).sum(:amount)
+    direct_outgoing = Hash.new(0.to_d)
+    Transfer.where(sale_id: nil, from_entity_type: "Customer", from_entity_id: filtered_customer_ids).find_each do |transfer|
+      direct_outgoing[transfer.from_entity_id] += transfer.total_outgoing
+    end
 
-    direct_to_customers = direct_received.values.sum.to_d
+    incoming_from_customers = Transfer.where(
+      sale_id: nil,
+      to_entity_type: "Customer",
+      to_entity_id: filtered_customer_ids,
+      from_entity_type: "Customer"
+    ).group(:to_entity_id).sum(:amount)
+
+    incoming_from_others = Transfer.where(
+      sale_id: nil,
+      to_entity_type: "Customer",
+      to_entity_id: filtered_customer_ids
+    ).where.not(from_entity_type: "Customer").group(:to_entity_id).sum(:amount)
+
+    direct_to_customers = incoming_from_others.values.sum.to_d
     direct_to_group = Transfer.where(
       to_entity_type: "CustomerGroup",
       sale_id: nil
@@ -68,7 +93,10 @@ class CustomersController < ApplicationController
       .to_d
 
     @group_total_received = direct_to_customers + direct_to_group + sale_transfers_to_customers + sale_transfers_to_group
-    @group_available_balance = @group_total_after_pcts + @group_opening_balance - @group_total_transferred - @group_total_received
+    direct_from_customers_total = incoming_from_customers.values.sum.to_d
+    direct_outgoing_total = direct_outgoing.values.sum.to_d
+    @group_available_balance = @group_total_after_pcts + @group_opening_balance - @group_total_transferred -
+                               @group_total_received - direct_outgoing_total + direct_from_customers_total
 
     @per_customer_deposit = Hash.new(0)
     @per_customer_after_pcts = Hash.new(0)
@@ -76,17 +104,27 @@ class CustomersController < ApplicationController
     @per_customer_direct_received = Hash.new(0)
     @per_customer_balances = Hash.new(0)
 
-    sales_scope.group_by(&:customer_id).each do |cid, sales|
+    sales_by_customer = sales_scope.group_by(&:customer_id)
+    opening_by_customer = OpeningBalance.customers
+                                        .where(reference_id: filtered_customer_ids)
+                                        .group(:reference_id)
+                                        .sum(:amount)
+
+    @display_customers.each do |customer|
+      cid = customer.id
+      sales = sales_by_customer[cid] || []
       gross_total = sales.sum { |s| s.gross_deposit.to_d }
       net_total = sales.sum { |s| s.net_after_provider_and_sellers.to_d }
       transfers_total = sales.sum { |s| s.total_transfer_applied.to_d }
-      opening = OpeningBalance.total_for_customer(cid)
+      opening = opening_by_customer[cid].to_d
       @per_customer_deposit[cid] = gross_total
       @per_customer_after_pcts[cid] = net_total
       @per_customer_transfers[cid] = transfers_total
-      direct = direct_received[cid].to_d
-      @per_customer_direct_received[cid] = direct
-      @per_customer_balances[cid] = net_total + opening - transfers_total - direct
+      direct_received = incoming_from_others[cid].to_d
+      direct_from_customers = incoming_from_customers[cid].to_d
+      direct_out = direct_outgoing[cid].to_d
+      @per_customer_direct_received[cid] = direct_received
+      @per_customer_balances[cid] = net_total + opening - transfers_total - direct_received - direct_out + direct_from_customers
     end
 
     @sales = sales_scope.order(date: :desc).limit(50)
@@ -113,17 +151,18 @@ class CustomersController < ApplicationController
     @customer_opening_balance = OpeningBalance.total_for_customer(@customer.id)
 
     # Transfers recibidos directamente (sin venta) que reducen lo adeudado
-    @customer_direct_received = Transfer.where(
-      customer_id: @customer.id,
-      sale_id: nil,
-      to_entity_type: "Customer"
-    ).sum(:amount).to_d
-
-    @customer_available_balance = @customer_total_after_pcts + @customer_opening_balance - @customer_total_transferred - @customer_direct_received
+    @customer_direct_received = Transfer.customer_incoming_from_others_total(@customer.id)
+    @customer_available_balance = @customer.available_transfer_total
 
     @customer_transfers = Transfer
                             .includes(:supplier, :sale)
-                            .where(customer_id: @customer.id)
+                            .where(
+                              "(from_entity_type = ? AND from_entity_id = ?) OR (to_entity_type = ? AND to_entity_id = ?)",
+                              "Customer",
+                              @customer.id,
+                              "Customer",
+                              @customer.id
+                            )
                             .order(occurred_at: :desc)
   end
 
@@ -171,10 +210,17 @@ class CustomersController < ApplicationController
   def transfers_for_group(group_name, customer_ids)
     return Transfer.none if group_name.blank?
     target = group_name.to_s.downcase
+    ids = customer_ids.presence || [ 0 ]
     Transfer
       .where(
-        "(to_entity_type = ? AND lower(to_group) = ?) OR (from_entity_type = ? AND lower(from_group) = ?) OR customer_id IN (?)",
-        "CustomerGroup", target, "CustomerGroup", target, customer_ids.presence || []
+        "(to_entity_type = ? AND lower(to_group) = ?) OR " \
+        "(from_entity_type = ? AND lower(from_group) = ?) OR " \
+        "(from_entity_type = ? AND from_entity_id IN (?)) OR " \
+        "(to_entity_type = ? AND to_entity_id IN (?))",
+        "CustomerGroup", target,
+        "CustomerGroup", target,
+        "Customer", ids,
+        "Customer", ids
       )
       .order(occurred_at: :desc)
   end

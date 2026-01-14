@@ -23,6 +23,7 @@
         <tr>
           <th>Código</th>
           <th>Nombre</th>
+          <th>Saldo final</th>
           <th>% Análisis por defecto</th>
           <th class="actions-desktop">Acciones</th>
         </tr>
@@ -32,6 +33,7 @@
           <tr>
             <td><%= supplier.code %></td>
             <td><%= link_to supplier.name, supplier %></td>
+            <td><%= number_to_currency(@supplier_balances[supplier.id] || 0, unit: "$") %></td>
             <td><%= supplier.default_analysis_pct %></td>
             <td class="actions-desktop">
               <div class="actions-stack">

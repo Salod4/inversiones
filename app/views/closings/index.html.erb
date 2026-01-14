@@ -23,7 +23,6 @@
       </thead>
       <tbody>
         <% @closings.each do |closing| %>
-          <% diff_class = closing.difference.to_d.negative? ? "difference-negative" : "difference-positive" %>
           <tr>
             <td><%= closing.business_date %></td>
             <td>
@@ -33,7 +32,7 @@
             </td>
             <td class="numeric"><%= number_to_currency(closing.total_customers, unit: "$") %></td>
             <td class="numeric"><%= number_to_currency(closing.total_suppliers, unit: "$") %></td>
-            <td class="numeric <%= diff_class %>"><%= number_to_currency(closing.difference, unit: "$") %></td>
+            <td class="numeric"><%= number_to_currency(@commission_totals[closing.id] || 0, unit: "$") %></td>
             <td>
               <div class="actions-stack">
                 <%= link_to "Ver", closing, class: "button button-secondary" %>

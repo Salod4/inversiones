@@ -3,7 +3,9 @@ class LoansController < ApplicationController
   before_action :set_available_to_lend, only: [ :new, :create, :edit, :update ]
 
   def index
-    @loans = Loan.order(created_at: :desc).includes(:loan_payments)
+    @loans = Loan.where("COALESCE(loans.amount,0) > COALESCE(loans.total_paid,0)")
+                 .order(created_at: :desc)
+                 .includes(:loan_payments)
     @loan_totals = {
       amount: Loan.sum(:amount),
       paid: Loan.sum(:total_paid),
