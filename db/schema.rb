@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_15_000000) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_16_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -175,6 +175,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_15_000000) do
     t.index ["user_id"], name: "index_sales_users_on_user_id"
     t.check_constraint "commission_pct >= 0::numeric AND commission_pct < 1::numeric", name: "sales_users_commission_pct_range"
     t.check_constraint "commission_pct_override IS NULL OR commission_pct_override >= 0::numeric AND commission_pct_override < 1::numeric", name: "sales_users_commission_pct_override_range"
+  end
+
+  create_table "signup_requests", force: :cascade do |t|
+    t.string "email", null: false
+    t.string "code", null: false
+    t.datetime "expires_at"
+    t.datetime "used_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email", "code"], name: "index_signup_requests_on_email_and_code"
+    t.index ["expires_at"], name: "index_signup_requests_on_expires_at"
   end
 
   create_table "supplier_closings", force: :cascade do |t|

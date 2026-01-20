@@ -1,6 +1,31 @@
 <h1>Reporte diario de saldos</h1>
 <p>Fecha: <strong><%= l(@as_of.to_date) %></strong></p>
 
+<h2>Comisiones de vendedores</h2>
+<% if @sellers.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th>Vendedor</th>
+        <th>Código</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @sellers.each do |row| %>
+        <tr>
+          <td><%= row[:name] %></td>
+          <td><%= row[:code] %></td>
+          <td><%= number_to_currency(row[:balance], unit: "$") %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <p>Total comisiones: <strong><%= number_to_currency(@seller_total, unit: "$") %></strong></p>
+<% else %>
+  <p>No hay comisiones registradas.</p>
+<% end %>
+
 <h2>Clientes</h2>
 <% if @customers.any? %>
   <table>

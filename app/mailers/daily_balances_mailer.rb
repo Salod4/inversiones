@@ -4,9 +4,11 @@ class DailyBalancesMailer < ApplicationMailer
     return if recipients.empty?
 
     @as_of = Time.zone.now
+    @sellers = build_seller_rows
     @customers = build_customer_rows
     @suppliers = build_supplier_rows
     @loans = build_loan_rows
+    @seller_total = sum_rows(@sellers)
     @customer_total = sum_rows(@customers)
     @supplier_total = sum_rows(@suppliers)
     @loan_total = sum_rows(@loans)
@@ -33,6 +35,23 @@ class DailyBalancesMailer < ApplicationMailer
         balance: customer.available_transfer_total
       }
     end
+    rows.select { |row| row[:balance].to_d.positive? }
+        .sort_by { |row| -row[:balance].to_d }
+  end
+
+  def build_seller_rows
+    users = User.order(:name).to_a
+    commissions = SalesUser.group(:user_id).sum(:commission_amount)
+    openings = OpeningBalance.users.group(:reference_id).sum(:amount)
+
+    rows = users.map do |user|
+      {
+        name: user.name,
+        code: user.code,
+        balance: commissions.fetch(user.id, 0).to_d + openings.fetch(user.id, 0).to_d
+      }
+    end
+
     rows.select { |row| row[:balance].to_d.positive? }
         .sort_by { |row| -row[:balance].to_d }
   end

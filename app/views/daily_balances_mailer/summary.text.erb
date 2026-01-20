@@ -1,6 +1,16 @@
 Reporte diario de saldos
 Fecha: <%= l(@as_of.to_date) %>
 
+Comisiones de vendedores
+<% if @sellers.any? %>
+<% @sellers.each do |row| %>
+- <%= row[:name] %> (<%= row[:code] %>): <%= number_to_currency(row[:balance], unit: "$") %>
+<% end %>
+Total comisiones: <%= number_to_currency(@seller_total, unit: "$") %>
+<% else %>
+No hay comisiones registradas.
+<% end %>
+
 Clientes
 <% if @customers.any? %>
 <% @customers.each do |row| %>
