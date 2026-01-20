@@ -33,7 +33,8 @@ class DailyBalancesMailer < ApplicationMailer
         balance: customer.available_transfer_total
       }
     end
-    rows.sort_by { |row| -row[:balance].to_d }
+    rows.select { |row| row[:balance].to_d.positive? }
+        .sort_by { |row| -row[:balance].to_d }
   end
 
   def build_supplier_rows
@@ -45,7 +46,8 @@ class DailyBalancesMailer < ApplicationMailer
         balance: supplier.available_transfer_total
       }
     end
-    rows.sort_by { |row| -row[:balance].to_d }
+    rows.select { |row| row[:balance].to_d.positive? }
+        .sort_by { |row| -row[:balance].to_d }
   end
 
   def build_loan_rows
