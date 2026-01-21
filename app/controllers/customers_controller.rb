@@ -171,7 +171,7 @@ class CustomersController < ApplicationController
   end
 
   def new
-    @customer = Customer.new
+    @customer ||= Customer.new
   end
 
   def edit; end
@@ -242,6 +242,7 @@ class CustomersController < ApplicationController
   end
 
   def build_default_associations
+    @customer ||= Customer.new
     @customer.customer_suppliers.build if @customer.customer_suppliers.empty?
     @customer.commission_defaults.build if @customer.commission_defaults.empty?
   end
