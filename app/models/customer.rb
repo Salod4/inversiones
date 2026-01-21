@@ -1,5 +1,6 @@
 class Customer < ApplicationRecord
   before_validation :assign_nested_customers
+  before_validation :assign_default_supplier_to_commissions
   has_many :sales, dependent: :restrict_with_error
   has_many :transfers, dependent: :restrict_with_error
   has_many :customer_closings, dependent: :restrict_with_error
@@ -45,11 +46,20 @@ class Customer < ApplicationRecord
     commission_defaults.each { |cd| cd.customer ||= self }
   end
 
+  def assign_default_supplier_to_commissions
+    default_supplier_id = customer_suppliers.map(&:supplier_id).compact.first
+    return if default_supplier_id.blank?
+
+    commission_defaults.each do |cd|
+      cd.supplier_id ||= default_supplier_id
+    end
+  end
+
   def reject_customer_supplier_row(attrs)
     attrs["supplier_id"].blank? || attrs["customer_fee_pct"].blank?
   end
 
   def reject_commission_default_row(attrs)
-    attrs["supplier_id"].blank? || attrs["user_id"].blank? || attrs["commission_pct"].blank?
+    attrs["user_id"].blank? || attrs["commission_pct"].blank?
   end
 end
