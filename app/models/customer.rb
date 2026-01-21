@@ -1,4 +1,5 @@
 class Customer < ApplicationRecord
+  before_validation :assign_nested_customers
   has_many :sales, dependent: :restrict_with_error
   has_many :transfers, dependent: :restrict_with_error
   has_many :customer_closings, dependent: :restrict_with_error
@@ -38,6 +39,11 @@ class Customer < ApplicationRecord
   end
 
   private
+
+  def assign_nested_customers
+    customer_suppliers.each { |cs| cs.customer ||= self }
+    commission_defaults.each { |cd| cd.customer ||= self }
+  end
 
   def reject_customer_supplier_row(attrs)
     attrs["supplier_id"].blank? || attrs["customer_fee_pct"].blank?
