@@ -25,11 +25,13 @@
       <div class="field">
         <%= form.label :default_customer_fee_pct, "% fee por defecto" %>
         <%= form.number_field :default_customer_fee_pct, step: :any, min: 0 %>
+        <p class="hint">Formato decimal: 2% = 0.02, 0.2% = 0.002.</p>
       </div>
     </div>
 
     <div class="card-section">
       <h3 class="section-title">Fees por proveedor</h3>
+      <p class="hint">Usa formato decimal: 2% = 0.02.</p>
       <div id="customer-suppliers-rows">
         <%= form.fields_for :customer_suppliers do |cs_fields| %>
           <div class="form-grid">
@@ -49,6 +51,7 @@
 
     <div class="card-section">
       <h3 class="section-title">Comisiones por vendedor</h3>
+      <p class="hint">Usa formato decimal: 2% = 0.02.</p>
       <div id="commission-defaults-rows">
         <%= form.fields_for :commission_defaults do |cd_fields| %>
           <div class="form-grid">
