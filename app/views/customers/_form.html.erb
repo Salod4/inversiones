@@ -28,9 +28,115 @@
       </div>
     </div>
 
+    <div class="card-section">
+      <h3 class="section-title">Fees por proveedor</h3>
+      <div id="customer-suppliers-rows">
+        <%= form.fields_for :customer_suppliers do |cs_fields| %>
+          <div class="form-grid">
+            <div class="field">
+              <%= cs_fields.label :supplier_id, "Proveedor" %>
+              <%= cs_fields.collection_select :supplier_id, @suppliers, :id, :name, include_blank: true %>
+            </div>
+            <div class="field">
+              <%= cs_fields.label :customer_fee_pct, "% fee" %>
+              <%= cs_fields.number_field :customer_fee_pct, step: :any, min: 0 %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+      <button type="button" id="add-customer-supplier" class="button button-secondary button-small">Agregar proveedor</button>
+    </div>
+
+    <div class="card-section">
+      <h3 class="section-title">Comisiones por vendedor</h3>
+      <div id="commission-defaults-rows">
+        <%= form.fields_for :commission_defaults do |cd_fields| %>
+          <div class="form-grid">
+            <div class="field">
+              <%= cd_fields.label :supplier_id, "Proveedor" %>
+              <%= cd_fields.collection_select :supplier_id, @suppliers, :id, :name, include_blank: true %>
+            </div>
+            <div class="field">
+              <%= cd_fields.label :user_id, "Vendedor" %>
+              <%= cd_fields.collection_select :user_id, @users, :id, :name, include_blank: true %>
+            </div>
+            <div class="field">
+              <%= cd_fields.label :commission_pct, "% comisión" %>
+              <%= cd_fields.number_field :commission_pct, step: :any, min: 0 %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+      <button type="button" id="add-commission-default" class="button button-secondary button-small">Agregar vendedor</button>
+    </div>
+
+    <template id="customer-supplier-template">
+      <%= form.fields_for :customer_suppliers, CustomerSupplier.new, child_index: "NEW_RECORD" do |cs_fields| %>
+        <div class="form-grid">
+          <div class="field">
+            <%= cs_fields.label :supplier_id, "Proveedor" %>
+            <%= cs_fields.collection_select :supplier_id, @suppliers, :id, :name, include_blank: true %>
+          </div>
+          <div class="field">
+            <%= cs_fields.label :customer_fee_pct, "% fee" %>
+            <%= cs_fields.number_field :customer_fee_pct, step: :any, min: 0 %>
+          </div>
+        </div>
+      <% end %>
+    </template>
+
+    <template id="commission-default-template">
+      <%= form.fields_for :commission_defaults, CommissionDefault.new, child_index: "NEW_RECORD" do |cd_fields| %>
+        <div class="form-grid">
+          <div class="field">
+            <%= cd_fields.label :supplier_id, "Proveedor" %>
+            <%= cd_fields.collection_select :supplier_id, @suppliers, :id, :name, include_blank: true %>
+          </div>
+          <div class="field">
+            <%= cd_fields.label :user_id, "Vendedor" %>
+            <%= cd_fields.collection_select :user_id, @users, :id, :name, include_blank: true %>
+          </div>
+          <div class="field">
+            <%= cd_fields.label :commission_pct, "% comisión" %>
+            <%= cd_fields.number_field :commission_pct, step: :any, min: 0 %>
+          </div>
+        </div>
+      <% end %>
+    </template>
+
     <div class="button-group">
       <%= form.submit "Guardar", class: "button" %>
       <%= link_to "Cancelar", customer.persisted? ? customer_path(customer) : customers_path, class: "button button-ghost" %>
     </div>
   <% end %>
 </div>
+
+<script>
+  (() => {
+    const initCustomerDefaults = () => {
+      const supplierContainer = document.getElementById("customer-suppliers-rows");
+      const supplierTemplate = document.getElementById("customer-supplier-template");
+      const addSupplier = document.getElementById("add-customer-supplier");
+      const commissionContainer = document.getElementById("commission-defaults-rows");
+      const commissionTemplate = document.getElementById("commission-default-template");
+      const addCommission = document.getElementById("add-commission-default");
+
+      if (!supplierContainer || !supplierTemplate || !addSupplier) return;
+      if (!commissionContainer || !commissionTemplate || !addCommission) return;
+      if (addSupplier.dataset.bound === "true") return;
+
+      const addRow = (template, container) => {
+        const stamp = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        const html = template.innerHTML.replace(/NEW_RECORD/g, stamp);
+        container.insertAdjacentHTML("beforeend", html);
+      };
+
+      addSupplier.addEventListener("click", () => addRow(supplierTemplate, supplierContainer));
+      addCommission.addEventListener("click", () => addRow(commissionTemplate, commissionContainer));
+      addSupplier.dataset.bound = "true";
+    };
+
+    document.addEventListener("turbo:load", initCustomerDefaults);
+    document.addEventListener("DOMContentLoaded", initCustomerDefaults);
+  })();
+</script>

@@ -5,6 +5,8 @@ class Customer < ApplicationRecord
   has_many :customer_suppliers, dependent: :destroy
   has_many :suppliers, through: :customer_suppliers
   has_many :commission_defaults, dependent: :destroy
+  accepts_nested_attributes_for :customer_suppliers, reject_if: :all_blank
+  accepts_nested_attributes_for :commission_defaults, reject_if: :all_blank
   validates :code, presence: true, uniqueness: true
   validates :name, presence: true
   validates :default_customer_fee_pct,

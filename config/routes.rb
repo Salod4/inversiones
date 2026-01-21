@@ -8,6 +8,7 @@ Rails.application.routes.draw do
   end
   resources :customers do
     get "groups/:name", on: :collection, action: :group, as: :group
+    patch :opening_balance, on: :member, action: :update_opening_balance
     resources :transfers, only: [ :new, :create ], module: :customers
   end
 

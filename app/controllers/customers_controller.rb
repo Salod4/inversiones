@@ -1,5 +1,6 @@
 class CustomersController < ApplicationController
-  before_action :set_customer, only: [ :show, :edit, :update, :destroy ]
+  before_action :set_customer, only: [ :show, :edit, :update, :destroy, :update_opening_balance ]
+  before_action :load_form_collections, only: [ :new, :edit, :create, :update ]
 
   def index
     @q = Customer
@@ -191,6 +192,21 @@ class CustomersController < ApplicationController
     end
   end
 
+  def update_opening_balance
+    balance = OpeningBalance.find_or_initialize_by(
+      reference_type: OpeningBalance::TYPES[:customer],
+      reference_id: @customer.id
+    )
+    balance.amount = opening_balance_params[:amount]
+    balance.source = "manual"
+
+    if balance.save
+      redirect_to customer_path(@customer), notice: "Saldo inicial actualizado."
+    else
+      redirect_to customer_path(@customer), alert: balance.errors.full_messages.to_sentence
+    end
+  end
+
   def destroy
     if @customer.destroy
       redirect_to customers_url, notice: "Customer was successfully destroyed."
@@ -206,7 +222,22 @@ class CustomersController < ApplicationController
   end
 
   def customer_params
-    params.require(:customer).permit(:code, :name, :default_customer_fee_pct)
+    params.require(:customer).permit(
+      :code,
+      :name,
+      :default_customer_fee_pct,
+      customer_suppliers_attributes: [ :id, :supplier_id, :customer_fee_pct ],
+      commission_defaults_attributes: [ :id, :supplier_id, :user_id, :commission_pct ]
+    )
+  end
+
+  def opening_balance_params
+    params.fetch(:opening_balance, {}).permit(:amount)
+  end
+
+  def load_form_collections
+    @suppliers = Supplier.order(:name)
+    @users = User.order(:name)
   end
 
   def transfers_for_group(group_name, customer_ids)

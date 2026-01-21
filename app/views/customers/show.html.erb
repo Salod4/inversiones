@@ -18,6 +18,13 @@
     <p class="label">Saldo inicial</p>
     <p class="stat"><%= number_to_currency(@customer_opening_balance || 0, unit: "$") %></p>
     <p class="hint">Saldo de arranque cargado por kickoff.</p>
+    <%= form_with url: opening_balance_customer_path(@customer), method: :patch, scope: :opening_balance, local: true do |f| %>
+      <div class="field">
+        <%= f.label :amount, "Actualizar saldo" %>
+        <%= f.number_field :amount, step: :any, min: 0, value: @customer_opening_balance %>
+      </div>
+      <%= f.submit "Actualizar", class: "button button-secondary button-small" %>
+    <% end %>
   </div>
 
   <div class="customer-summary__stat">
