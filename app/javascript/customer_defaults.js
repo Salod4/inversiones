@@ -16,8 +16,46 @@ function initCustomerDefaults() {
     container.insertAdjacentHTML("beforeend", html);
   };
 
+  const supplierSelect = supplierContainer.querySelector("select[name*='[supplier_id]']");
+  let defaultSupplierId = supplierSelect ? supplierSelect.value : "";
+
+  const commissionSupplierSelects = () =>
+    commissionContainer.querySelectorAll("select[name*='[supplier_id]']");
+
+  const syncCommissionSupplier = (newDefault, previousDefault = "") => {
+    if (!newDefault) return;
+    commissionSupplierSelects().forEach((select) => {
+      if (!select.value || select.value === previousDefault) {
+        select.value = newDefault;
+      }
+    });
+  };
+
+  const updateDefaultSupplier = () => {
+    if (!supplierSelect) return;
+    const previous = defaultSupplierId;
+    defaultSupplierId = supplierSelect.value;
+    if (defaultSupplierId && defaultSupplierId !== previous) {
+      syncCommissionSupplier(defaultSupplierId, previous);
+    }
+  };
+
+  if (supplierSelect) {
+    supplierSelect.addEventListener("change", updateDefaultSupplier);
+    updateDefaultSupplier();
+  }
+
   addSupplier.addEventListener("click", () => addRow(supplierTemplate, supplierContainer));
-  addCommission.addEventListener("click", () => addRow(commissionTemplate, commissionContainer));
+  addCommission.addEventListener("click", () => {
+    const beforeCount = commissionContainer.children.length;
+    addRow(commissionTemplate, commissionContainer);
+    const newRow = commissionContainer.children[beforeCount];
+    if (!newRow) return;
+    const select = newRow.querySelector("select[name*='[supplier_id]']");
+    if (select && defaultSupplierId) {
+      select.value = defaultSupplierId;
+    }
+  });
   addSupplier.dataset.bound = "true";
 }
 
