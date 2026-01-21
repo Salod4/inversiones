@@ -39,9 +39,9 @@ module Sales
     end
 
     def snapshot_sales_users_splits!
-      commission_defaults.find_each do |cd|
-        su = find_or_build_sales_user(cd.user_id)
-        pct = su.commission_pct_override.presence || cd.commission_pct || 0
+      vendor_defaults.find_each do |vd|
+        su = find_or_build_sales_user(vd.user_id)
+        pct = su.commission_pct_override.presence || vd.commission_pct || 0
         su.commission_pct = pct.to_f
       end
     end
@@ -85,9 +85,9 @@ module Sales
       )
     end
 
-    def commission_defaults
-      return CommissionDefault.none unless sale.supplier_id.present? && sale.customer_id.present?
-      CommissionDefault.where(supplier_id: sale.supplier_id, customer_id: sale.customer_id)
+    def vendor_defaults
+      return CustomerSupplierVendor.none unless customer_supplier_link
+      CustomerSupplierVendor.where(customer_supplier_id: customer_supplier_link.id)
     end
   end
 end

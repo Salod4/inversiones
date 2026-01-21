@@ -2,9 +2,10 @@ class Supplier < ApplicationRecord
   has_many :sales, dependent: :restrict_with_error
   has_many :supplier_closings, dependent: :restrict_with_error
   has_many :transfers, dependent: :restrict_with_error
-  has_many :customer_suppliers, dependent: :destroy
+  has_many :customer_suppliers, dependent: :destroy, inverse_of: :supplier
   has_many :customers, through: :customer_suppliers
-  has_many :commission_defaults, dependent: :destroy
+  has_many :customer_supplier_vendors, through: :customer_suppliers
+  has_many :commission_defaults, dependent: :destroy, inverse_of: :supplier
 
 
 

@@ -29,83 +29,121 @@
       </div>
     </div>
 
-    <div class="card-section">
-      <h3 class="section-title">Fees por proveedor</h3>
+    <div
+      class="card-section"
+      data-controller="customer-suppliers"
+      data-customer-suppliers-default-vendor-ids-value="<%= (@default_vendor_ids || []).to_json %>"
+    >
+      <h3 class="section-title">Proveedores y vendedores</h3>
       <p class="hint">Usa formato decimal: 2% = 0.02.</p>
-      <div id="customer-suppliers-rows">
+
+      <div data-customer-suppliers-target="suppliersContainer">
         <%= form.fields_for :customer_suppliers do |cs_fields| %>
-          <div class="form-grid">
-            <div class="field">
-              <%= cs_fields.label :supplier_id, "Proveedor" %>
-              <%= cs_fields.collection_select :supplier_id, @suppliers, :id, :name, include_blank: true %>
+          <div class="card-section supplier-block" data-supplier-block>
+            <%= cs_fields.hidden_field :id %>
+            <div class="form-grid">
+              <div class="field">
+                <%= cs_fields.label :supplier_id, "Proveedor" %>
+                <%= cs_fields.collection_select :supplier_id, @suppliers, :id, :name, include_blank: true %>
+              </div>
+              <div class="field">
+                <%= cs_fields.label :customer_fee_pct, "% fee" %>
+                <%= cs_fields.number_field :customer_fee_pct, step: :any, min: 0 %>
+              </div>
             </div>
-            <div class="field">
-              <%= cs_fields.label :customer_fee_pct, "% fee" %>
-              <%= cs_fields.number_field :customer_fee_pct, step: :any, min: 0 %>
+
+            <div class="vendor-block" data-vendor-container>
+              <%= cs_fields.fields_for :customer_supplier_vendors do |csv_fields| %>
+                <div class="form-grid">
+                  <%= csv_fields.hidden_field :id %>
+                  <div class="field">
+                    <%= csv_fields.label :user_id, "Vendedor" %>
+                    <%= csv_fields.collection_select :user_id, @users, :id, :name, include_blank: true %>
+                  </div>
+                  <div class="field">
+                    <%= csv_fields.label :commission_pct, "% comisión" %>
+                    <%= csv_fields.number_field :commission_pct, step: :any, min: 0 %>
+                  </div>
+                </div>
+              <% end %>
             </div>
+
+            <button
+              type="button"
+              class="button button-secondary button-small"
+              data-action="customer-suppliers#addVendor"
+            >
+              Agregar vendedor
+            </button>
+
+            <template data-vendor-template>
+              <%= cs_fields.fields_for :customer_supplier_vendors, CustomerSupplierVendor.new, child_index: "NEW_VENDOR" do |csv_fields| %>
+                <div class="form-grid">
+                  <div class="field">
+                    <%= csv_fields.label :user_id, "Vendedor" %>
+                    <%= csv_fields.collection_select :user_id, @users, :id, :name, include_blank: true %>
+                  </div>
+                  <div class="field">
+                    <%= csv_fields.label :commission_pct, "% comisión" %>
+                    <%= csv_fields.number_field :commission_pct, step: :any, min: 0 %>
+                  </div>
+                </div>
+              <% end %>
+            </template>
           </div>
         <% end %>
       </div>
-      <button type="button" id="add-customer-supplier" class="button button-secondary button-small">Agregar proveedor</button>
-    </div>
 
-    <div class="card-section">
-      <h3 class="section-title">Comisiones por vendedor</h3>
-      <p class="hint">Usa formato decimal: 2% = 0.02.</p>
-      <div id="commission-defaults-rows">
-        <%= form.fields_for :commission_defaults do |cd_fields| %>
-          <div class="form-grid">
-            <div class="field">
-              <%= cd_fields.label :supplier_id, "Proveedor" %>
-              <%= cd_fields.collection_select :supplier_id, @suppliers, :id, :name, include_blank: true %>
+      <button
+        type="button"
+        class="button button-secondary button-small"
+        data-action="customer-suppliers#addSupplier"
+      >
+        Agregar proveedor
+      </button>
+
+      <template data-customer-suppliers-target="supplierTemplate">
+        <%= form.fields_for :customer_suppliers, CustomerSupplier.new, child_index: "NEW_SUPPLIER" do |cs_fields| %>
+          <div class="card-section supplier-block" data-supplier-block>
+            <div class="form-grid">
+              <div class="field">
+                <%= cs_fields.label :supplier_id, "Proveedor" %>
+                <%= cs_fields.collection_select :supplier_id, @suppliers, :id, :name, include_blank: true %>
+              </div>
+              <div class="field">
+                <%= cs_fields.label :customer_fee_pct, "% fee" %>
+                <%= cs_fields.number_field :customer_fee_pct, step: :any, min: 0 %>
+              </div>
             </div>
-            <div class="field">
-              <%= cd_fields.label :user_id, "Vendedor" %>
-              <%= cd_fields.collection_select :user_id, @users, :id, :name, include_blank: true %>
-            </div>
-            <div class="field">
-              <%= cd_fields.label :commission_pct, "% comisión" %>
-              <%= cd_fields.number_field :commission_pct, step: :any, min: 0 %>
-            </div>
+
+            <div class="vendor-block" data-vendor-container></div>
+
+            <button
+              type="button"
+              class="button button-secondary button-small"
+              data-action="customer-suppliers#addVendor"
+            >
+              Agregar vendedor
+            </button>
+
+            <template data-vendor-template>
+              <%= cs_fields.fields_for :customer_supplier_vendors, CustomerSupplierVendor.new, child_index: "NEW_VENDOR" do |csv_fields| %>
+                <div class="form-grid">
+                  <div class="field">
+                    <%= csv_fields.label :user_id, "Vendedor" %>
+                    <%= csv_fields.collection_select :user_id, @users, :id, :name, include_blank: true %>
+                  </div>
+                  <div class="field">
+                    <%= csv_fields.label :commission_pct, "% comisión" %>
+                    <%= csv_fields.number_field :commission_pct, step: :any, min: 0 %>
+                  </div>
+                </div>
+              <% end %>
+            </template>
           </div>
         <% end %>
-      </div>
-      <button type="button" id="add-commission-default" class="button button-secondary button-small">Agregar vendedor</button>
+      </template>
     </div>
-
-    <template id="customer-supplier-template">
-      <%= form.fields_for :customer_suppliers, CustomerSupplier.new, child_index: "NEW_RECORD" do |cs_fields| %>
-        <div class="form-grid">
-          <div class="field">
-            <%= cs_fields.label :supplier_id, "Proveedor" %>
-            <%= cs_fields.collection_select :supplier_id, @suppliers, :id, :name, include_blank: true %>
-          </div>
-          <div class="field">
-            <%= cs_fields.label :customer_fee_pct, "% fee" %>
-            <%= cs_fields.number_field :customer_fee_pct, step: :any, min: 0 %>
-          </div>
-        </div>
-      <% end %>
-    </template>
-
-    <template id="commission-default-template">
-      <%= form.fields_for :commission_defaults, CommissionDefault.new, child_index: "NEW_RECORD" do |cd_fields| %>
-        <div class="form-grid">
-          <div class="field">
-            <%= cd_fields.label :supplier_id, "Proveedor" %>
-            <%= cd_fields.collection_select :supplier_id, @suppliers, :id, :name, include_blank: true %>
-          </div>
-          <div class="field">
-            <%= cd_fields.label :user_id, "Vendedor" %>
-            <%= cd_fields.collection_select :user_id, @users, :id, :name, include_blank: true %>
-          </div>
-          <div class="field">
-            <%= cd_fields.label :commission_pct, "% comisión" %>
-            <%= cd_fields.number_field :commission_pct, step: :any, min: 0 %>
-          </div>
-        </div>
-      <% end %>
-    </template>
 
     <div class="button-group">
       <%= form.submit "Guardar", class: "button" %>

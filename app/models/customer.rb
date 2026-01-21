@@ -1,14 +1,14 @@
 class Customer < ApplicationRecord
-  before_validation :assign_nested_customers
-  before_validation :assign_default_supplier_to_commissions
   has_many :sales, dependent: :restrict_with_error
   has_many :transfers, dependent: :restrict_with_error
   has_many :customer_closings, dependent: :restrict_with_error
-  has_many :customer_suppliers, dependent: :destroy
+  has_many :customer_suppliers, dependent: :destroy, inverse_of: :customer
   has_many :suppliers, through: :customer_suppliers
+  has_many :customer_supplier_vendors, through: :customer_suppliers
   has_many :commission_defaults, dependent: :destroy
-  accepts_nested_attributes_for :customer_suppliers, reject_if: :reject_customer_supplier_row
-  accepts_nested_attributes_for :commission_defaults, reject_if: :reject_commission_default_row
+  accepts_nested_attributes_for :customer_suppliers,
+                                reject_if: :reject_customer_supplier_row,
+                                allow_destroy: true
   validates :code, presence: true, uniqueness: true
   validates :name, presence: true
   validates :default_customer_fee_pct,
@@ -41,25 +41,7 @@ class Customer < ApplicationRecord
 
   private
 
-  def assign_nested_customers
-    customer_suppliers.each { |cs| cs.customer ||= self }
-    commission_defaults.each { |cd| cd.customer ||= self }
-  end
-
-  def assign_default_supplier_to_commissions
-    default_supplier_id = customer_suppliers.map(&:supplier_id).compact.first
-    return if default_supplier_id.blank?
-
-    commission_defaults.each do |cd|
-      cd.supplier_id ||= default_supplier_id
-    end
-  end
-
   def reject_customer_supplier_row(attrs)
     attrs["supplier_id"].blank? || attrs["customer_fee_pct"].blank?
-  end
-
-  def reject_commission_default_row(attrs)
-    attrs["user_id"].blank? || attrs["commission_pct"].blank?
   end
 end

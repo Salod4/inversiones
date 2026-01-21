@@ -39,9 +39,9 @@ module Sales
 
     def preload_sales_users_splits
       sale.sales_users.target.clear
-      commission_defaults.order(:id).limit(Sale::MAX_SELLERS).find_each do |cd|
-        pct = cd.commission_pct.to_f
-        sale.sales_users.build(user: cd.user, user_id: cd.user_id, commission_pct: pct)
+      vendor_defaults.order(:id).limit(Sale::MAX_SELLERS).find_each do |vd|
+        pct = vd.commission_pct.to_f
+        sale.sales_users.build(user: vd.user, user_id: vd.user_id, commission_pct: pct)
       end
     end
 
@@ -61,9 +61,9 @@ module Sales
       )
     end
 
-    def commission_defaults
-      return CommissionDefault.none unless sale.supplier_id.present? && sale.customer_id.present?
-      CommissionDefault.where(supplier_id: sale.supplier_id, customer_id: sale.customer_id)
+    def vendor_defaults
+      return CustomerSupplierVendor.none unless customer_supplier_link
+      CustomerSupplierVendor.where(customer_supplier_id: customer_supplier_link.id)
     end
 
     def skip_prefill?

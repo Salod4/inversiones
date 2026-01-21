@@ -1,7 +1,7 @@
 class CustomersController < ApplicationController
   before_action :set_customer, only: [ :show, :edit, :update, :destroy, :update_opening_balance ]
   before_action :load_form_collections, only: [ :new, :edit, :create, :update ]
-  before_action :build_default_associations, only: [ :new, :edit ]
+  before_action :build_default_associations, only: [ :new ]
 
   def index
     @q = Customer
@@ -227,8 +227,13 @@ class CustomersController < ApplicationController
       :code,
       :name,
       :default_customer_fee_pct,
-      customer_suppliers_attributes: [ :id, :supplier_id, :customer_fee_pct ],
-      commission_defaults_attributes: [ :id, :supplier_id, :user_id, :commission_pct ]
+      customer_suppliers_attributes: [
+        :id,
+        :supplier_id,
+        :customer_fee_pct,
+        :_destroy,
+        customer_supplier_vendors_attributes: [ :id, :user_id, :commission_pct, :_destroy ]
+      ]
     )
   end
 
@@ -239,12 +244,23 @@ class CustomersController < ApplicationController
   def load_form_collections
     @suppliers = Supplier.order(:name)
     @users = User.order(:name)
+    @default_vendor_ids = default_vendor_ids
   end
 
   def build_default_associations
     @customer ||= Customer.new
-    @customer.customer_suppliers.build if @customer.customer_suppliers.empty?
-    @customer.commission_defaults.build if @customer.commission_defaults.empty?
+    return unless @customer.customer_suppliers.empty?
+
+    supplier_link = @customer.customer_suppliers.build
+    default_vendor_ids.each do |user_id|
+      supplier_link.customer_supplier_vendors.build(user_id: user_id)
+    end
+  end
+
+  def default_vendor_ids
+    codes = %w[JACK SAM FONDO]
+    ids = User.where(code: codes).order(Arel.sql("ARRAY_POSITION(ARRAY['JACK','SAM','FONDO'], code)")).pluck(:id)
+    ids.presence || User.order(:name).limit(3).pluck(:id)
   end
 
   def transfers_for_group(group_name, customer_ids)

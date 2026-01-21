@@ -3017,9 +3017,11 @@ end
 
 def upsert_commission_default!(supplier:, customer:, user:, pct:)
   raise ArgumentError, "pct fuera de rango" unless pct && pct >= 0 && pct < 1
-  record = CommissionDefault.find_or_initialize_by(
-    supplier: supplier,
-    customer: customer,
+  link = CustomerSupplier.find_by(customer: customer, supplier: supplier)
+  raise ArgumentError, "no existe CustomerSupplier para #{customer&.name} / #{supplier&.code}" unless link
+
+  record = CustomerSupplierVendor.find_or_initialize_by(
+    customer_supplier: link,
     user: user
   )
   record.commission_pct = pct
@@ -3086,7 +3088,7 @@ ActiveRecord::Base.transaction do
           user: user,
           pct: pct
         )
-        counters["commission_defaults_#{cd_status}".to_sym] += 1
+        counters["customer_supplier_vendors_#{cd_status}".to_sym] += 1
       end
 
       Sales::Subagents.entries_for(supplier_code, customer_name).each do |subagent|
@@ -3101,7 +3103,7 @@ ActiveRecord::Base.transaction do
           user: user_records.fetch(:subagent),
           pct: pct
         )
-        counters["commission_defaults_#{cd_status}".to_sym] += 1
+        counters["customer_supplier_vendors_#{cd_status}".to_sym] += 1
       end
 
       puts format(
