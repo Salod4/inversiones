@@ -1,6 +1,7 @@
 class CustomersController < ApplicationController
   before_action :set_customer, only: [ :show, :edit, :update, :destroy, :update_opening_balance ]
   before_action :load_form_collections, only: [ :new, :edit, :create, :update ]
+  before_action :build_default_associations, only: [ :new, :edit ]
 
   def index
     @q = Customer
@@ -238,6 +239,11 @@ class CustomersController < ApplicationController
   def load_form_collections
     @suppliers = Supplier.order(:name)
     @users = User.order(:name)
+  end
+
+  def build_default_associations
+    @customer.customer_suppliers.build if @customer.customer_suppliers.empty?
+    @customer.commission_defaults.build if @customer.commission_defaults.empty?
   end
 
   def transfers_for_group(group_name, customer_ids)
