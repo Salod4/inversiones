@@ -7,7 +7,7 @@ class Customer < ApplicationRecord
   has_many :customer_supplier_vendors, through: :customer_suppliers
   has_many :commission_defaults, dependent: :destroy
   accepts_nested_attributes_for :customer_suppliers,
-                                reject_if: :reject_customer_supplier_row,
+                                reject_if: :all_blank,
                                 allow_destroy: true
   validates :code, presence: true, uniqueness: true
   validates :name, presence: true
@@ -40,10 +40,4 @@ class Customer < ApplicationRecord
   end
 
   private
-
-  def reject_customer_supplier_row(attrs)
-    supplier_id = attrs["supplier_id"] || attrs[:supplier_id]
-    fee_pct = attrs["customer_fee_pct"] || attrs[:customer_fee_pct]
-    supplier_id.blank? || fee_pct.blank?
-  end
 end

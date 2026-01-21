@@ -54,7 +54,7 @@
 
             <div class="vendor-block" data-vendor-container>
               <%= cs_fields.fields_for :customer_supplier_vendors do |csv_fields| %>
-                <div class="form-grid">
+                <div class="form-grid" data-vendor-row>
                   <%= csv_fields.hidden_field :id %>
                   <div class="field">
                     <%= csv_fields.label :user_id, "Vendedor" %>
@@ -78,7 +78,7 @@
 
             <template data-vendor-template>
               <%= cs_fields.fields_for :customer_supplier_vendors, CustomerSupplierVendor.new, child_index: "NEW_VENDOR" do |csv_fields| %>
-                <div class="form-grid">
+                <div class="form-grid" data-vendor-row>
                   <div class="field">
                     <%= csv_fields.label :user_id, "Vendedor" %>
                     <%= csv_fields.collection_select :user_id, @users, :id, :name, include_blank: true %>
@@ -128,7 +128,7 @@
 
             <template data-vendor-template>
               <%= cs_fields.fields_for :customer_supplier_vendors, CustomerSupplierVendor.new, child_index: "NEW_VENDOR" do |csv_fields| %>
-                <div class="form-grid">
+                <div class="form-grid" data-vendor-row>
                   <div class="field">
                     <%= csv_fields.label :user_id, "Vendedor" %>
                     <%= csv_fields.collection_select :user_id, @users, :id, :name, include_blank: true %>
