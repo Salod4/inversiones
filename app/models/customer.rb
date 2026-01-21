@@ -42,6 +42,8 @@ class Customer < ApplicationRecord
   private
 
   def reject_customer_supplier_row(attrs)
-    attrs["supplier_id"].blank? || attrs["customer_fee_pct"].blank?
+    supplier_id = attrs["supplier_id"] || attrs[:supplier_id]
+    fee_pct = attrs["customer_fee_pct"] || attrs[:customer_fee_pct]
+    supplier_id.blank? || fee_pct.blank?
   end
 end

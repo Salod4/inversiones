@@ -12,6 +12,8 @@ class CustomerSupplier < ApplicationRecord
   private
 
   def reject_vendor_row(attrs)
-    attrs["user_id"].blank? || attrs["commission_pct"].blank?
+    user_id = attrs["user_id"] || attrs[:user_id]
+    commission_pct = attrs["commission_pct"] || attrs[:commission_pct]
+    user_id.blank? || commission_pct.blank?
   end
 end
