@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_16_000000) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_21_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -77,6 +77,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_16_000000) do
     t.datetime "updated_at", null: false
     t.index ["closing_id"], name: "index_customer_closings_on_closing_id"
     t.index ["customer_id"], name: "index_customer_closings_on_customer_id"
+  end
+
+  create_table "customer_supplier_vendors", force: :cascade do |t|
+    t.bigint "customer_supplier_id", null: false
+    t.bigint "user_id", null: false
+    t.decimal "commission_pct", precision: 6, scale: 4, default: "0.0", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_supplier_id", "user_id"], name: "idx_customer_supplier_vendors_unique", unique: true
+    t.index ["customer_supplier_id"], name: "index_customer_supplier_vendors_on_customer_supplier_id"
+    t.index ["user_id"], name: "index_customer_supplier_vendors_on_user_id"
+    t.check_constraint "commission_pct >= 0::numeric AND commission_pct < 1::numeric", name: "customer_supplier_vendors_pct_range"
   end
 
   create_table "customer_suppliers", force: :cascade do |t|
@@ -257,6 +269,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_16_000000) do
   add_foreign_key "commission_defaults", "users"
   add_foreign_key "customer_closings", "closings"
   add_foreign_key "customer_closings", "customers"
+  add_foreign_key "customer_supplier_vendors", "customer_suppliers"
+  add_foreign_key "customer_supplier_vendors", "users"
   add_foreign_key "customer_suppliers", "customers"
   add_foreign_key "customer_suppliers", "suppliers"
   add_foreign_key "loan_payments", "loans"
