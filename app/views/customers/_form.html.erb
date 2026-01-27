@@ -23,8 +23,9 @@
       </div>
 
       <div class="field">
-        <%= form.label :default_customer_fee_pct, "% fee por defecto" %>
+        <%= form.label :default_customer_fee_pct, "% fee cliente (default)" %>
         <%= form.number_field :default_customer_fee_pct, step: :any, min: 0 %>
+        <p class="hint">Porcentaje que se cobra al cliente en cada venta si el proveedor no tiene override.</p>
         <p class="hint">Formato decimal: 2% = 0.02, 0.2% = 0.002.</p>
       </div>
     </div>
@@ -47,8 +48,9 @@
                 <%= cs_fields.collection_select :supplier_id, @suppliers, :id, :name, include_blank: true %>
               </div>
               <div class="field">
-                <%= cs_fields.label :customer_fee_pct, "% fee" %>
+                <%= cs_fields.label :customer_fee_pct, "% fee cliente (por proveedor)" %>
                 <%= cs_fields.number_field :customer_fee_pct, step: :any, min: 0 %>
+                <p class="hint">Override del fee del cliente para ventas con este proveedor.</p>
               </div>
             </div>
 
@@ -63,6 +65,7 @@
                   <div class="field">
                     <%= csv_fields.label :commission_pct, "% comisión" %>
                     <%= csv_fields.number_field :commission_pct, step: :any, min: 0 %>
+                    <p class="hint">Comisión del vendedor sobre la base neta de la venta.</p>
                   </div>
                 </div>
               <% end %>
@@ -86,6 +89,7 @@
                   <div class="field">
                     <%= csv_fields.label :commission_pct, "% comisión" %>
                     <%= csv_fields.number_field :commission_pct, step: :any, min: 0 %>
+                    <p class="hint">Comisión del vendedor sobre la base neta de la venta.</p>
                   </div>
                 </div>
               <% end %>
@@ -111,8 +115,9 @@
                 <%= cs_fields.collection_select :supplier_id, @suppliers, :id, :name, include_blank: true %>
               </div>
               <div class="field">
-                <%= cs_fields.label :customer_fee_pct, "% fee" %>
+                <%= cs_fields.label :customer_fee_pct, "% fee cliente (por proveedor)" %>
                 <%= cs_fields.number_field :customer_fee_pct, step: :any, min: 0 %>
+                <p class="hint">Override del fee del cliente para ventas con este proveedor.</p>
               </div>
             </div>
 
@@ -136,6 +141,7 @@
                   <div class="field">
                     <%= csv_fields.label :commission_pct, "% comisión" %>
                     <%= csv_fields.number_field :commission_pct, step: :any, min: 0 %>
+                    <p class="hint">Comisión del vendedor sobre la base neta de la venta.</p>
                   </div>
                 </div>
               <% end %>

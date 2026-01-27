@@ -16,4 +16,4 @@ production:
   daily_balance_email:
     class: DailyBalanceEmailJob
     queue: default
-    schedule: "TZ=America/Mexico_City 0 7 * * *"
+    schedule: at 7am every day
