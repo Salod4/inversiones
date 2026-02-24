@@ -9,7 +9,14 @@ module Users
         return handle_missing_owner_email if owner_email.blank?
 
         request = SignupRequest.issue_for!(email)
-        SignupRequestMailer.approval_code(email, request.code)&.deliver_now
+        unless send_signup_code_email(email, request.code)
+          build_resource(sign_up_params)
+          resource.errors.add(:base, "No se pudo enviar el código. Intenta de nuevo en unos minutos.")
+          clean_up_passwords(resource)
+          render :new, status: :unprocessable_entity
+          return
+        end
+
         build_resource(sign_up_params)
         resource.errors.add(:signup_code, "Necesitas el código del dueño para continuar.")
         flash.now[:notice] = "Se envió un código al dueño. Pídelo y vuelve a intentar."
@@ -56,6 +63,14 @@ module Users
 
     def owner_email
       ENV.fetch("OWNER_EMAIL", "juanjos.finance@gmail.com")
+    end
+
+    def send_signup_code_email(email, code)
+      SignupRequestMailer.approval_code(email, code)&.deliver_now
+      true
+    rescue Net::SMTPError, IOError, SocketError, Timeout::Error => error
+      Rails.logger.error("Signup code email delivery failed: #{error.class}: #{error.message}")
+      false
     end
   end
 end
