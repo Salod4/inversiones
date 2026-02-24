@@ -31,10 +31,7 @@ module Sales
     end
 
     def snapshot_customer_fee_pct!
-      pct = sale.customer_fee_pct_override.presence ||
-            customer_supplier_link&.customer_fee_pct ||
-            customer&.default_customer_fee_pct ||
-            0
+      pct = resolved_customer_fee_pct
       sale.customer_fee_pct = pct.to_f
     end
 
@@ -83,6 +80,18 @@ module Sales
         customer_id: sale.customer_id,
         supplier_id: sale.supplier_id
       )
+    end
+
+    def resolved_customer_fee_pct
+      return sale.customer_fee_pct_override if sale.customer_fee_pct_override.present?
+
+      default_fee = customer&.default_customer_fee_pct
+      return default_fee if default_fee.present?
+
+      link_fee = customer_supplier_link&.customer_fee_pct
+      return link_fee if link_fee.present?
+
+      sale.customer_fee_pct.presence || 0
     end
 
     def vendor_defaults

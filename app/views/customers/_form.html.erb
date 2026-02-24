@@ -25,7 +25,7 @@
       <div class="field">
         <%= form.label :default_customer_fee_pct, "% fee cliente (default)" %>
         <%= form.number_field :default_customer_fee_pct, step: :any, min: 0 %>
-        <p class="hint">Porcentaje que se cobra al cliente en cada venta si el proveedor no tiene override.</p>
+        <p class="hint">Porcentaje que se cobra al cliente en cada venta (prioridad principal).</p>
         <p class="hint">Formato decimal: 2% = 0.02, 0.2% = 0.002.</p>
       </div>
     </div>
@@ -50,7 +50,7 @@
               <div class="field">
                 <%= cs_fields.label :customer_fee_pct, "% fee cliente (por proveedor)" %>
                 <%= cs_fields.number_field :customer_fee_pct, step: :any, min: 0 %>
-                <p class="hint">Override del fee del cliente para ventas con este proveedor.</p>
+                <p class="hint">Respaldo si el cliente no tiene fee default.</p>
               </div>
             </div>
 
@@ -117,7 +117,7 @@
               <div class="field">
                 <%= cs_fields.label :customer_fee_pct, "% fee cliente (por proveedor)" %>
                 <%= cs_fields.number_field :customer_fee_pct, step: :any, min: 0 %>
-                <p class="hint">Override del fee del cliente para ventas con este proveedor.</p>
+                <p class="hint">Respaldo si el cliente no tiene fee default.</p>
               </div>
             </div>
 

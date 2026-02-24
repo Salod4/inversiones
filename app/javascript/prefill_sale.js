@@ -4,16 +4,23 @@ function initSalePrefill() {
   const outProv  = document.getElementById("sale_provider_pct_override");
   const outCust  = document.getElementById("sale_customer_fee_pct_override");
   const outUsers = document.getElementById("preview_sales_users");
+  let fetchToken = 0;
 
   if (!customer || !supplier || !outProv || !outCust || !outUsers) return;
 
   const fetchPrefill = async () => {
     if (!customer.value || !supplier.value) return;
-    const url = `/sales/prefill?customer_id=${customer.value}&supplier_id=${supplier.value}`;
+    const selectedCustomerId = customer.value;
+    const selectedSupplierId = supplier.value;
+    const currentToken = ++fetchToken;
+    const url = `/sales/prefill?customer_id=${encodeURIComponent(selectedCustomerId)}&supplier_id=${encodeURIComponent(selectedSupplierId)}`;
     const res = await fetch(url, { headers: { Accept: "application/json" } });
     if (!res.ok) return;
 
     const data = await res.json();
+    if (currentToken !== fetchToken) return;
+    if (customer.value !== selectedCustomerId || supplier.value !== selectedSupplierId) return;
+
     outProv.value = data.provider_pct ?? "";
     outCust.value = data.customer_fee_pct ?? "";
 
