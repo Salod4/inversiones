@@ -66,7 +66,7 @@
           <th>Transferido</th>
           <th>Transfers recibidos</th>
           <th>Saldo disponible</th>
-          <th></th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -78,7 +78,14 @@
             <td><%= number_to_currency(@per_customer_transfers[c.id].to_f, unit: "$") %></td>
             <td><%= number_to_currency(@per_customer_direct_received[c.id].to_f, unit: "$") %></td>
             <td><%= number_to_currency(@per_customer_balances[c.id].to_f, unit: "$") %></td>
-            <td><%= link_to "Agregar transfer", new_customer_transfer_path(c), class: "button button--small" %></td>
+            <td>
+              <div class="actions-stack">
+                <%= link_to "Ver", customer_path(c), class: "button button-secondary" %>
+                <%= link_to "Editar", edit_customer_path(c), class: "button button-ghost" %>
+                <%= link_to "Eliminar", customer_path(c), class: "button button-danger", data: { turbo_method: :delete, turbo_confirm: "¿Eliminar cliente?" } %>
+                <%= link_to "Agregar transfer", new_customer_transfer_path(c), class: "button button--small" %>
+              </div>
+            </td>
           </tr>
         <% end %>
       </tbody>
