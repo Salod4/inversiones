@@ -39,7 +39,11 @@ module Closings
     end
 
     def upsert_customer_aggregates!(closing, customers_snapshot)
+      valid_customer_ids = Customer.where(id: customers_snapshot.keys.compact).pluck(:id).to_h { |id| [ id, true ] }
+
       customers_snapshot.each do |customer_id, data|
+        next unless valid_customer_ids[customer_id]
+
         CustomerClosing
           .where(closing_id: closing.id, customer_id: customer_id)
           .first_or_initialize
@@ -51,7 +55,11 @@ module Closings
     end
 
     def upsert_supplier_aggregates!(closing, suppliers_snapshot)
+      valid_supplier_ids = Supplier.where(id: suppliers_snapshot.keys.compact).pluck(:id).to_h { |id| [ id, true ] }
+
       suppliers_snapshot.each do |supplier_id, data|
+        next unless valid_supplier_ids[supplier_id]
+
         SupplierClosing
           .where(closing_id: closing.id, supplier_id: supplier_id)
           .first_or_initialize
@@ -62,9 +70,9 @@ module Closings
       end
     end
 
-    def update_totals!(closing, snapshot)
-      total_customers = snapshot[:customers].values.sum { |h| h[:balance].to_d }
-      total_suppliers = snapshot[:suppliers].values.sum { |h| (h[:ret_comp] - h[:transferred]).to_d }
+    def update_totals!(closing, _snapshot)
+      total_customers = closing.customer_closings.sum(:customer_balance).to_d
+      total_suppliers = closing.supplier_closings.sum(:amount_owed_to_supplier).to_d
 
       closing.update!(
         total_customers: total_customers,
@@ -80,6 +88,8 @@ module Closings
       # Clientes: suma de working_capital menos transfers hasta la fecha
       customers = Hash.new { |h, k| h[k] = { balance: 0.to_d, receivables: 0.to_d } }
       sales_scope.find_each do |sale|
+        next if sale.customer_id.blank?
+
         transfers_sum = 0.to_d
         sale.transfers.each do |transfer|
           next unless transfer.occurred_at && transfer.occurred_at <= end_of_day
@@ -92,6 +102,8 @@ module Closings
       end
 
       OpeningBalance.customers.find_each do |ob|
+        next if ob.reference_id.blank?
+
         customers[ob.reference_id][:balance] += ob.amount.to_d
       end
 
@@ -114,11 +126,15 @@ module Closings
       # Proveedores: RET.COMP (gross - provider_commission) menos transfers hasta la fecha
       suppliers = Hash.new { |h, k| h[k] = { ret_comp: 0.to_d, transferred: 0.to_d } }
       sales_scope.find_each do |sale|
+        next if sale.supplier_id.blank?
+
         ret_comp = sale.gross_deposit.to_d - sale.provider_commission.to_d
         suppliers[sale.supplier_id][:ret_comp] += ret_comp
       end
 
       OpeningBalance.suppliers.find_each do |ob|
+        next if ob.reference_id.blank?
+
         suppliers[ob.reference_id][:ret_comp] += ob.amount.to_d
       end
 
