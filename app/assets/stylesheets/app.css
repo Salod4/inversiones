@@ -3,15 +3,6 @@
  * Navbar is top/sticky; cards, tables, and forms share spacing and rounded corners.
  */
 
-@import "dashboard.css";
-@import "customers.css";
-@import "suppliers.css";
-@import "transfers.css";
-@import "closings.css";
-@import "kickoff.css";
-@import "sale.css";
-@import "auth.css";
-
 :root {
   --bg: #f6f8fb;
   --surface: #f9fbff;

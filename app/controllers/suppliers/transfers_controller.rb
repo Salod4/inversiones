@@ -92,14 +92,8 @@ module Suppliers
     end
 
     def supplier_balances_for(suppliers)
-      ids = suppliers.map(&:id)
-      return {} if ids.empty?
-      sales_sum = Sale.where(supplier_id: ids).group(:supplier_id).sum(Arel.sql("COALESCE(gross_deposit,0) - COALESCE(provider_commission,0)"))
-      transfer_sum = Transfer.outgoing_sum_by_supplier(ids)
-      ids.index_with do |sid|
-        gross = BigDecimal(sales_sum[sid] || 0)
-        transferred = BigDecimal(transfer_sum[sid] || 0)
-        gross - transferred
+      suppliers.each_with_object({}) do |supplier, balances|
+        balances[supplier.id] = supplier.available_transfer_total
       end
     end
   end
