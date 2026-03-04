@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_21_000000) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_04_093000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -58,7 +58,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_21_000000) do
     t.bigint "supplier_id", null: false
     t.bigint "customer_id", null: false
     t.bigint "user_id", null: false
-    t.decimal "commission_pct", precision: 6, scale: 4, default: "0.0", null: false
+    t.decimal "commission_pct", precision: 8, scale: 6, default: "0.0", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["customer_id"], name: "index_commission_defaults_on_customer_id"
@@ -82,7 +82,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_21_000000) do
   create_table "customer_supplier_vendors", force: :cascade do |t|
     t.bigint "customer_supplier_id", null: false
     t.bigint "user_id", null: false
-    t.decimal "commission_pct", precision: 6, scale: 4, default: "0.0", null: false
+    t.decimal "commission_pct", precision: 8, scale: 6, default: "0.0", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["customer_supplier_id", "user_id"], name: "idx_customer_supplier_vendors_unique", unique: true
@@ -96,7 +96,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_21_000000) do
     t.bigint "supplier_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.decimal "customer_fee_pct", precision: 6, scale: 4
+    t.decimal "customer_fee_pct", precision: 8, scale: 6
     t.index ["customer_id", "supplier_id"], name: "index_customer_suppliers_on_customer_id_and_supplier_id", unique: true
     t.index ["customer_id"], name: "index_customer_suppliers_on_customer_id"
     t.index ["supplier_id"], name: "index_customer_suppliers_on_supplier_id"
@@ -106,7 +106,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_21_000000) do
   create_table "customers", force: :cascade do |t|
     t.string "code", null: false
     t.string "name", null: false
-    t.decimal "default_customer_fee_pct", precision: 6, scale: 4
+    t.decimal "default_customer_fee_pct", precision: 8, scale: 6
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["code"], name: "index_customers_on_code", unique: true
@@ -152,8 +152,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_21_000000) do
     t.bigint "closing_id"
     t.decimal "gross_deposit", precision: 15, scale: 2
     t.decimal "net_base", precision: 15, scale: 2
-    t.decimal "provider_pct", precision: 6, scale: 4, default: "0.0", null: false
-    t.decimal "customer_fee_pct", precision: 6, scale: 4, default: "0.0"
+    t.decimal "provider_pct", precision: 8, scale: 6, default: "0.0", null: false
+    t.decimal "customer_fee_pct", precision: 8, scale: 6, default: "0.0"
     t.decimal "provider_commission", precision: 15, scale: 2, default: "0.0"
     t.decimal "customer_fee", precision: 15, scale: 2, default: "0.0"
     t.decimal "total_transfer_applied", precision: 15, scale: 2, default: "0.0", null: false
@@ -162,8 +162,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_21_000000) do
     t.string "status", default: "open", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.decimal "provider_pct_override", precision: 6, scale: 4
-    t.decimal "customer_fee_pct_override", precision: 6, scale: 4
+    t.decimal "provider_pct_override", precision: 8, scale: 6
+    t.decimal "customer_fee_pct_override", precision: 8, scale: 6
     t.index ["closing_id"], name: "index_sales_on_closing_id"
     t.index ["code"], name: "index_sales_on_code", unique: true
     t.index ["customer_id"], name: "index_sales_on_customer_id"
@@ -178,11 +178,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_21_000000) do
   create_table "sales_users", force: :cascade do |t|
     t.bigint "sale_id", null: false
     t.bigint "user_id", null: false
-    t.decimal "commission_pct", precision: 6, scale: 4, default: "0.0", null: false
+    t.decimal "commission_pct", precision: 8, scale: 6, default: "0.0", null: false
     t.decimal "commission_amount", precision: 15, scale: 2, default: "0.0"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.decimal "commission_pct_override", precision: 6, scale: 4
+    t.decimal "commission_pct_override", precision: 8, scale: 6
     t.index ["sale_id"], name: "index_sales_users_on_sale_id"
     t.index ["user_id"], name: "index_sales_users_on_user_id"
     t.check_constraint "commission_pct >= 0::numeric AND commission_pct < 1::numeric", name: "sales_users_commission_pct_range"
@@ -214,7 +214,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_21_000000) do
   create_table "suppliers", force: :cascade do |t|
     t.string "code", null: false
     t.string "name", null: false
-    t.decimal "default_analysis_pct", precision: 6, scale: 4, default: "0.0", null: false
+    t.decimal "default_analysis_pct", precision: 8, scale: 6, default: "0.0", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["code"], name: "index_suppliers_on_code", unique: true

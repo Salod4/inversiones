@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "bigdecimal/util"
+
 module Sales
   class Prefill
     def self.call(sale)
@@ -26,18 +28,18 @@ module Sales
       pct = sale.provider_pct_override.presence ||
             supplier&.default_analysis_pct ||
             0
-      sale.provider_pct = pct.to_f
+      sale.provider_pct = pct.to_d
     end
 
     def preload_customer_fee_pct
       pct = resolved_customer_fee_pct
-      sale.customer_fee_pct = pct.to_f
+      sale.customer_fee_pct = pct.to_d
     end
 
     def preload_sales_users_splits
       sale.sales_users.target.clear
       vendor_defaults.order(:id).limit(Sale::MAX_SELLERS).find_each do |vd|
-        pct = vd.commission_pct.to_f
+        pct = vd.commission_pct.to_d
         sale.sales_users.build(user: vd.user, user_id: vd.user_id, commission_pct: pct)
       end
     end

@@ -40,7 +40,7 @@
   <div class="summary-grid">
     <div class="summary-card">
       <h3>Análisis base</h3>
-      <p class="value"><%= number_to_percentage(@totals[:analisis_base_pct].to_f * 100, precision: 2) %></p>
+      <p class="value"><%= number_to_percentage(@totals[:analisis_base_pct].to_d * 100, precision: 6, strip_insignificant_zeros: true) %></p>
       <p>Porcentaje base configurado para este proveedor.</p>
     </div>
     <div class="summary-card">

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "bigdecimal"
+require "bigdecimal/util"
 
 class Sale < ApplicationRecord
   MAX_SELLERS = 4
@@ -85,11 +86,11 @@ class Sale < ApplicationRecord
   end
 
   def resolved_provider_pct
-    provider_pct_override.presence || provider_pct.to_f
+    (provider_pct_override.presence || provider_pct).to_d
   end
 
   def resolved_customer_fee_pct
-    customer_fee_pct_override.presence || customer_fee_pct.to_f
+    (customer_fee_pct_override.presence || customer_fee_pct).to_d
   end
 
   def available_transfer_amount(excluding: nil)

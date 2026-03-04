@@ -41,7 +41,7 @@
             <td><%= su.sale&.code %></td>
             <td><%= su.sale&.supplier&.name %></td>
             <td><%= su.sale&.date %></td>
-            <td class="numeric"><%= number_to_percentage(su.effective_commission_pct.to_f * 100, precision: 2) %></td>
+            <td class="numeric"><%= number_to_percentage(su.effective_commission_pct.to_d * 100, precision: 6, strip_insignificant_zeros: true) %></td>
             <td class="numeric"><%= number_to_currency(su.commission_amount.to_f, unit: "$") %></td>
           </tr>
         <% end %>

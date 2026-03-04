@@ -1,7 +1,7 @@
 <div class="page-header">
   <div>
     <h1><%= @supplier.name %></h1>
-    <p class="lead">Código: <strong><%= @supplier.code %></strong> · Análisis base: <strong><%= number_to_percentage(@supplier.default_analysis_pct.to_f * 100, precision: 2) %></strong></p>
+    <p class="lead">Código: <strong><%= @supplier.code %></strong> · Análisis base: <strong><%= number_to_percentage(@supplier.default_analysis_pct.to_d * 100, precision: 6, strip_insignificant_zeros: true) %></strong></p>
   </div>
   <div class="button-group">
     <%= link_to "Editar", edit_supplier_path(@supplier), class: "button button-secondary" %>
