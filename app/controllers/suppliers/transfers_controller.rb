@@ -63,7 +63,7 @@ module Suppliers
       @customers = Customer.order(:name)
       @users = User.order(:name)
       @supplier_balances = supplier_balances_for(@suppliers)
-      @user_balances = {}
+      @user_balances = User.balances_by_user(@users.map(&:id))
     end
 
     def transfer_params

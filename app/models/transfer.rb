@@ -20,6 +20,20 @@ class Transfer < ApplicationRecord
     sums
   end
 
+  def self.incoming_sum_by_user(ids)
+    return {} if ids.empty?
+    where(to_entity_type: "User", to_entity_id: ids).group(:to_entity_id).sum(:amount)
+  end
+
+  def self.outgoing_sum_by_user(ids)
+    return {} if ids.empty?
+    sums = Hash.new(0.to_d)
+    where(from_entity_type: "User", from_entity_id: ids).find_each do |transfer|
+      sums[transfer.from_entity_id] += transfer.total_outgoing
+    end
+    sums
+  end
+
   def self.customer_outgoing_total(customer_id, range: nil, excluding: nil)
     scope = where(sale_id: nil, from_entity_type: "Customer", from_entity_id: customer_id)
     scope = scope.where(occurred_at: range) if range

@@ -7,17 +7,32 @@ class DashboardsController < ApplicationController
     @closing_today = Closing.find_by(business_date: @today)
     @closing_done = @closing_today&.status == "closed"
 
-    commissions = SalesUser.group(:user_id).sum(:commission_amount)
-    openings = OpeningBalance.users.group(:reference_id).sum(:amount)
-    merged = commissions.dup
-    openings.each { |uid, amt| merged[uid] = merged.fetch(uid, 0).to_d + amt.to_d }
-    @seller_commissions_by_user = merged
+    @seller_commissions_by_user = User.balances_by_user.reject { |_, total| total.to_d.zero? }
 
     @total_seller_commissions = @seller_commissions_by_user.values.sum
 
-    @customer_pending = Sale.sum(:customer_balance).to_d +
+    customer_base = Sale.sum(:customer_balance).to_d +
       OpeningBalance.customers.sum(:amount).to_d +
       OpeningBalance.customer_groups.sum(:amount).to_d
+
+    direct_customer_outgoing = 0.to_d
+    Transfer.where(sale_id: nil, from_entity_type: "Customer").find_each do |transfer|
+      direct_customer_outgoing += transfer.total_outgoing
+    end
+
+    direct_customer_incoming_from_customers = Transfer.where(
+      sale_id: nil,
+      to_entity_type: "Customer",
+      from_entity_type: "Customer"
+    ).sum(:amount).to_d
+
+    direct_customer_incoming_from_others = Transfer.where(
+      sale_id: nil,
+      to_entity_type: "Customer"
+    ).where.not(from_entity_type: "Customer").sum(:amount).to_d
+
+    @customer_pending = customer_base - direct_customer_outgoing -
+      direct_customer_incoming_from_others + direct_customer_incoming_from_customers
 
     @supplier_pending = Supplier.all.sum(&:available_transfer_total)
     @cash_box_total = Transfer.cash_box_balance

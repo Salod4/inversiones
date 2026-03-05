@@ -41,14 +41,13 @@ class DailyBalancesMailer < ApplicationMailer
 
   def build_seller_rows
     users = User.order(:name).to_a
-    commissions = SalesUser.group(:user_id).sum(:commission_amount)
-    openings = OpeningBalance.users.group(:reference_id).sum(:amount)
+    balances = User.balances_by_user(users.map(&:id))
 
     rows = users.map do |user|
       {
         name: user.name,
         code: user.code,
-        balance: commissions.fetch(user.id, 0).to_d + openings.fetch(user.id, 0).to_d
+        balance: balances.fetch(user.id, 0).to_d
       }
     end
 

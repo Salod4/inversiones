@@ -25,4 +25,44 @@ class CustomerTest < ActiveSupport::TestCase
     assert_respond_to customer, :sales
     assert_respond_to customer, :customer_closings
   end
+
+  test "available_transfer_total decreases when transferring to fondo user" do
+    customer = Customer.create!(code: "CUSTBAL", name: "Cliente Saldo")
+    supplier = Supplier.create!(code: "SUPBAL", name: "Proveedor Saldo")
+    fondo = User.create!(
+      email: "fondo_customer_balance@example.com",
+      password: "password123",
+      password_confirmation: "password123",
+      name: "FONDO",
+      code: "FONDO"
+    )
+
+    Sale.create!(
+      code: "SALE-CBAL",
+      date: Date.current,
+      customer: customer,
+      supplier: supplier,
+      gross_deposit: 100,
+      net_base: 100,
+      provider_pct: 0,
+      customer_fee_pct: 0,
+      provider_commission: 0,
+      customer_fee: 0,
+      working_capital: 100,
+      customer_balance: 100,
+      total_transfer_applied: 0,
+      status: "open"
+    )
+
+    assert_equal BigDecimal("100"), customer.available_transfer_total
+
+    Transfer.create!(
+      from_entity: customer,
+      to_entity: fondo,
+      amount: 100
+    )
+
+    assert_equal BigDecimal("0"), customer.available_transfer_total
+    assert_equal BigDecimal("100"), User.balances_by_user([ fondo.id ])[fondo.id]
+  end
 end

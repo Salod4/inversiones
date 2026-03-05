@@ -228,9 +228,9 @@
         Disponible para SPEI en esta venta: <strong><%= number_to_currency(sale.available_transfer_amount(excluding: transfer), unit: "$") %></strong>
       </p>
     <% elsif transfer.customer.present? %>
-      <% available_total = local_assigns[:customer_balance] || transfer.customer.total_customer_balance %>
+      <% available_total = local_assigns[:customer_balance] || transfer.customer.available_transfer_total(excluding: transfer) %>
       <p class="hint">
-        Total de cliente: <strong><%= number_to_currency(available_total, unit: "$") %></strong>
+        Saldo de cliente: <strong><%= number_to_currency(available_total, unit: "$") %></strong>
       </p>
     <% end %>
 
@@ -466,28 +466,46 @@
       });
     }
 
+    function normalizedEntityType(option) {
+      const rawType = option?.dataset?.entityType || (option?.value || "").split(":")[0] || "";
+      if (rawType === "CustomerGroup") return "Customer";
+      return rawType;
+    }
+
+    function computeDestinationRemaining(balance, amount, fromType, destType) {
+      if (destType === "CashBox" || destType === "User") {
+        return balance + amount;
+      }
+      if (destType === "Supplier") {
+        return balance - amount;
+      }
+      if (destType === "Customer") {
+        return fromType === "Customer" ? balance + amount : balance - amount;
+      }
+      return balance - amount;
+    }
+
     function updateDestinationHint(balanceHint, entitySelect, amountInput) {
       if (!balanceHint || !entitySelect) return;
       const selected = entitySelect.selectedOptions[0];
-      const rawBalance = selected?.dataset.balance;
-      if (!rawBalance || Number.isNaN(Number(rawBalance))) {
-        balanceHint.textContent = "";
+      const rawBalance = selected?.dataset?.balance;
+      const parsedBalance = Number(rawBalance);
+      const hasBalance = rawBalance !== undefined && rawBalance !== null && `${rawBalance}`.trim().length > 0 && !Number.isNaN(parsedBalance);
+      const amount = Number(amountInput?.value || 0);
+      const amt = Number.isNaN(amount) ? 0 : amount;
+
+      const fromSelected = fromSelect?.selectedOptions?.[0];
+      const fromType = normalizedEntityType(fromSelected);
+      const destType = normalizedEntityType(selected);
+
+      if (!hasBalance) {
+        balanceHint.textContent = "Saldo: — · Restante: —";
         balanceHint.classList.remove("negative");
         return;
       }
-      const balance = Number(rawBalance);
-      const amount = Number(amountInput?.value || 0);
-      const fromSelected = fromSelect?.selectedOptions?.[0];
-      const fromType = fromSelected?.dataset.entityType || (fromSelected?.value || "").split(":")[0];
-      const destType = selected?.dataset.entityType || (selected?.value || "").split(":")[0];
-      const amt = Number.isNaN(amount) ? 0 : amount;
-      let remaining = balance - amt;
-      if (destType === "CashBox") {
-        remaining = balance + amt;
-      } else if ((destType === "Customer" || destType === "CustomerGroup") &&
-                 (fromType === "Customer" || fromType === "CustomerGroup")) {
-        remaining = balance + amt;
-      }
+
+      const balance = parsedBalance;
+      const remaining = computeDestinationRemaining(balance, amt, fromType, destType);
       balanceHint.textContent = `Saldo: ${formatCurrency(balance)} · Restante: ${formatCurrency(remaining)}`;
       balanceHint.classList.toggle("negative", remaining < 0);
     }
