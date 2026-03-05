@@ -136,7 +136,12 @@ class Transfer < ApplicationRecord
                             to_entity_type == "Supplier" &&
                             from_entity_id.present? &&
                             from_entity_id == to_entity_id
-    return if allowed_same_supplier
+    allowed_same_customer_in_sale = sale_id.present? &&
+                                    from_entity_type == "Customer" &&
+                                    to_entity_type == "Customer" &&
+                                    from_entity_id.present? &&
+                                    from_entity_id == to_entity_id
+    return if allowed_same_supplier || allowed_same_customer_in_sale
     return unless from_entity_type == to_entity_type
 
     if from_entity_type == "CustomerGroup"

@@ -150,4 +150,17 @@ class TransferTest < ActiveSupport::TestCase
       assert_equal Date.new(2024, 1, 13), transfer.occurred_at.to_date
     end
   end
+
+  test "allows same customer as origin and destination when transfer belongs to a sale" do
+    transfer = Transfer.new(
+      sale: @sale,
+      customer: @customer,
+      supplier: @supplier,
+      from_entity: @customer,
+      to_entity: @customer,
+      amount: 50
+    )
+
+    assert transfer.valid?, transfer.errors.full_messages.to_sentence
+  end
 end
