@@ -140,7 +140,7 @@ class TransfersController < ApplicationController
     @suppliers = supplier ? [ supplier ] : Supplier.order(:name)
     @customers = Customer.order(:name)
     @customer_groups = CustomerGroups.build(@customers).map do |group|
-      balance = group[:customers].sum { |c| c.available_transfer_total(excluding: @transfer) }
+      balance = customer_group_total_cliente_balance(group[:name], group[:customers].map(&:id))
       group.merge(balance: balance)
     end
     grouped_ids = @customer_groups.flat_map { |g| g[:customers].map(&:id) }
@@ -183,5 +183,71 @@ class TransfersController < ApplicationController
     suppliers.each_with_object({}) do |supplier, balances|
       balances[supplier.id] = supplier.available_transfer_total
     end
+  end
+
+  def transfers_scope_for_balance
+    scope = Transfer.all
+    return scope unless @transfer&.persisted?
+
+    scope.where.not(id: @transfer.id)
+  end
+
+  # Mantiene el mismo criterio de "TOTAL CLIENTE" usado en CustomersController#group.
+  def customer_group_total_cliente_balance(group_name, customer_ids)
+    return 0.to_d if customer_ids.blank?
+
+    transfers_scope = transfers_scope_for_balance
+    base_sales_scope = Sale.where(customer_id: customer_ids)
+    sales_scope = base_sales_scope.includes(:sales_users)
+
+    group_total_after_pcts = sales_scope.sum { |sale| sale.net_after_provider_and_sellers.to_d }
+    group_opening_balance = OpeningBalance.total_for_group(group_name)
+    group_total_transferred = transfers_scope.where(
+      sale_id: base_sales_scope.select(:id),
+      to_entity_type: "Supplier"
+    ).sum(:amount).to_d
+
+    direct_outgoing_total = 0.to_d
+    transfers_scope.where(
+      sale_id: nil,
+      from_entity_type: "Customer",
+      from_entity_id: customer_ids
+    ).find_each do |transfer|
+      direct_outgoing_total += transfer.total_outgoing
+    end
+
+    direct_from_customers_total = transfers_scope.where(
+      sale_id: nil,
+      to_entity_type: "Customer",
+      to_entity_id: customer_ids,
+      from_entity_type: "Customer"
+    ).sum(:amount).to_d
+
+    direct_to_customers = transfers_scope.where(
+      sale_id: nil,
+      to_entity_type: "Customer",
+      to_entity_id: customer_ids
+    ).where.not(from_entity_type: "Customer").sum(:amount).to_d
+
+    direct_to_group = transfers_scope.where(
+      sale_id: nil,
+      to_entity_type: "CustomerGroup"
+    ).where("lower(to_group) = ?", group_name.to_s.downcase).sum(:amount).to_d
+
+    sale_transfers_to_customers = transfers_scope.where(
+      sale_id: base_sales_scope.select(:id),
+      to_entity_type: "Customer",
+      to_entity_id: customer_ids
+    ).sum(:amount).to_d
+
+    sale_transfers_to_group = transfers_scope.where(
+      sale_id: base_sales_scope.select(:id),
+      to_entity_type: "CustomerGroup"
+    ).where("lower(to_group) = ?", group_name.to_s.downcase).sum(:amount).to_d
+
+    group_total_received = direct_to_customers + direct_to_group + sale_transfers_to_customers + sale_transfers_to_group
+
+    group_total_after_pcts + group_opening_balance - group_total_transferred -
+      group_total_received - direct_outgoing_total + direct_from_customers_total
   end
 end
