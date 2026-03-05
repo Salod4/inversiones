@@ -147,7 +147,7 @@ class TransfersController < ApplicationController
     @ungrouped_customers = @customers.reject { |c| grouped_ids.include?(c.id) }
     @users = User.order(:name)
     @supplier_balances = supplier_balances_for(@suppliers)
-    @user_balances = {}
+    @user_balances = User.balances_by_user(@users.map(&:id))
     @cash_box_balance = Transfer.cash_box_balance
   end
 

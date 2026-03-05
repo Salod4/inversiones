@@ -60,13 +60,10 @@ module Customers
       @customers = Customer.order(:name)
       @users = User.order(:name)
       @supplier_balances = supplier_balances_for(@suppliers)
-      @user_balances = {}
+      @user_balances = User.balances_by_user(@users.map(&:id))
     end
 
     def set_available_balances
-      base_sales_scope = @customer.sales
-      sales_scope = base_sales_scope.includes(:supplier, :sales_users, :transfers)
-
       @customer_available_balance = @customer.available_transfer_total
       @sale_available_balance = @sale&.available_transfer_amount(excluding: @transfer)
     end

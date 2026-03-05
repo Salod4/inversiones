@@ -29,7 +29,7 @@
     <p class="hint">Este transfer no se ligará a una venta específica.</p>
   <% end %>
   <p class="hint">
-    Total de cliente:
+    Saldo de cliente:
     <strong><%= number_to_currency(@customer_available_balance, unit: "$") %></strong>
   </p>
   <%= render "transfers/form",
