@@ -9,7 +9,7 @@ class OpeningBalance < ApplicationRecord
   }.freeze
 
   validates :reference_type, inclusion: { in: TYPES.values }
-  validates :amount, numericality: { greater_than_or_equal_to: 0 }
+  validates :amount, numericality: true
   validate :reference_presence
 
   scope :customers, -> { where(reference_type: TYPES[:customer]) }

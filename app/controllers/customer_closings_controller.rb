@@ -38,7 +38,9 @@ class CustomerClosingsController < ApplicationController
   def edit; end
 
   def update
+    old_balance = @customer_closing.customer_balance.to_d
     if @customer_closing.update(customer_closing_params)
+      sync_customer_opening_balance!(@customer_closing, old_balance)
       redirect_to closing_path(@closing), notice: "Cierre de cliente actualizado correctamente."
     else
       render :edit, status: :unprocessable_entity
@@ -90,5 +92,19 @@ class CustomerClosingsController < ApplicationController
 
   def customer_closing_params
     params.require(:customer_closing).permit(:customer_id, :customer_balance, :receivables)
+  end
+
+  def sync_customer_opening_balance!(customer_closing, old_balance)
+    new_balance = customer_closing.customer_balance.to_d
+    delta = new_balance - old_balance
+    return if delta.zero?
+
+    ob = OpeningBalance.find_or_initialize_by(
+      reference_type: OpeningBalance::TYPES[:customer],
+      reference_id: customer_closing.customer_id
+    )
+    ob.amount = ob.amount.to_d + delta
+    ob.source = "closing_adjustment"
+    ob.save!
   end
 end
