@@ -68,7 +68,7 @@ class Transfer < ApplicationRecord
   belongs_to :from_entity, polymorphic: true, optional: true
   belongs_to :to_entity, polymorphic: true, optional: true
 
-  validates :amount, numericality: { greater_than: 0 }
+  validates :amount, numericality: true
   validates :from_entity_type, :to_entity_type, presence: true
   validates :from_entity_id, presence: true, unless: -> { [ "CustomerGroup", DESTINATION_CASH_BOX, "Other" ].include?(from_entity_type) }
   validates :to_entity_id, presence: true, unless: -> { [ "CustomerGroup", DESTINATION_CASH_BOX ].include?(to_entity_type) }
